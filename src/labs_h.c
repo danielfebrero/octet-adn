@@ -689,7 +689,7 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
 /* ======================= 8. general : apprendre pendant sa vie, généraliser =======================
  * Définition opérationnelle : un génome est « intelligent » ici s'il apprend PENDANT sa vie une règle
  * qu'il ne connaît pas à la naissance, et s'il le fait sur des tâches que la sélection n'a jamais vues.
- * Vie = 64 essais. Stimulus = indice c (bits 0-1) | récompense affichée de l'essai précédent (bit 2) ;
+ * Vie = 64 essais. Stimulus = indice c (bits 0-1) | récompense affichée de l'essai précédent (bit 2) | début de tâche (bit 3) ;
  * réponse = EMIT v (v & 3), silence = faux. La bonne réponse n'est jamais dans le stimulus et
  * l'historique est vidé à chaque tick : se souvenir de l'indice précédent (p1, p2) coûte un STORE.
  * Familles (table 2 bits / entrée) :
@@ -701,14 +701,14 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
  * récompense affichée bruitée 10 % ; L3 bruit 20 %. Tables des familles 0-2 : hachage non réservé.
  * Fitness de sélection = mélange fixe des 4 niveaux (comparable d'un pool à l'autre).
  * Jeu tenu à l'écart (40 tâches fixes, sans bruit) : familles 0,1,2 sur tables réservées, mémoire-1,
- * mémoire-2. Score d'une vie = justesse des essais 32..63. Budget : 32 instructions / tick (ce labo). */
+ * mémoire-2. Score d'une vie = justesse des essais 32..63. Budget : 96 instructions / tick (ce labo). */
 #define GN_TRIALS 64
 #define GN_LATE   32
 #define GN_HELD_N 40
 #define GN_TOP    8
 #define GN_REWARD 2
 #define GN_LEVELS 4
-#define GN_OPS    32
+#define GN_OPS    96
 typedef struct { int fam, t1, t2, nsw, sw[3], noise; uint32_t q1, q2; } GnTask;
 static int gn_held_code(int code) { return (((unsigned)code * 167u) >> 3 & 3u) == 0; }
 static int gn_draw_code(Rng *r, int held, int avoid) {
@@ -765,7 +765,7 @@ static void gn_life(GnState *s, const PoolEntry *g, const GnTask *t, Rng *cues, 
         int flip = t->noise && (int)rng_below(cues, 1000) < t->noise;
         if (mode >= 3) resp = mode == 3 ? (int)rng_below(cues, 4) : mode - 4;
         else {
-            w->stimulus = cue | ((mode == 2 ? 0 : r) << 2);
+            w->stimulus = cue | ((mode == 2 ? 0 : r) << 2) | (i == 0) << 3;
             w->hist_n = 0; w->nem = 0; c->e = 1000;
             vm_run(c, w);
             resp = c->emitted;
@@ -797,10 +797,10 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     if (curve) { curve[0] = a / (16.0 * lives); curve[1] = b / (16.0 * lives); }
     return late / ((double)(GN_TRIALS - GN_LATE) * lives);
 }
-/* fitness de sélection : mélange fixe des 4 niveaux, 8 tâches chacun */
+/* fitness de sélection : mélange fixe des 4 niveaux, 16 tâches chacun */
 double gn_train(const PoolEntry *g, int n, uint64_t seed) {
     double s = 0;
-    for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 8, 0, -1, NULL);
+    for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 16, 0, -1, NULL);
     return s / GN_LEVELS;
 }
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
@@ -822,10 +822,10 @@ static void gn_before(World *w, Creature *c) {
     int cue = (int)rng_below(w->rng, 4), p1 = c->ls[2] & 3, p2 = (c->ls[2] >> 2) & 3;
     int flip = t.noise && (int)rng_below(w->rng, 1000) < t.noise;
     c->ls[5] = gn_target(&t, c->ls[1], cue, p1, p2) | flip << 2;
+    w->stimulus = cue | r << 2 | (c->ls[1] == 0) << 3;     /* bit 3 : premier essai d'une tâche */
     c->ls[2] = cue | p1 << 2 | p2 << 4;
-    w->stimulus = cue | r << 2;
 }
-void hl_gn_cfg(WorldConfig *c) { c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS; }
+void hl_gn_cfg(WorldConfig *c) { c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS; c->mut_rate = 0.005; c->dup_rate = 0.01; }   /* génome long : charge de mutation réduite */
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
 int gn_level_of(const PoolEntry *g, int n) {
