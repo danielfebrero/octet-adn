@@ -72,7 +72,7 @@ int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *ou
     int i = 0;
     while (i < n) {
         if (i >= 2 && i < 6) {                         /* paramètres : jamais protégés, taux méta fixe */
-            if (rng_double(r) < EVO_META) out[i] = (uint8_t)(out[i] + drift[rng_below(r, 4)]);
+            if (rng_double(r) < EVO_META) { int v = out[i] + drift[rng_below(r, 4)]; out[i] = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v); }   /* saturé, pas de bouclage 0↔255 */
             i++; continue;
         }
         if (i < p->prot) { i++; continue; }            /* zone protégée (hors paramètres) */

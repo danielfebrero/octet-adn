@@ -291,7 +291,7 @@ void hl_fold_cfg(WorldConfig *c); int hl_fold_seeds(PoolEntry *o); double hl_fol
 void hl_ab_cfg(WorldConfig *c); int hl_ab_seeds(PoolEntry *o); void hl_ab_init(Lab *l, World *w); void hl_ab_pre(Lab *l, World *w);
 void hl_ab_post(Lab *l, World *w); double hl_ab_fit(Lab *l, World *w, int t); int hl_ab_sel(Lab *l, World *w, PoolEntry *out);
 void hl_cm_cfg(WorldConfig *c); int hl_cm_seeds(PoolEntry *o); void hl_cm_init(Lab *l, World *w); void hl_cm_pre(Lab *l, World *w); double hl_cm_fit(Lab *l, World *w, int t);
-int hl_pd_seeds(PoolEntry *o); void hl_pd_init(Lab *l, World *w); void hl_pd_post(Lab *l, World *w); double hl_pd_fit(Lab *l, World *w, int t);
+int hl_pd_seeds(PoolEntry *o); void hl_pd_rank(const Creature *c, double k[2]); void hl_pd_init(Lab *l, World *w); void hl_pd_post(Lab *l, World *w); double hl_pd_fit(Lab *l, World *w, int t);
 int hl_cr_seeds(PoolEntry *o); void hl_cr_init(Lab *l, World *w); double hl_cr_fit(Lab *l, World *w, int t); void hl_cr_rank(const Creature *c, double k[2]);
 void hl_se_cfg(WorldConfig *c); int hl_se_seeds(PoolEntry *o); void hl_se_init(Lab *l, World *w); void hl_se_pre(Lab *l, World *w);
 void hl_se_post(Lab *l, World *w); double hl_se_fit(Lab *l, World *w, int t);
@@ -334,12 +334,12 @@ const LabDef LABS[N_LABS] = {
       { "pop_late", "resource_frac", "dead_cells", "baseline", "vs_baseline" }, hl_cm_cfg, hl_cm_seeds, hl_cm_pre, NULL, hl_cm_fit, rank_default, NULL, hl_cm_init, 5 },
     { "pandemic", "Pandémie : contagion SEIR entre agents",
       "moyenne sur 4 paires appariées (nombres aléatoires communs) de : morts évitées / max(morts sans actions, 10) × maintien pop − énergie des actions / mangée ; baseline = même pool, même graine, actions sans effet",
-      { "deaths", "pop_mean", "deaths_no_action", "cost", "vaccinated", "isolations" }, NULL, hl_pd_seeds, NULL, hl_pd_post, hl_pd_fit, rank_default, NULL, hl_pd_init, 0 },
+      { "deaths", "pop_mean", "deaths_no_action", "cost", "vaccinated", "isolations" }, NULL, hl_pd_seeds, NULL, hl_pd_post, hl_pd_fit, hl_pd_rank, NULL, hl_pd_init, 0 },
     { "code-repair", "Réparer un programme cassé via STORE",
       "score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière",
       { "repaired", "resolved", "success_rate", "patch_bonus", "baseline", "vs_baseline" }, NULL, hl_cr_seeds, NULL, NULL, hl_cr_fit, hl_cr_rank, NULL, hl_cr_init, 0 },
     { "self-evolve", "La seed pilote sa propre évolution",
-      "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 25 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
+      "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 50 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
       { "baseline", "vs_baseline", "mut_rate", "indel_rate", "crossover", "protected" }, hl_se_cfg, hl_se_seeds, hl_se_pre, hl_se_post, hl_se_fit, rank_default, NULL, hl_se_init, 0 },
 };
 

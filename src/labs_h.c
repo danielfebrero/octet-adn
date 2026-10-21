@@ -340,14 +340,16 @@ void hl_pd_post(Lab *l, World *w) {
     }
 }
 /* un run du labo sur une graine donnée ; cf = 1 sans effet des actions, 2 avec (pas de récursion) */
-static void pd_run(Lab *l, int ticks, const Rng *rng, int cf, double *ex) {
+static double pd_run(Lab *l, int ticks, const Rng *rng, int cf, double *ex) {
     Lab l2; lab_init(&l2, l->id, ticks);
     l2.counterfactual = cf;
     Rng r = *rng;
     CycleResult *res = malloc(sizeof *res);
     run_cycle(&l2, l->pool0, l->npool0, &r, ticks, res);
-    memcpy(ex, l2.extra, sizeof l2.extra);
+    double f = res->fitness;
+    if (ex) memcpy(ex, l2.extra, sizeof l2.extra);
     world_free(res->w); lab_free(&l2); free(res);
+    return f;
 }
 static double pd_pair(double d, double pm, double cost, const double *b) {
     return (b[0] - d) / fmax(b[0], 10.0) * fmin(1.0, b[1] > 0 ? pm / b[1] : 0) - cost;
@@ -485,18 +487,26 @@ double hl_cr_fit(Lab *l, World *w, int ticks) {
 /* ======================= 6. self-evolve : la seed pilote son évolution =======================
  * Octets 2..5 du génome = taux de substitution, taux d'indel, crossover, zone protégée (lus à SPLIT
  * par mutate_evo, bornés, voir mutate.c ; cfg.self_evo n'est posé QUE dans ce labo). Le monde change
- * de régime toutes les 25 ticks : une cible R ∈ 0..15 (nouvelle à chaque régime, tirée par la graine
+ * de régime toutes les 50 ticks : une cible R ∈ 0..15 (nouvelle à chaque régime, tirée par la graine
  * du cycle, donc impossible à mémoriser) ; EMIT v rapporte 6 − 2·|v&15 − R| si l'écart d < 4, sinon coûte 1.
  * Fitness = moyenne sur les régimes de Σ(1 − d/4)⁺ / créature-tick : vitesse d'adaptation.
- * Baseline = même pool rejoué avec les paramètres fixes du moteur (mut 2 %, dup 5 %). */
-#define SE_PERIOD 25
-typedef struct { int R; double corr[16]; long ct[16]; } SeState;
+ * Fitness et baseline = moyennes sur SE_REPS = 4 graines appariées ; baseline = même pool, paramètres fixes
+ * du moteur (mut 2 %, dup 5 %). */
+#define SE_PERIOD 50
+#define SE_MAX_AGE 60    /* ferme l'exploit « ne plus se reproduire » (gel par absence d'enfants) */
+#define SE_REPS 4
+typedef struct { int R; double corr[16]; long ct[16]; uint64_t key; } SeState;
 void hl_se_cfg(WorldConfig *c) { (void)c; }
 int hl_se_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "selfevo", 0); return 4; }
-void hl_se_init(Lab *l, World *w) { l->ext = calloc(1, sizeof(SeState)); w->cfg.self_evo = !l->counterfactual; }
+void hl_se_init(Lab *l, World *w) {
+    SeState *s = calloc(1, sizeof *s);
+    s->key = fnv1a(l->rng0.s, sizeof l->rng0.s, FNV_INIT);   /* cibles communes aux runs appariés */
+    l->ext = s; w->cfg.self_evo = l->counterfactual != 1;
+}
 void hl_se_pre(Lab *l, World *w) {
     SeState *s = l->ext;
-    if ((w->t - 1) % SE_PERIOD == 0) { int r; do r = (int)rng_below(w->rng, 16); while (w->t > 1 && r == s->R); s->R = r; }
+    for (int i = 0; i < w->ncs; i++) if (w->cs[i]->age >= SE_MAX_AGE) w->cs[i]->e = 0;   /* mortels : sans descendance, pas d'évolution */
+    if ((w->t - 1) % SE_PERIOD == 0) { int r; uint64_t k = 0; do r = (int)(pd_u(s->key, (uint64_t)w->t, k++, 5) * 16); while (w->t > 1 && r == s->R); s->R = r; }
 }
 void hl_se_post(Lab *l, World *w) {
     SeState *s = l->ext; int g = (int)((w->t - 1) / SE_PERIOD) & 15;
@@ -514,7 +524,15 @@ double hl_se_fit(Lab *l, World *w, int ticks) {
     for (int g = 0; g < ng; g++) f += s->ct[g] ? (double)s->corr[g] / s->ct[g] : 0;
     f /= ng;
     if (!l->counterfactual) {
-        l->extra[0] = replay(l, ticks, NULL); l->extra[1] = f - l->extra[0];
+        /* SE_REPS paires appariées (même graine, mêmes cibles) : paramètres du génome vs paramètres fixes */
+        double fe = f, fb = 0;
+        for (int k = 0; k < SE_REPS; k++) {
+            Rng r = l->rng0;
+            if (k) { rng_seed(&r, l->rng0.s[0] ^ (0x9E3779B97F4A7C15ULL * (uint64_t)k)); fe += pd_run(l, ticks, &r, 2, NULL); }
+            fb += pd_run(l, ticks, &r, 1, NULL);
+        }
+        f = fe / SE_REPS;
+        l->extra[0] = fb / SE_REPS; l->extra[1] = f - l->extra[0];
         double m = 0, id = 0, xo = 0, pr = 0;
         for (int i = 0; i < w->ncs; i++) { EvoParams p = evo_params(w->cs[i]->dna, w->cs[i]->len); m += p.mut; id += p.indel; xo += p.xover; pr += p.prot; }
         int n = w->ncs ? w->ncs : 1;
@@ -522,3 +540,5 @@ double hl_se_fit(Lab *l, World *w, int ticks) {
     }
     return f;
 }
+/* pandemic : pool = survivants les plus âgés (l'énergie favoriserait ceux qui ne paient jamais l'isolement) */
+void hl_pd_rank(const Creature *c, double k[2]) { k[0] = c->age; k[1] = c->e; }

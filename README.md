@@ -164,7 +164,7 @@ locale bit à bit avec retour arrière (generate-and-validate).
 
 **self-evolve.** Les octets 2..5 du génome sont ses paramètres d'évolution, lus à chaque SPLIT
 (`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
-zone protégée ≤ 16 octets et ≤ la moitié du génome. Une cible 0..15 change toutes les 25 ticks (tirée
+zone protégée ≤ 16 octets et ≤ la moitié du génome. Une cible 0..15 change toutes les 50 ticks (tirée
 par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. Les
 moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`,
 `crossover`, `protected`).

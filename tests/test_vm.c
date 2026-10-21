@@ -357,10 +357,14 @@ TEST(test_evo_params_bounded) {
     uint8_t out[MAX_LEN + 16]; Rng r; rng_seed(&r, 1);
     EvoParams z = { 0, 0, 0, 0 };
     for (int i = 0; i < 40; i++) g[i] = (uint8_t)i;
-    assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 40));      /* taux 0 = copie exacte */
+    assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 34));   /* taux 0 = copie, sauf paramètres */
+    int moved = 0;                                                            /* les octets 2..5 dérivent toujours (méta) */
+    EvoParams pr = { 0, 0, 0, 16 };
+    for (int k = 0; k < 200; k++) { mutate_evo(g, 40, &r, &pr, out); moved += memcmp(out + 2, g + 2, 4) != 0; assert(!memcmp(out + 6, g + 6, 10)); }
+    assert(moved > 0);
     EvoParams all = { 1.0, 0, 0, 12 };
     mutate_evo(g, 40, &r, &all, out);
-    assert(!memcmp(out, g, 12) && memcmp(out + 12, g + 12, 28));              /* zone protégée intacte */
+    assert(!memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 6) && memcmp(out + 12, g + 12, 28));   /* zone protégée intacte (hors paramètres) */
 }
 
 TEST(test_new_labs_beat_naive_baselines) {
@@ -384,7 +388,7 @@ TEST(test_new_labs_exploits_closed) {
     assert(ev4("fold", p, raw_pool(p, inert), NULL) == 0);                     /* tout droit = 0 contact */
     assert(ev4("commons", p, raw_pool(p, inert), NULL) == 0);                  /* ne rien faire = s'éteindre */
     assert(ev4("code-repair", p, raw_pool(p, inert), NULL) == 0);
-    assert(fabs(ev4("pandemic", p, raw_pool(p, inert), NULL)) < 0.05);         /* mourir de faim n'évite rien */
+    assert(ev4("pandemic", p, raw_pool(p, inert), NULL) == 0);                 /* aléa commun : sans action, paires identiques */
     assert(ev4("antibiotic", p, raw_pool(p, "1a1a0d0a09030c0e0f010b0c1a0e0f1e"), ex) < 0.05);   /* tuer les hôtes */
     double spam = ev4("antibiotic", p, raw_pool(p, "01140d0a09030c0e0f010b0c0d0e0f1e"), NULL);   /* tous les médicaments */
     int n = LABS[lab_index("antibiotic")].seeds(p);
