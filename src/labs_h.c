@@ -336,3 +336,112 @@ double hl_pd_fit(Lab *l, World *w, int ticks) {
     l->extra[2] = d0; l->extra[3] = cost; l->extra[4] = (double)s->vacc; l->extra[5] = (double)s->isol;
     return f;
 }
+
+/* ======================= 5. code-repair : réparation de programme =======================
+ * Chaque créature reçoit un patient : programme de 8 octets tiré d'une famille aléatoire
+ * (SENSE_STIM ; MOV_BA ; op1 ; op2 ; EMIT ; YIELD, op ∈ INC/DEC/ADD/SUB/XOR/AND k) puis cassé
+ * par 1 ou 2 bit-flips connus (bits 0..4 d'un opcode, 0..7 d'un immédiat), cassure visible sur
+ * les tests. Il est mappé sur STORE/LOAD imm 0xE0..0xE7 (fenêtre win, voir vm.c). Signal par tick :
+ * stimulus = tests passés (0..16) | 0x40 si mieux que le meilleur vu | 0x20 nouveau patient.
+ * Réussite = les 256 entrées donnent la sortie de référence (pas seulement les 16 tests) ;
+ * score = 1 + 0.5 × (nb de flips injectés / octets modifiés). Délai 80 ticks, sinon échec. */
+#define CR_LEN 8
+#define CR_TIMEOUT 80
+static const uint8_t CR_TESTS[16] = { 0, 1, 2, 3, 5, 7, 8, 13, 21, 34, 55, 89, 100, 144, 200, 255 };
+typedef struct { World *sb; Creature tc; long attempts, succ, timeouts; double score; } CrState;
+static int cr_run(CrState *s, const uint8_t *prog, int x) {
+    Creature *c = &s->tc;
+    memcpy(c->dna, prog, CR_LEN); c->len = CR_LEN; c->dirty[0] = 0;
+    c->ip = 0; c->a = c->b = 0; c->e = 1000; c->win_len = 0; c->x = c->y = 1; c->d = 0;
+    s->sb->stimulus = x; s->sb->nem = 0;
+    vm_run(c, s->sb);
+    return c->emitted;
+}
+static int cr_pass(CrState *s, const uint8_t *p, const uint8_t *ref) {
+    int n = 0;
+    for (int i = 0; i < 16; i++) n += cr_run(s, p, CR_TESTS[i]) == cr_run(s, ref, CR_TESTS[i]);
+    return n;
+}
+static int cr_equiv(CrState *s, const uint8_t *p, const uint8_t *ref) {
+    for (int x = 0; x < 256; x++) if (cr_run(s, p, x) != cr_run(s, ref, x)) return 0;
+    return 1;
+}
+static void cr_assign(World *w, CrState *s, Creature *c) {
+    static const uint8_t OPS[6] = { OP_INC_A, OP_DEC_A, OP_ADD, OP_SUB, OP_XOR, OP_AND };
+    uint8_t *ref = c->win0 + 8, *brk = c->win0;
+    for (;;) {
+        int k = 0;
+        ref[k++] = OP_SENSE_STIM; ref[k++] = OP_MOV_BA;
+        for (int j = 0; j < 2; j++) {
+            uint8_t op = OPS[rng_below(w->rng, 6)];
+            ref[k++] = op;
+            if (op == OP_AND) ref[k++] = (uint8_t)rng_below(w->rng, 256);
+        }
+        ref[k++] = OP_EMIT;
+        while (k < CR_LEN) ref[k++] = OP_YIELD;
+        if (!cr_equiv(s, ref, (const uint8_t[CR_LEN]){ OP_SENSE_STIM, OP_EMIT, OP_YIELD, OP_YIELD, OP_YIELD, OP_YIELD, OP_YIELD, OP_YIELD })) break;  /* pas l'identité */
+    }
+    for (int tries = 0; tries < 50; tries++) {
+        memcpy(brk, ref, CR_LEN);
+        int m = 1 + (int)rng_below(w->rng, 2);
+        for (int j = 0; j < m; j++) {
+            int p = (int)rng_below(w->rng, 6);           /* zone code (avant le remplissage) */
+            int imm = p > 0 && ref[p - 1] == OP_AND;
+            brk[p] ^= (uint8_t)(1u << rng_below(w->rng, imm ? 8 : 5));
+        }
+        c->ls[3] = 0; for (int i = 0; i < CR_LEN; i++) c->ls[3] += brk[i] != ref[i];
+        if (c->ls[3] && cr_pass(s, brk, ref) < 16) break;   /* cassure visible sur les tests */
+    }
+    memcpy(c->win, brk, CR_LEN); c->win_len = CR_LEN;
+    c->ls[0] = 1; c->ls[1] = cr_pass(s, c->win, ref); c->ls[2] = (int)w->t; c->ls[4] = c->ls[1];
+    memcpy(c->win0 + 16, c->win, CR_LEN);
+    s->attempts++;
+}
+static void cr_before(World *w, Creature *c) {
+    CrState *s = w->lab->ext;
+    if (!c->ls[0]) { cr_assign(w, s, c); w->stimulus = c->ls[1] | 0x60; return; }
+    int p = c->ls[4];
+    if (memcmp(c->win, c->win0 + 16, CR_LEN)) { p = cr_pass(s, c->win, c->win0 + 8); c->ls[4] = p; memcpy(c->win0 + 16, c->win, CR_LEN); }
+    if (p == 16 && cr_equiv(s, c->win, c->win0 + 8)) {
+        int patch = 0; for (int i = 0; i < CR_LEN; i++) patch += c->win[i] != c->win0[i];
+        s->succ++; c->ls[5]++;
+        s->score += 1 + 0.5 * c->ls[3] / (double)(patch > c->ls[3] ? patch : c->ls[3]);
+        c->e += 100; cap_e(c);
+        cr_assign(w, s, c); w->stimulus = c->ls[1] | 0x60; return;
+    }
+    if (w->t - c->ls[2] > CR_TIMEOUT) { s->timeouts++; cr_assign(w, s, c); w->stimulus = c->ls[1] | 0x60; return; }
+    w->stimulus = p | (p > c->ls[1] ? 0x40 : 0);
+    if (p > c->ls[1]) c->ls[1] = p;
+}
+static void cr_free(Lab *l) { CrState *s = l->ext; if (s) { free(s->sb->rng); world_free(s->sb); } }
+void hl_cr_init(Lab *l, World *w) {
+    CrState *s = calloc(1, sizeof *s);
+    WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0;
+    Rng *r = malloc(sizeof *r); rng_seed(r, 0);
+    s->sb = world_new(NULL, 0, r, &sc, NULL);
+    l->ext = s; l->ext_free = cr_free; w->before_vm = cr_before;
+}
+int hl_cr_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "repair", 0); return 4; }
+void hl_cr_rank(const Creature *c, double k[2]) { k[0] = c->ls[5]; k[1] = c->e; }
+/* baseline : chercheur aléatoire sans mémoire (flip, pas de retour arrière) */
+static int cr_random_genome(PoolEntry *o) {
+    int k = 0; uint8_t *d = o->dna;
+    d[k++] = OP_MOV_AB; d[k++] = OP_JNZ; d[k++] = 1; d[k++] = OP_INC_B;
+    for (int p = 0; p < CR_LEN; p++) { d[k++] = OP_LOAD; d[k++] = (uint8_t)(0xE0 + p); d[k++] = OP_XOR; d[k++] = OP_STORE; d[k++] = (uint8_t)(0xE0 + p); d[k++] = OP_YIELD; }
+    d[k++] = OP_MOV_AB; d[k++] = OP_ADD; d[k++] = OP_MOV_BA; d[k++] = OP_SPLIT; d[k++] = OP_LOOP;
+    o->len = k; o->species = 0;
+    return 1;
+}
+double hl_cr_fit(Lab *l, World *w, int ticks) {
+    CrState *s = l->ext; long active = 0;
+    for (int i = 0; i < w->ncs; i++) active += w->cs[i]->ls[0] != 0;
+    long resolved = s->attempts - active;
+    double f = resolved > 0 ? s->score / resolved : 0;
+    l->extra[0] = (double)s->succ; l->extra[1] = (double)resolved; l->extra[2] = resolved > 0 ? (double)s->succ / resolved : 0;
+    l->extra[3] = s->succ ? s->score / s->succ - 1 : 0;
+    if (!l->counterfactual) {
+        PoolEntry g[4]; for (int i = 0; i < 4; i++) cr_random_genome(&g[i]);
+        l->extra[4] = replay_pool(l, ticks, g, 4, NULL); l->extra[5] = f - l->extra[4];
+    }
+    return f;
+}

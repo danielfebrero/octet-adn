@@ -7,17 +7,17 @@
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
 EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
-EXT(adn_fold) EXT(adn_antibiotic) EXT(adn_commons) EXT(adn_pandemic)
+EXT(adn_fold) EXT(adn_antibiotic) EXT(adn_commons) EXT(adn_pandemic) EXT(adn_repair)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
     BLOB("predator", adn_predator), BLOB("walk", adn_walk),
-    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic), BLOB("commons", adn_commons), BLOB("pandemic", adn_pandemic),
+    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic), BLOB("commons", adn_commons), BLOB("pandemic", adn_pandemic), BLOB("repair", adn_repair),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
                                       adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end,
-                                      adn_fold_end, adn_antibiotic_end, adn_commons_end, adn_pandemic_end };
+                                      adn_fold_end, adn_antibiotic_end, adn_commons_end, adn_pandemic_end, adn_repair_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -292,6 +292,7 @@ void hl_ab_cfg(WorldConfig *c); int hl_ab_seeds(PoolEntry *o); void hl_ab_init(L
 void hl_ab_post(Lab *l, World *w); double hl_ab_fit(Lab *l, World *w, int t); int hl_ab_sel(Lab *l, World *w, PoolEntry *out);
 void hl_cm_cfg(WorldConfig *c); int hl_cm_seeds(PoolEntry *o); void hl_cm_init(Lab *l, World *w); void hl_cm_pre(Lab *l, World *w); double hl_cm_fit(Lab *l, World *w, int t);
 int hl_pd_seeds(PoolEntry *o); void hl_pd_init(Lab *l, World *w); void hl_pd_post(Lab *l, World *w); double hl_pd_fit(Lab *l, World *w, int t);
+int hl_cr_seeds(PoolEntry *o); void hl_cr_init(Lab *l, World *w); double hl_cr_fit(Lab *l, World *w, int t); void hl_cr_rank(const Creature *c, double k[2]);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -332,6 +333,9 @@ const LabDef LABS[N_LABS] = {
     { "pandemic", "Pandémie : contagion SEIR entre agents",
       "(morts − morts sans actions) / max(morts sans actions, 5) × maintien pop − énergie des actions / énergie mangée ; baseline = même pool, actions sans effet",
       { "deaths", "pop_mean", "deaths_no_action", "cost", "vaccinated", "isolations" }, NULL, hl_pd_seeds, NULL, hl_pd_post, hl_pd_fit, rank_default, NULL, hl_pd_init, 0 },
+    { "code-repair", "Réparer un programme cassé via STORE",
+      "score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière",
+      { "repaired", "resolved", "success_rate", "patch_bonus", "baseline", "vs_baseline" }, NULL, hl_cr_seeds, NULL, NULL, hl_cr_fit, hl_cr_rank, NULL, hl_cr_init, 0 },
 };
 
 int lab_index(const char *name) {

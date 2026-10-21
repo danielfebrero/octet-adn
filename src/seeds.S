@@ -20,4 +20,5 @@
         SEED adn_antibiotic, "seeds/antibiotic.adn"
         SEED adn_commons,  "seeds/commons.adn"
         SEED adn_pandemic, "seeds/pandemic.adn"
+        SEED adn_repair,   "seeds/repair.adn"
         .section .note.GNU-stack,"",@progbits
