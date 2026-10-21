@@ -105,7 +105,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 
 | # | labo | objectif | fitness |
 |---|---|---|---|
-| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos historiques (crossover) ; lignées distinctes viables (clusters Hamming) × diversité |
+| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos historiques (les 8 premiers utilisés) ; le génome du pool humanité au plus grand `vs_baseline` > 0 remplace le 8e ; lignées distinctes viables (clusters Hamming) × diversité |
 | 2 | `max-pop` | population la plus haute | population moyenne + 10 % du pic |
 | 3 | `survival` | longévité | espérance de vie moyenne × fraction du cycle survécue (monde pauvre) |
 | 4 | `energy-eff` | efficacité métabolique | énergie mangée / créature-tick |
@@ -132,7 +132,7 @@ vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
 | 13 | `commons` | tragédie des biens communs | pop. moyenne (2e moitié d'un horizon 5×) / 100 × capacité restante | fourrageur glouton |
 | 14 | `pandemic` | épidémie SEIR | morts évitées vs même pool sans effet des actions × maintien pop − coût | rejeu sans actions |
 | 15 | `code-repair` | réparation automatique de bugs | patients réparés (équivalence sur 256 entrées) / résolus, +0.5 × patch minimal | flips aléatoires sans retour arrière |
-| 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks | même pool, paramètres d'évolution fixes |
+| 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks, 4 paires | même pool, paramètres d'évolution fixes |
 
 **fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
 H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,
@@ -164,16 +164,15 @@ locale bit à bit avec retour arrière (generate-and-validate).
 
 **self-evolve.** Les octets 2..5 du génome sont ses paramètres d'évolution, lus à chaque SPLIT
 (`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
-zone protégée ≤ 16 octets et ≤ la moitié du génome ; elle ne couvre jamais les octets 2..5 (dérive méta 3 %, saturée) et coûte prot/4 d'énergie par SPLIT. Mortalité à 60 ticks (sinon « ne plus se reproduire » gèle tout). Cibles hachées (communes aux runs appariés) ; fitness et baseline moyennées sur 4 graines appariées. Une cible 0..15 change toutes les 50 ticks (tirée
-par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. Les
-moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`,
-`crossover`, `protected`).
+zone protégée ≤ 16 octets et ≤ la moitié du génome ; elle ne couvre jamais les octets 2..5 (dérive méta 3 %, saturée) et coûte prot/4 d'énergie par SPLIT. Mortalité à 60 ticks (sinon « ne plus se reproduire » gèle tout). Cibles hachées, communes aux runs appariés. Fitness et baseline sont des moyennes sur 4 graines appariées. Une cible 0..15 change toutes les 50 ticks ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. La cible n'est pas observable. La seed garde une mutation d'environ 4 % (octet 2 = 0x55), mange, se divise, puis `EMIT 5`. Geler les octets 2 et 3 à 0 fait perdre. Sur les 4 graines du test : fitness 0.210, écart +0.033. Les moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`, `crossover`, `protected`).
+
+**Qui se reproduit.** `commons`, `pandemic`, `antibiotic` et `self-evolve` ne classent plus par l'énergie seule. `commons` baisse le score d'un génome qui mange une case sous 8 ou qui la vide. `antibiotic` crédite une cible tuée et débite les hôtes abîmés ; si le corps meurt, le pic positif de son génome reste en tête du pool. `pandemic` crédite l'isolement et l'alerte pendant la phase infectieuse, puis l'âge départage (l'énergie punissait ceux qui s'isolent). `self-evolve` crédite la justesse de l'`EMIT`.
 
 **Exploits testés et fermés** (`test_new_labs_exploits_closed`) : ne rien faire (fold, commons,
 code-repair → 0 ; pandemic → ≈ 0 malgré zéro mort, car la population n'est pas maintenue) ; tuer les
 hôtes pour affamer le pathogène (→ 0, facteur hôtes vivants) ; arroser des 8 médicaments (dégâts) ;
-vacciner ou s'isoler en permanence (coût) ; balayer 0..15 dans self-evolve ; geler l'évolution
-(mutation 0 : perd dès que la cible change) ; surapprendre les 16 tests de code-repair (refusé par
+vacciner ou s'isoler en permanence (coût) ; balayer 0..15 dans self-evolve ; geler les octets 2 et 3
+(la seed porte déjà un taux de mutation, le gel fait perdre) ; surapprendre les 16 tests de code-repair (refusé par
 l'équivalence sur 256 entrées) ; sélectionner des pathogènes faibles (ils ne sont pas dans le pool).
 
 **Sélection entre cycles (appariée, robuste au bruit)** : après le cycle, le nouveau pool
@@ -241,8 +240,4 @@ appel réseau.**
 - Aucune « émergence » au-delà de stratégies simples ; pas de conscience, pas d'autonomie hors de la VM.
 - Le moteur est du C compilé, pas de l'assembleur écrit à la main octet par octet : ce qui
   est « octet only », ce sont le produit livré (un ELF), les génomes et toutes les données.
-- Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart) : `fold`, `antibiotic`, `commons`,
-  `code-repair` et `pandemic` battent nettement leur baseline ; les pools évolués de `pandemic` battent la seed
-  (0.60 à 0.76 contre 0.44, écart-type 0.04 à 0.11 contre 0.23 à 0.26 avant l'aléa commun). **`self-evolve` reste
-  un chantier ouvert** : après 40 cycles, les pools évolués font un peu moins bien que le même pool à paramètres
-  fixes (−0.008 à −0.014, sd ≈ 0.04) ; les paramètres bougent peu (mut ≈ 0.040 → 0.040-0.043, protection ≈ 0).
+- Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart, mesures d'avant le classement par contribution) : `fold`, `antibiotic`, `commons`, `code-repair` et `pandemic` battent leur baseline. Les pools évolués de `pandemic` battaient la seed (0.60 à 0.76 contre 0.44). **`code-repair`** : sur 12 cycles le pool était encore la seed, écart aux flips +0.329 sur 8 graines tenues à l'écart ; sur 24 cycles, 0 acceptation. `org-seeds` importe le génome du pool, pas le sommet d'un cycle refusé. **`self-evolve`** : mètre actuel (4 paires, régimes de 50 ticks, mort à 60). La seed à mutation ≈ 4 % fait +0.033 sur les 4 graines du test. La même seed gelée à mut = indel = 0 tombe à 0.147 (−0.063). Un gel par STORE à chaque tick faisait −0.010 : il ne bat pas le moteur fixe.
