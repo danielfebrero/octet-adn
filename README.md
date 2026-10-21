@@ -149,7 +149,7 @@ le médicament v&7 en rayon 1 (coût 2, 1 de dégât par hôte touché).
 une case lui retire 4 de capacité **pour toujours**. Seed `commons` : ne mange qu'une case à ≥ 8 et ne
 se divise qu'à ≥ 128 d'énergie.
 
-**pandemic.** À t = 20, 8 cas index. I → S voisin : p = 0.3 / tick ; E 3 ticks (sans symptômes) ; I
+**pandemic.** À t = 20, 8 cas index. Nombres aléatoires communs : chaque tirage épidémique (contagion par paire d'agents et par tick, issue de la maladie, cas index) est un hachage indépendant des actions et du RNG du monde, et la fitness moyenne 4 paires appariées (même graine avec / sans effet des actions). Le pool garde les survivants les plus âgés (classer par énergie sélectionnait contre l'isolement, qui coûte). I → S voisin : p = 0.3 / tick ; E 3 ticks (sans symptômes) ; I
 12 ticks puis mort (30 %) ou guérison. Stimulus propre à chaque créature (hook `before_vm`) :
 bit0 malade, bit1 alerte reçue, bit2 immunisé. `EMIT` 1 = alerter (rayon 2), 2 = s'isoler ce tick,
 3 = se vacciner (25 d'énergie). La baseline rejoue le même pool sur la même graine, actions sans effet.
@@ -164,7 +164,7 @@ locale bit à bit avec retour arrière (generate-and-validate).
 
 **self-evolve.** Les octets 2..5 du génome sont ses paramètres d'évolution, lus à chaque SPLIT
 (`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
-zone protégée ≤ 16 octets et ≤ la moitié du génome. Une cible 0..15 change toutes les 50 ticks (tirée
+zone protégée ≤ 16 octets et ≤ la moitié du génome ; elle ne couvre jamais les octets 2..5 (dérive méta 3 %, saturée) et coûte prot/4 d'énergie par SPLIT. Mortalité à 60 ticks (sinon « ne plus se reproduire » gèle tout). Cibles hachées (communes aux runs appariés) ; fitness et baseline moyennées sur 4 graines appariées. Une cible 0..15 change toutes les 50 ticks (tirée
 par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. Les
 moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`,
 `crossover`, `protected`).
@@ -241,10 +241,8 @@ appel réseau.**
 - Aucune « émergence » au-delà de stratégies simples ; pas de conscience, pas d'autonomie hors de la VM.
 - Le moteur est du C compilé, pas de l'assembleur écrit à la main octet par octet : ce qui
   est « octet only », ce sont le produit livré (un ELF), les génomes et toutes les données.
-- Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart) : `fold`, `antibiotic`,
-  `commons` et `code-repair` battent nettement leur baseline. **`self-evolve`** : la seed bat les
-  paramètres fixes (+0.08), mais après 40 cycles les pools évolués font un peu moins bien que le même
-  pool rejoué à paramètres fixes (−0.01 à −0.09) : la population pousse sa zone protégée au maximum
-  (16 o), ce qui gèle aussi ses propres paramètres (octets 2..5). **`pandemic`** : très bruité (sd ≈ 0.24
-  sur 8 graines, le rejeu contrefactuel diverge), et les pools évolués (≈ 0.02 à 0.08) font moins bien
-  que la seed (0.28). Les deux sont des chantiers ouverts, pas des résultats.
+- Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart) : `fold`, `antibiotic`, `commons`,
+  `code-repair` et `pandemic` battent nettement leur baseline ; les pools évolués de `pandemic` battent la seed
+  (0.60 à 0.76 contre 0.44, écart-type 0.04 à 0.11 contre 0.23 à 0.26 avant l'aléa commun). **`self-evolve` reste
+  un chantier ouvert** : après 40 cycles, les pools évolués font un peu moins bien que le même pool à paramètres
+  fixes (−0.008 à −0.014, sd ≈ 0.04) ; les paramètres bougent peu (mut ≈ 0.040 → 0.040-0.043, protection ≈ 0).
