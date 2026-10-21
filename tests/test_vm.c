@@ -333,7 +333,7 @@ static int raw_pool(PoolEntry *p, const char *hex) {
 TEST(test_sixteen_labs_and_core_untouched) {
     const char *nw[6] = { "fold", "antibiotic", "commons", "pandemic", "code-repair", "self-evolve" };
     for (int i = 0; i < 6; i++) assert(lab_index(nw[i]) == N_CORE_LABS + i);
-    assert(N_LABS == 16 && cfg_default().self_evo == 0);
+    assert(N_LABS == 17 && cfg_default().self_evo == 0);
     Rng r; rng_seed(&r, 0); WorldConfig cfg = cfg_default();
     World *w = world_new(NULL, 0, &r, &cfg, NULL);
     assert(w->before_vm == NULL);
@@ -545,6 +545,35 @@ TEST(test_core_state_hash_matches_main) {
     }
 }
 
+/* La seed ne contient pas la politique. Copier la marque est entre les deux.
+ * Calculer (marque + 1) mod 8 tient, et s'effondre si on renverse le stimulus. */
+TEST(test_diagnose_reads_and_computes) {
+    PoolEntry seed[POOL_MAX], copy[4], sol[4];
+    int n = LABS[lab_index("diagnose")].seeds(seed);
+    assert(n == 4 && lab_index("diagnose") == N_CORE_LABS + 6);
+    for (int i = 0; i < n; i++)
+        for (int k = 0; k < seed[i].len; k++)
+            assert(seed[i].dna[k] != OP_SENSE_STIM && seed[i].dna[k] != OP_EMIT);
+    double ex[N_EXTRA];
+    double lo = ev4("diagnose", seed, n, ex);
+    assert(lo < 0.32);
+    for (int i = 0; i < 4; i++) {
+        copy[i] = seed[0];
+        copy[i].dna[0] = OP_SENSE_STIM;
+        copy[i].dna[1] = OP_EMIT;
+        sol[i] = seed[0];
+        sol[i].dna[0] = OP_SENSE_STIM;
+        sol[i].dna[1] = OP_INC_A;
+        sol[i].dna[2] = OP_EMIT;
+    }
+    double mid = ev4("diagnose", copy, 4, NULL);
+    double hi = ev4("diagnose", sol, 4, ex);
+    assert(mid > lo + 0.05);
+    assert(hi > 0.65 && hi > mid + 0.25);
+    assert(ex[4] > 0.3);   /* vs_blind : il se sert du stimulus */
+    printf("    diagnose seed=%.3f copy=%.3f cipher=%.3f vs_blind=%+.3f\n", lo, mid, hi, ex[4]);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -575,6 +604,7 @@ int main(void) {
     RUN(test_foreign_admits_only_positive_gap);
     RUN(test_code_repair_pool_beats_flips);
     RUN(test_core_state_hash_matches_main);
-    printf("\n%d/%d tests OK\n", passed, 29);
+    RUN(test_diagnose_reads_and_computes);
+    printf("\n%d/%d tests OK\n", passed, 30);
     return 0;
 }

@@ -570,3 +570,91 @@ double hl_se_fit(Lab *l, World *w, int ticks) {
 /* pandemic : la contribution (isolement, alerte, vaccin) d'abord. L'âge départage :
  * l'énergie favoriserait ceux qui ne paient jamais l'isolement. */
 void hl_pd_rank(const Creature *c, double k[2]) { k[0] = c->lscore; k[1] = c->age; }
+
+/* ======================= 7. diagnose : le médicament n'est pas dans le stimulus =======================
+ * La marque m = (m0 + tick) mod 8 est posée dans le stimulus. Elle change à chaque tick : une
+ * constante (LOADI) ne peut pas la suivre. Le médicament est (m + 1) mod 8, pas m. Copier la
+ * marque vaut 0,4. La calculer vaut 1. Une autre émission vaut 0,05. Le silence vaut 0.
+ * La baseline renverse le stimulus (m XOR 7) et note toujours contre le vrai médicament :
+ * un génome qui lit s'effondre, un génome qui récite non.
+ * La seed ne contient ni SENSE_STIM ni EMIT. On photographie le meilleur taux après 40 ticks
+ * (une constante chanceuse ne tient pas sur une marque qui tourne), même si le corps meurt ensuite. */
+typedef struct {
+    int mark;
+    double credit, emits, best_rate;
+    PoolEntry best;
+    int has_best;
+} DgState;
+
+void hl_dg_cfg(WorldConfig *c) {
+    c->mut_rate = 0.05;
+    c->dup_rate = 0.02;
+    c->max_pop = 100;
+    c->food_density = 0.5;
+}
+int hl_dg_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "diagnose", 0); return 4; }
+void hl_dg_init(Lab *l, World *w) {
+    DgState *s = calloc(1, sizeof *s);
+    s->best_rate = -1;
+    s->mark = (int)rng_below(w->rng, 8);
+    l->ext = s;
+}
+static int dg_mark(const DgState *s, int t) { return (s->mark + t) & 7; }
+void hl_dg_pre(Lab *l, World *w) {
+    DgState *s = l->ext;
+    int m = dg_mark(s, w->t);
+    w->stimulus = l->counterfactual ? (m ^ 7) : m;
+}
+void hl_dg_post(Lab *l, World *w) {
+    DgState *s = l->ext;
+    int drug = (dg_mark(s, w->t) + 1) & 7;
+    for (int i = 0; i < w->nem; i++) {
+        Creature *a = w->em[i].c;
+        if (!a || a->species != 0 || a->e < 0) continue;
+        int got = w->em[i].v & 7;
+        int d = (got - drug) & 7;
+        double c = got == drug ? 1.0 : (d == 1 || d == 7) ? 0.4 : 0.05;
+        a->lscore += c;
+        s->credit += c;
+        s->emits += 1;
+        double rate = a->age > 0 ? a->lscore / a->age : 0;
+        if (a->age >= 40 && rate > s->best_rate) {
+            s->best_rate = rate;
+            s->has_best = 1;
+            s->best.species = 0;
+            s->best.len = a->len;
+            memcpy(s->best.dna, a->dna, (size_t)a->len);
+        }
+    }
+}
+double hl_dg_fit(Lab *l, World *w, int ticks) {
+    (void)w;
+    DgState *s = l->ext;
+    double acc = s->emits > 0 ? s->credit / s->emits : 0;
+    l->extra[0] = acc;
+    l->extra[1] = s->emits;
+    l->extra[2] = s->best_rate < 0 ? 0 : s->best_rate;
+    if (!l->counterfactual) {
+        double b = replay(l, ticks, NULL);
+        l->extra[3] = b;
+        l->extra[4] = acc - b;
+    }
+    return acc;
+}
+int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
+    int n = sel_species0(l, w, out);
+    DgState *s = l->ext;
+    if (!s->has_best) return n;
+    double top = -1;
+    for (int i = 0; i < w->ncs; i++) {
+        Creature *c = w->cs[i];
+        if (c->species != 0 || c->age <= 0) continue;
+        double rate = c->lscore / c->age;
+        if (rate > top) top = rate;
+    }
+    if (top >= 0 && s->best_rate <= top) return n;
+    if (n < POOL_SIZE) n++;
+    for (int i = n - 1; i > 0; i--) out[i] = out[i - 1];
+    out[0] = s->best;
+    return n < 1 ? 1 : n;
+}

@@ -101,7 +101,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 **Déterminisme** : tout l'aléa vient d'un RNG xoshiro256** amorcé par
 `FNV-1a("labo:cycle:seed")`. Même seed → même monde, même `state_hash` (testé).
 
-## Les 16 éprouvettes (10 historiques + 6 humanité)
+## Les 17 éprouvettes (10 historiques + 7 humanité)
 
 | # | labo | objectif | fitness |
 |---|---|---|---|
@@ -116,7 +116,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 | 9 | `predict-stock` | direction d'un « prix » | précision hausse/baisse du pas suivant ; série GBM synthétique ou CSV local |
 | 10 | `predator-prey` | écologie | coexistence proies/prédateurs × équilibre des effectifs |
 
-## Les 6 labos « humanité » (11 à 16) — modèles jouets
+## Les 7 labos « humanité » (11 à 17) — modèles jouets
 
 ⚠️ **Ce sont des terrains d'entraînement, pas des percées.** Chaque labo est la miniature d'un vrai
 problème, avec une fitness mesurable et une baseline naïve chiffrée (colonne `baseline` de
@@ -133,6 +133,7 @@ vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
 | 14 | `pandemic` | épidémie SEIR | morts évitées vs même pool sans effet des actions × maintien pop − coût | rejeu sans actions |
 | 15 | `code-repair` | réparation automatique de bugs | patients réparés (équivalence sur 256 entrées) / résolus, +0.5 × patch minimal | flips aléatoires sans retour arrière |
 | 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks, 4 paires | même pool, paramètres d'évolution fixes |
+| 17 | `diagnose` | calculer une réponse qui n'est pas dans le capteur | justesse des EMIT : médicament = (marque + 1) mod 8, marque = stimulus | même pool, stimulus renversé (`marque XOR 7`) |
 
 **fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
 H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,
@@ -166,7 +167,9 @@ locale bit à bit avec retour arrière (generate-and-validate).
 (`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
 zone protégée ≤ 16 octets et ≤ la moitié du génome ; elle ne couvre jamais les octets 2..5 (dérive méta 3 %, saturée) et coûte prot/4 d'énergie par SPLIT. Mortalité à 60 ticks (sinon « ne plus se reproduire » gèle tout). Cibles hachées, communes aux runs appariés. Fitness et baseline sont des moyennes sur 4 graines appariées. Une cible 0..15 change toutes les 50 ticks ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. La cible n'est pas observable. La seed garde une mutation d'environ 4 % (octet 2 = 0x55), mange, se divise, puis `EMIT 5`. Geler les octets 2 et 3 à 0 fait perdre. Sur les 4 graines du test : fitness 0.210, écart +0.033. Les moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`, `crossover`, `protected`).
 
-**Qui se reproduit.** `commons`, `pandemic`, `antibiotic` et `self-evolve` ne classent plus par l'énergie seule. `commons` baisse le score d'un génome qui mange une case sous 8 ou qui la vide. `antibiotic` crédite une cible tuée et débite les hôtes abîmés ; si le corps meurt, le pic positif de son génome reste en tête du pool. `pandemic` crédite l'isolement et l'alerte pendant la phase infectieuse, puis l'âge départage (l'énergie punissait ceux qui s'isolent). `self-evolve` crédite la justesse de l'`EMIT`.
+**diagnose.** Le stimulus porte une marque `m = (m0 + tick) mod 8`. Elle change à chaque tick : la réciter avec `LOADI` ne tient pas. Le médicament noté est `(m + 1) mod 8`. La seed est un fourrageur court suivi d'un bourrage de `NOP` : elle n'a ni `SENSE_STIM` ni `EMIT`. Copier `m` marque 0,4 ; le calculer marque 1 ; une autre émission marque 0,05. La baseline pose `m XOR 7` dans le stimulus et note toujours contre le vrai médicament. Le pool retient le génome au meilleur crédit par tick, mesuré sur au moins 40 ticks, même si ce corps est déjà mort. Course locale, graine 0, 150 cycles : dès le cycle 19 un individu est exact sur toute sa fenêtre (taux 1, une constante ne peut pas). Au cycle 150 la population est à 0,78, écart au stimulus renversé +0,53. Hold-out sur 8 graines : 0,75 contre 0,08 pour la seed, écart +0,51. Le génome retenu, seul et sans mutation, est exact (1,000) et tombe à 0,225 si le stimulus est renversé. Le travail est `SENSE_STIM`, `INC_A`, `EMIT` ; les `XOR` et `ADD` autour sont neutres tant que B vaut 0.
+
+**Qui se reproduit.** `commons`, `pandemic`, `antibiotic`, `self-evolve` et `diagnose` ne classent plus par l'énergie seule. `commons` baisse le score d'un génome qui mange une case sous 8 ou qui la vide. `antibiotic` crédite une cible tuée et débite les hôtes abîmés ; si le corps meurt, le pic positif de son génome reste en tête du pool. `pandemic` crédite l'isolement et l'alerte pendant la phase infectieuse, puis l'âge départage (l'énergie punissait ceux qui s'isolent). `self-evolve` crédite la justesse de l'`EMIT`.
 
 **Exploits testés et fermés** (`test_new_labs_exploits_closed`) : ne rien faire (fold, commons,
 code-repair → 0 ; pandemic → ≈ 0 malgré zéro mort, car la population n'est pas maintenue) ; tuer les
