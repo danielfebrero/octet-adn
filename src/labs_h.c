@@ -856,6 +856,7 @@ double hl_gn_fit(Lab *l, World *w, int ticks) {
     memset(l->extra, 0, sizeof l->extra);
     if (n > 0) {
         tr = gn_train(l->pool0, n, gn_cycle_seed(l));
+        l->extra[1] = tr;
         if (l->eval_only) return tr;                    /* réévaluation appariée : pas besoin du held-out */
         l->extra[0] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, curve);
         l->extra[2] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, -1, NULL);

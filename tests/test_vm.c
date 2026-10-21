@@ -589,10 +589,10 @@ TEST(test_general_learns_and_holds_out) {
     printf("    general seed held=%.3f train=%.3f gelé=%.3f sans_récompense=%.3f constante_max=%.3f mémoire2=%.3f mix=%.3f début/fin=%.3f/%.3f\n", h, tr, fz, nr, best_c, mem, mix, cv[0], cv[1]);
     assert(h > fz + 0.25 && h > best_c + 0.3 && nr < 0.3 && cv[1] > cv[0] + 0.1 && tr > 0.9 && mix < 0.8);   /* L0 saturé, mélange non */
     double ex[N_EXTRA]; double f = pool_eval_x(lab_index("general"), s, n, "gn-test", 100, NULL, 0, ex);
-    assert(f == ex[1] && fabs(ex[3] - (ex[0] - ex[2])) < 1e-12);   /* sélection = train */
+    assert(f == ex[1] && fabs(f - gn_train(s, 4 < n ? 4 : n, 0) ) < 1 && f > 0.5 && f < 0.85);   /* sélection = train du pool, non saturé */
     RunOpts o = { .ticks = 60, .cycles = 1, .quiet = 1, .no_reload = 1, .dry_run = 1, .data_dir = "/tmp/unused-gn" };
     o.labs[o.nlabs++] = lab_index("general");
-    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0]);   /* affichage = held-out */
+    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0] && r.best_fitness == r.extra[0] && r.extra[1] != r.extra[0]);   /* affichage et best = held-out */
 }
 
 int main(void) {
