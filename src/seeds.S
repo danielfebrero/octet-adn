@@ -23,4 +23,5 @@
         SEED adn_repair,   "seeds/repair.adn"
         SEED adn_selfevo,  "seeds/selfevo.adn"
         SEED adn_diagnose, "seeds/diagnose.adn"
+        SEED adn_general,  "seeds/general.adn"
         .section .note.GNU-stack,"",@progbits

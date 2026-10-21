@@ -685,3 +685,214 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
     out[0] = s->best;
     return n < 1 ? 1 : n;
 }
+
+/* ======================= 8. general : apprendre pendant sa vie, généraliser =======================
+ * Définition opérationnelle : un génome est « intelligent » ici s'il apprend PENDANT sa vie une règle
+ * qu'il ne connaît pas à la naissance, et s'il le fait sur des tâches que la sélection n'a jamais vues.
+ * Vie = 64 essais. Stimulus = indice c (bits 0-1) | récompense affichée de l'essai précédent (bit 2) | début de tâche (bit 3) ;
+ * réponse = EMIT v (v & 3), silence = faux. La bonne réponse n'est jamais dans le stimulus et
+ * l'historique est vidé à chaque tick : se souvenir de l'indice précédent (p1, p2) coûte un STORE.
+ * Familles (table 2 bits / entrée) :
+ *   0 association   T[c]                 4 renversement : T puis T' à l'essai 24 (ou 1-3 instants aléatoires)
+ *   2 bandit        k (constant ou qui change)       3 mémoire-1  T[p1]   (TENUE À L'ÉCART ; cas particulier de 4)
+ *   4 paire         T16[c + 4·p1]        5 XOR  c ^ p1 ^ k               6 mémoire-2  T[p2]   (TENUE À L'ÉCART, jamais vue)
+ * Entraînement, curriculum de 4 niveaux (le niveau du monde = le premier où le pool reçu ne dépasse
+ * pas 0.9) : L0 {0,1,2} ; L1 + paire, renversements multiples ; L2 + XOR, bandit non stationnaire,
+ * récompense affichée bruitée 10 % ; L3 bruit 20 %. Tables des familles 0-2 : hachage non réservé.
+ * Fitness de sélection = mélange fixe des 4 niveaux (comparable d'un pool à l'autre).
+ * Jeu tenu à l'écart (40 tâches fixes, sans bruit) : familles 0,1,2 sur tables réservées, mémoire-1,
+ * mémoire-2. Score d'une vie = justesse des essais 32..63. Budget : 96 instructions / tick (ce labo). */
+#define GN_TRIALS 64
+#define GN_LATE   32
+#define GN_HELD_N 40
+#define GN_TOP    8
+#define GN_REWARD 2
+#define GN_LEVELS 4
+#define GN_OPS    96
+typedef struct { int fam, t1, t2, nsw, sw[3], noise; uint32_t q1, q2; } GnTask;
+static int gn_held_code(int code) { return (((unsigned)code * 167u) >> 3 & 3u) == 0; }
+static int gn_draw_code(Rng *r, int held, int avoid) {
+    for (;;) { int c = (int)rng_below(r, 256); if (gn_held_code(c) == held && c != avoid) return c; }
+}
+static GnTask gn_draw(Rng *r, int held, int level) {
+    static const int HF[5] = { 0, 1, 2, 3, 6 }, TF[GN_LEVELS] = { 3, 4, 5, 5 };   /* familles tirables */
+    static const int TFAM[5] = { 0, 1, 2, 4, 5 };
+    GnTask t; memset(&t, 0, sizeof t);
+    t.fam = held ? HF[rng_below(r, 5)] : TFAM[rng_below(r, (uint32_t)TF[level])];
+    if (t.fam == 2) {
+        int k = (int)rng_below(r, held ? 4 : 3), k2 = (k + 1 + (int)rng_below(r, 3)) & 3;
+        if (!held) k2 = (k + 1 + (int)rng_below(r, 2)) % 3;
+        t.t1 = k * 0x55; t.t2 = k2 * 0x55;
+    } else { t.t1 = gn_draw_code(r, held, -1); t.t2 = gn_draw_code(r, held, t.t1); }
+    t.q1 = (uint32_t)rng_next(r); t.q2 = (uint32_t)rng_next(r);
+    if (t.fam == 1 || (t.fam == 2 && !held && level >= 2)) {
+        if (held || level == 0) { if (t.fam == 1) { t.nsw = 1; t.sw[0] = 24; } }
+        else { t.nsw = 1 + (int)rng_below(r, 3); for (int i = 0; i < t.nsw; i++) t.sw[i] = 8 + (int)rng_below(r, 48); }
+    }
+    if (!held && level == 4 - 1) t.noise = 200; else if (!held && level == 2) t.noise = 100;
+    return t;
+}
+static int gn_target(const GnTask *t, int trial, int c, int p1, int p2) {
+    int ph = 0; for (int i = 0; i < t->nsw; i++) ph += trial >= t->sw[i];
+    int tab = (ph & 1) ? t->t2 : t->t1;
+    switch (t->fam) {
+    case 3: return (tab >> (2 * p1)) & 3;
+    case 6: return (tab >> (2 * p2)) & 3;
+    case 4: return (int)(((ph & 1) ? t->q2 : t->q1) >> (2 * (c + 4 * p1))) & 3;
+    case 5: return (c ^ p1 ^ (int)(t->q1 & 3)) & 3;
+    default: return (tab >> (2 * c)) & 3;
+    }
+}
+typedef struct { World *sb; Creature tc; } GnState;
+typedef struct { int level; } GnLab;
+static GnState *gn_state_new(void) {
+    GnState *s = calloc(1, sizeof *s);
+    WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0; sc.ops_per_tick = GN_OPS;
+    Rng *r = malloc(sizeof *r); rng_seed(r, 0);
+    s->sb = world_new(NULL, 0, r, &sc, NULL);
+    return s;
+}
+static void gn_state_free(GnState *s) { free(s->sb->rng); world_free(s->sb); free(s); }
+/* Une vie en bac à sable. mode : 0 normal, 1 génome gelé (STORE sans effet durable),
+ * 2 récompense masquée, 3 réponse aléatoire, 4+v réponse constante v. ok[i] += 1 si l'essai i est juste. */
+static void gn_life(GnState *s, const PoolEntry *g, const GnTask *t, Rng *cues, int mode, int *ok) {
+    Creature *c = &s->tc; World *w = s->sb;
+    memset(c, 0, sizeof *c);
+    c->len = g->len; memcpy(c->dna, g->dna, (size_t)g->len); c->x = c->y = 2; c->emitted = -1;
+    int p1 = (int)rng_below(cues, 4), p2 = (int)rng_below(cues, 4), r = 0;
+    for (int i = 0; i < GN_TRIALS; i++) {
+        int cue = (int)rng_below(cues, 4), tgt = gn_target(t, i, cue, p1, p2), resp;
+        int flip = t->noise && (int)rng_below(cues, 1000) < t->noise;
+        if (mode >= 3) resp = mode == 3 ? (int)rng_below(cues, 4) : mode - 4;
+        else {
+            w->stimulus = cue | ((mode == 2 ? 0 : r) << 2) | (i == 0) << 3;
+            w->hist_n = 0; w->nem = 0; c->e = 1000;
+            vm_run(c, w);
+            resp = c->emitted;
+            if (mode == 1) memcpy(c->dna, g->dna, (size_t)g->len);
+        }
+        int good = resp >= 0 && (resp & 3) == tgt;
+        ok[i] += good;
+        r = good ^ flip;
+        p2 = p1; p1 = cue;
+    }
+}
+/* Justesse moyenne (essais 32..63) de n génomes. held : jeu tenu à l'écart (fixe) ; sinon tâches
+ * d'entraînement du niveau level tirées de seed. fam >= 0 : une seule famille.
+ * curve (si non NULL) : [0] essais 0..15, [1] essais 48..63. */
+double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, int ntask, int mode, int fam, double *curve) {
+    GnState *s = gn_state_new();
+    int ok[GN_TRIALS] = { 0 }; long lives = 0;
+    for (int j = 0; j < ntask; j++) {
+        Rng tr; rng_seed(&tr, held ? 0x6E6E0000ULL + (uint64_t)j : seed + (uint64_t)j * 0x9E3779B97F4A7C15ULL);
+        GnTask t = gn_draw(&tr, held, level);
+        if (fam >= 0 && t.fam != fam) continue;
+        for (int i = 0; i < n; i++) { Rng cu = tr; gn_life(s, &g[i], &t, &cu, mode, ok); lives++; }
+    }
+    gn_state_free(s);
+    if (!lives) { if (curve) curve[0] = curve[1] = 0; return 0; }
+    double late = 0, a = 0, b = 0;
+    for (int i = GN_LATE; i < GN_TRIALS; i++) late += ok[i];
+    for (int i = 0; i < 16; i++) { a += ok[i]; b += ok[GN_TRIALS - 16 + i]; }
+    if (curve) { curve[0] = a / (16.0 * lives); curve[1] = b / (16.0 * lives); }
+    return late / ((double)(GN_TRIALS - GN_LATE) * lives);
+}
+/* fitness de sélection : mélange fixe des 4 niveaux, 8 tâches chacun */
+double gn_train(const PoolEntry *g, int n, uint64_t seed) {
+    double s = 0;
+    for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 8, 0, -1, NULL);
+    return s / GN_LEVELS;
+}
+/* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
+ * curriculum ; un essai juste rapporte de l'énergie. lscore = justesse des essais 32..63, rétrécie.
+ * ls[0] = graine de la tâche, ls[1] = essai, ls[2] = c | p1<<2 | p2<<4, ls[3]/ls[4] = justes/essais tardifs,
+ * ls[5] = cible | bruit<<2 (bit de récompense inversé pour cet essai). */
+static GnTask gn_task_of(int seed, int level) { Rng r; rng_seed(&r, (uint64_t)seed); return gn_draw(&r, 0, level); }
+static void gn_before(World *w, Creature *c) {
+    int level = ((GnLab *)w->lab->ext)->level, r = 0;
+    if (!c->ls[0]) { c->ls[0] = (int)(rng_next(w->rng) & 0x7fffffff) | 1; c->ls[1] = 0; c->ls[2] = (int)rng_below(w->rng, 16) << 2; }
+    else {
+        int good = c->emitted >= 0 && (c->emitted & 3) == (c->ls[5] & 3);
+        r = good ^ (c->ls[5] >> 2);
+        if (good) { c->e += GN_REWARD; cap_e(c); }
+        if (c->ls[1] >= GN_LATE) { c->ls[3] += good; c->ls[4]++; c->lscore = c->ls[3] / (c->ls[4] + 8.0); }
+        if (++c->ls[1] == GN_TRIALS) { c->ls[0] = (int)(rng_next(w->rng) & 0x7fffffff) | 1; c->ls[1] = 0; }
+    }
+    GnTask t = gn_task_of(c->ls[0], level);
+    int cue = (int)rng_below(w->rng, 4), p1 = c->ls[2] & 3, p2 = (c->ls[2] >> 2) & 3;
+    int flip = t.noise && (int)rng_below(w->rng, 1000) < t.noise;
+    c->ls[5] = gn_target(&t, c->ls[1], cue, p1, p2) | flip << 2;
+    w->stimulus = cue | r << 2 | (c->ls[1] == 0) << 3;     /* bit 3 : premier essai d'une tâche */
+    c->ls[2] = cue | p1 << 2 | p2 << 4;
+}
+void hl_gn_cfg(WorldConfig *c) { c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS; c->mut_rate = 0.005; c->dup_rate = 0.01; }   /* génome long : charge de mutation réduite */
+int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
+/* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
+int gn_level_of(const PoolEntry *g, int n) {
+    if (n > 4) n = 4;
+    int L = 0;
+    while (L < GN_LEVELS - 1 && gn_eval(g, n, 0, L, 0xC0C0 + (uint64_t)L, 8, 0, -1, NULL) > 0.9) L++;
+    return L;
+}
+void hl_gn_init(Lab *l, World *w) {
+    GnLab *s = calloc(1, sizeof *s);
+    s->level = l->pool0 ? gn_level_of(l->pool0, l->npool0) : 0;
+    l->ext = s; w->before_vm = gn_before;
+    if (l->eval_only) {                                 /* réévaluation : la fitness ne lit que le pool, pas de monde à simuler */
+        for (int i = 0; i < w->ncs; i++) free(w->cs[i]);
+        w->ncs = 0;
+    }
+}
+void hl_gn_pre(Lab *l, World *w) { (void)l; w->hist_n = 0; }
+/* Graine des tâches d'entraînement d'un cycle : dérivée de l'état initial du RNG, donc la même pour le
+ * nouveau pool et le pool en place dans la réévaluation appariée du runner. */
+static uint64_t gn_cycle_seed(const Lab *l) { Rng t = l->rng0; return rng_next(&t); }
+/* Fitness = le POOL lui-même (pas ses descendants après 200 ticks) : justesse d'entraînement de ses
+ * génomes en bac à sable. Le monde ne sert qu'à produire les candidats (mutation, héritage). */
+double hl_gn_fit(Lab *l, World *w, int ticks) {
+    (void)ticks; (void)w;
+    int n = l->npool0 < GN_TOP ? l->npool0 : GN_TOP;     /* les 8 premiers du pool (triés par la sélection) */
+    double curve[2] = { 0, 0 }, tr = 0;
+    memset(l->extra, 0, sizeof l->extra);
+    if (n > 0) {
+        tr = gn_train(l->pool0, n, gn_cycle_seed(l));
+        l->extra[1] = tr;
+        if (l->eval_only) return tr;                    /* réévaluation appariée : pas besoin du held-out */
+        l->extra[0] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, curve);
+        l->extra[2] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, -1, NULL);
+    }
+    l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2]; l->extra[4] = curve[0];
+    l->extra[5] = ((GnLab *)l->ext)->level;
+    return tr;                                          /* la sélection ne voit que l'entraînement */
+}
+/* Nouveau pool : les 32 meilleurs du monde (lscore) + le pool reçu, notés UN PAR UN en bac à sable sur
+ * les tâches d'entraînement du cycle ; on garde les 16 meilleurs génomes distincts. */
+int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
+    if (l->eval_only) return 0;                         /* réévaluation : seule la fitness du pool compte */
+    Creature *v[CMAX]; int n = 0;
+    for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
+    for (int i = 1; i < n; i++) {
+        Creature *c = v[i]; int j = i - 1;
+        while (j >= 0 && (v[j]->lscore < c->lscore || (v[j]->lscore == c->lscore && v[j]->e < c->e))) { v[j + 1] = v[j]; j--; }
+        v[j + 1] = c;
+    }
+    if (n > 32) n = 32;
+    int m = 0;
+    PoolEntry *cand = malloc(sizeof(PoolEntry) * (32 + POOL_MAX)); double *sc = malloc(sizeof(double) * (32 + POOL_MAX));
+    for (int i = 0; i < n; i++) { cand[m].species = 0; cand[m].len = v[i]->len; memcpy(cand[m].dna, v[i]->dna, (size_t)v[i]->len); m++; }
+    for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
+    uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
+    for (int i = 0; i < m; i++) sc[i] = gn_train(&cand[i], 1, seed);
+    int k = 0;
+    while (k < POOL_SIZE) {
+        int b = -1;
+        for (int i = 0; i < m; i++) if (sc[i] > -1 && (b < 0 || sc[i] > sc[b])) b = i;
+        if (b < 0) break;
+        sc[b] = -2;
+        int dup = 0;
+        for (int j = 0; j < k; j++) if (out[j].len == cand[b].len && !memcmp(out[j].dna, cand[b].dna, (size_t)cand[b].len)) { dup = 1; break; }
+        if (!dup) out[k++] = cand[b];
+    }
+    free(cand); free(sc);
+    return k;
+}

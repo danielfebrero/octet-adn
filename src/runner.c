@@ -87,7 +87,7 @@ int collect_foreign(const char *dir, PoolEntry *out) {
 double pool_eval_x(int id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nf, double *extra) {
     Rng rng; rng_seed(&rng, fnv1a(key, strlen(key), FNV_INIT));
     Lab lab; lab_init(&lab, id, ticks);
-    lab.foreign = foreign; lab.nforeign = nf;
+    lab.foreign = foreign; lab.nforeign = nf; lab.eval_only = 1;
     CycleResult *res = malloc(sizeof *res);
     run_cycle(&lab, pool, n, &rng, ticks, res);
     double f = res->fitness;
@@ -157,6 +157,7 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
         accepted = g_eval_new >= g_eval_old;
     }
     if (accepted) { memcpy(ck.pool, res.newpool, sizeof(PoolEntry) * (size_t)res.nnew); ck.npool = res.nnew; }
+    if (LABS[id].show_extra) fit = lab.extra[LABS[id].show_extra - 1];   /* general : fitness ET best = jeu tenu à l'écart (la sélection a déjà utilisé l'entraînement) */
     if (fit > ck.best_fitness && res.nnew > 0) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
     ck.cycle = cycle; ck.engine = eng;
 

@@ -101,7 +101,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 **Déterminisme** : tout l'aléa vient d'un RNG xoshiro256** amorcé par
 `FNV-1a("labo:cycle:seed")`. Même seed → même monde, même `state_hash` (testé).
 
-## Les 17 éprouvettes (10 historiques + 7 humanité)
+## Les 18 éprouvettes (10 historiques + 7 humanité + general)
 
 | # | labo | objectif | fitness |
 |---|---|---|---|
@@ -134,6 +134,9 @@ vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
 | 15 | `code-repair` | réparation automatique de bugs | patients réparés (équivalence sur 256 entrées) / résolus, +0.5 × patch minimal | flips aléatoires sans retour arrière |
 | 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks, 4 paires | même pool, paramètres d'évolution fixes |
 | 17 | `diagnose` | calculer une réponse qui n'est pas dans le capteur | justesse des EMIT : médicament = ((marque + 1) XOR 4) mod 8, marque = stimulus | même pool, stimulus renversé (`marque XOR 7`) |
+| 18 | `general` | apprendre pendant sa vie, généraliser | justesse des essais 32..63 d'une vie de 64 essais sur 40 tâches **tenues à l'écart** (fitness et best affichées) ; la sélection ne voit que l'entraînement (curriculum 4 niveaux) | mêmes génomes, génome gelé (`frozen`, `vs_frozen`) ; hasard 0.25 ; constante oracle 0.35 |
+
+**general.** Stimulus = indice (bits 0-1) | récompense affichée de l'essai précédent (bit 2) | début de tâche (bit 3) ; réponse = `EMIT v` (v & 3). Entraînement : association, renversements (1 à 3, instants aléatoires), bandit (non stationnaire), paire T[indice, indice précédent], XOR, récompense bruitée 10-20 % ; le niveau monte quand le pool dépasse 0.9. Tenu à l'écart : tables réservées des familles association/renversement/bandit, **mémoire-1** (T[indice précédent], cas particulier de la famille paire : voisine de l'entraînement) et **mémoire-2** (T[indice d'il y a 2 essais], jamais vue). Ce labo seul : 96 instructions/tick, mutation 0.5 %, fitness = le pool lui-même en bac à sable sur des tâches appariées, sélection génome par génome. Seed (172 octets) : table par indice + table par paire à confirmation, remises à zéro au début de tâche. Résultats : PR #9.
 
 **fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
 H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,

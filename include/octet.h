@@ -28,7 +28,7 @@
 #define GRID_H        32
 #define CMAX          1024   /* plafond dur de créatures par liste */
 #define N_EXTRA       6
-#define N_LABS        17
+#define N_LABS        18
 #define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */
 
 /* ---------------- RNG déterministe (xoshiro256**) ---------------- */
@@ -85,6 +85,7 @@ typedef struct {
     int pred_max_age;     /* plafond d'âge des prédateurs (0 = aucun) */
     int self_evo;         /* self-evolve : paramètres de mutation lus dans le génome à SPLIT (0 = constantes) */
     int eat_guard;        /* commons : 1 = manger une case < 8 ou la vider baisse lscore (0 ailleurs) */
+    int ops_per_tick;     /* general : budget d'instructions par tick (0 = OPS_PER_TICK) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -155,6 +156,7 @@ typedef struct LabDef {
     int    (*select)(Lab *l, World *w, PoolEntry *out);  /* NULL = top-16 par rank */
     void   (*init)(Lab *l, World *w);   /* après world_new (NULL = rien) */
     int    ticks_mult;                  /* horizon = ticks × mult (0 = 1) */
+    int    show_extra;                  /* > 0 : la fitness affichée est extra[show_extra - 1] (la sélection garde le retour de fitness) */
 } LabDef;
 
 struct Lab {
@@ -179,6 +181,7 @@ struct Lab {
     void *ext;                           /* état alloué par le labo (libéré par lab_free) */
     void (*ext_free)(struct Lab *l);     /* libère ce que ext contient (appelé avant free(ext)) */
     double acc[16];
+    int eval_only;                       /* 1 = monde jetable de pool_eval (rien n'est sélectionné) */
 };
 
 extern const LabDef LABS[N_LABS];
