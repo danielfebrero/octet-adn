@@ -448,11 +448,11 @@ double hl_cr_fit(Lab *l, World *w, int ticks) {
 /* ======================= 6. self-evolve : la seed pilote son évolution =======================
  * Octets 2..5 du génome = taux de substitution, taux d'indel, crossover, zone protégée (lus à SPLIT
  * par mutate_evo, bornés, voir mutate.c ; cfg.self_evo n'est posé QUE dans ce labo). Le monde change
- * de régime toutes les 50 ticks : une cible R ∈ 0..15 (nouvelle à chaque régime, tirée par la graine
+ * de régime toutes les 25 ticks : une cible R ∈ 0..15 (nouvelle à chaque régime, tirée par la graine
  * du cycle, donc impossible à mémoriser) ; EMIT v rapporte 6 − 2·|v&15 − R| si l'écart d < 4, sinon coûte 1.
  * Fitness = moyenne sur les régimes de Σ(1 − d/4)⁺ / créature-tick : vitesse d'adaptation.
  * Baseline = même pool rejoué avec les paramètres fixes du moteur (mut 2 %, dup 5 %). */
-#define SE_PERIOD 50
+#define SE_PERIOD 25
 typedef struct { int R; double corr[16]; long ct[16]; } SeState;
 void hl_se_cfg(WorldConfig *c) { (void)c; }
 int hl_se_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "selfevo", 0); return 4; }

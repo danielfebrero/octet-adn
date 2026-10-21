@@ -339,7 +339,7 @@ const LabDef LABS[N_LABS] = {
       "score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière",
       { "repaired", "resolved", "success_rate", "patch_bonus", "baseline", "vs_baseline" }, NULL, hl_cr_seeds, NULL, NULL, hl_cr_fit, hl_cr_rank, NULL, hl_cr_init, 0 },
     { "self-evolve", "La seed pilote sa propre évolution",
-      "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 50 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
+      "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 25 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
       { "baseline", "vs_baseline", "mut_rate", "indel_rate", "crossover", "protected" }, hl_se_cfg, hl_se_seeds, hl_se_pre, hl_se_post, hl_se_fit, rank_default, NULL, hl_se_init, 0 },
 };
 

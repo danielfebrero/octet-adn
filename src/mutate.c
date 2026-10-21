@@ -54,7 +54,8 @@ int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_
 
 /* self-evolve : le génome porte ses paramètres d'évolution aux octets 2..5 (la seed commence par
  * JMP +4 pour les sauter). Bornes dures : substitution ≤ 12 %, indel ≤ 6 %, zone protégée ≤ 16 o
- * et ≤ moitié du génome. Taux 0 permis (gel) : c'est l'environnement changeant qui le fait perdre. */
+ * (elle ne couvre jamais les octets 2..5 : ceux-ci dérivent toujours à EVO_META ; protéger coûte
+ * 1 d'énergie par octet à chaque SPLIT, voir world_split) * et ≤ moitié du génome. Taux 0 permis (gel) : c'est l'environnement changeant qui le fait perdre. */
 EvoParams evo_params(const uint8_t *dna, int len) {
     EvoParams p = { 0, 0, 0, 0 };
     if (len < 6) return p;
@@ -68,15 +69,20 @@ EvoParams evo_params(const uint8_t *dna, int len) {
 int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *out) {
     static const int drift[4] = { -3, -1, 1, 3 };
     memcpy(out, in, (size_t)n);
-    int i = p->prot;
+    int i = 0;
     while (i < n) {
+        if (i >= 2 && i < 6) {                         /* paramètres : jamais protégés, taux méta fixe */
+            if (rng_double(r) < EVO_META) out[i] = (uint8_t)(out[i] + drift[rng_below(r, 4)]);
+            i++; continue;
+        }
+        if (i < p->prot) { i++; continue; }            /* zone protégée (hors paramètres) */
         if (rng_double(r) < p->mut) {
             int k = (int)rng_below(r, 4);
             if (k <= 1) out[i] = (uint8_t)rng_below(r, OP_COUNT);
             else if (k == 2) out[i] = (uint8_t)rng_below(r, 256);
             else out[i] = (uint8_t)(out[i] + drift[rng_below(r, 4)]);
         }
-        if (rng_double(r) < p->indel) {
+        if (i >= 6 && rng_double(r) < p->indel) {
             if (rng_below(r, 2) && n < MAX_LEN) {
                 memmove(out + i + 1, out + i, (size_t)(n - i));
                 out[i] = (uint8_t)rng_below(r, OP_COUNT);
