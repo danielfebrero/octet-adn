@@ -8,7 +8,7 @@
 
 static void usage(void) {
     puts("usage : octet-adn [run] [options]        runner des éprouvettes (défaut)\n"
-         "        octet-adn labs                    liste les 10 labos et leur fitness\n"
+         "        octet-adn labs                    liste les labos et leur fitness\n"
          "        octet-adn disasm FICHIER.adn      désassemble un génome\n"
          "        octet-adn dump FICHIER.bin        métriques binaires → texte (une ligne / cycle)\n"
          "        octet-adn hexdump FICHIER         octets bruts en hexadécimal\n"

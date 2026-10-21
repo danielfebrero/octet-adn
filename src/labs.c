@@ -286,28 +286,28 @@ static int sel_org(Lab *l, World *w, PoolEntry *out) {
 const LabDef LABS[N_LABS] = {
     { "org-seeds", "Organiser d'autres seeds",
       "lignées distinctes viables (clusters Hamming) × diversité (génomes uniques / pop)",
-      { "clusters", "unique", "crossovers" }, cfg_org, s_org, NULL, NULL, f_org, rank_default, sel_org },
+      { "clusters", "unique", "crossovers" }, cfg_org, s_org, NULL, NULL, f_org, rank_default, sel_org, NULL, 0 },
     { "max-pop", "Population la plus haute", "population moyenne sur le cycle (+10 % du pic)",
-      { "peak" }, NULL, s_forager, NULL, NULL, f_maxpop, rank_default, NULL },
+      { "peak" }, NULL, s_forager, NULL, NULL, f_maxpop, rank_default, NULL, NULL, 0 },
     { "survival", "Longévité", "espérance de vie moyenne × fraction du cycle survécue (monde pauvre)",
-      { "median_age", "mean_death_age", "mean_lifespan" }, cfg_poor, s_forager, NULL, NULL, f_survival, r_age, NULL },
+      { "median_age", "mean_death_age", "mean_lifespan" }, cfg_poor, s_forager, NULL, NULL, f_survival, r_age, NULL, NULL, 0 },
     { "energy-eff", "Efficacité métabolique", "énergie mangée / créature-tick",
-      { "energy_eaten" }, NULL, s_forager, NULL, NULL, f_energy, r_energy, NULL },
+      { "energy_eaten" }, NULL, s_forager, NULL, NULL, f_energy, r_energy, NULL, NULL, 0 },
     { "self-rewrite", "Auto-réécriture utile", "STORE utiles (codon réécrit PUIS exécuté) / créature-tick",
-      { "store_writes", "useful_stores" }, NULL, s_forager, NULL, NULL, f_rewrite, r_rewrite, NULL },
+      { "store_writes", "useful_stores" }, NULL, s_forager, NULL, NULL, f_rewrite, r_rewrite, NULL, NULL, 0 },
     { "emit-echo", "Communiquer : écho d'un stimulus", "EMIT == stimulus (0..15) ; corrects / créature-tick",
-      { "correct", "emits", "accuracy" }, NULL, s_echo, pre_echo, post_echo, f_emit, rank_default, NULL },
+      { "correct", "emits", "accuracy" }, NULL, s_echo, pre_echo, post_echo, f_emit, rank_default, NULL, NULL, 0 },
     { "emit-dialog", "Dialogue : protocole stimulus → réponse",
       "hello 00→AC, s→s+1, bye 0F→00 ; corrects / créature-tick",
-      { "correct", "emits", "accuracy" }, NULL, s_dialog, pre_dialog, post_dialog, f_emit, rank_default, NULL },
+      { "correct", "emits", "accuracy" }, NULL, s_dialog, pre_dialog, post_dialog, f_emit, rank_default, NULL, NULL, 0 },
     { "predict-walk", "Prédire une série AR(2) bruitée", "précision sur le bin (0..7) du prochain point ; baseline = répéter la dernière valeur",
-      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_walk, pre_walk, post_predict, f_predict, rank_default, NULL },
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_walk, pre_walk, post_predict, f_predict, rank_default, NULL, NULL, 0 },
     { "predict-stock", "Direction d'un prix (proxy GBM / CSV local)",
       "précision hausse/baisse du pas suivant (A&1) ; hasard = 50 %",
-      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL },
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL, NULL, 0 },
     { "predator-prey", "Proies (espèce 0) et prédateurs (espèce 1, ATTACK)",
       "fraction des ticks de coexistence × équilibre min(proies/20, préd/5)",
-      { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp },
+      { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp, NULL, 0 },
 };
 
 int lab_index(const char *name) {
@@ -317,15 +317,18 @@ int lab_index(const char *name) {
 void lab_init(Lab *l, int id, int max_ticks) {
     memset(l, 0, sizeof *l);
     l->id = id; l->def = &LABS[id];
+    if (LABS[id].ticks_mult > 1) max_ticks *= LABS[id].ticks_mult;
     l->pops = calloc((size_t)max_ticks + 1, sizeof(int));
     l->prey = calloc((size_t)max_ticks + 1, sizeof(int));
     l->pred = calloc((size_t)max_ticks + 1, sizeof(int));
 }
-void lab_free(Lab *l) { free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
+void lab_free(Lab *l) { free(l->ext); l->ext = NULL; free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
 void lab_pre(Lab *l, World *w) { if (l->def->pre) l->def->pre(l, w); }
 void lab_post(Lab *l, World *w) { if (l->def->post) l->def->post(l, w); }
 
 void run_cycle(Lab *l, const PoolEntry *pool, int n, Rng *rng, int ticks, CycleResult *res) {
+    if (l->def->ticks_mult > 1) ticks *= l->def->ticks_mult;
+    l->pool0 = pool; l->npool0 = n; l->rng0 = *rng;      /* pour les rejeux contrefactuels */
     PoolEntry *g = malloc(sizeof(PoolEntry) * (POOL_MAX + 8 + POOL_SIZE));
     int k = 0;
     for (int i = 0; i < n && k < POOL_MAX; i++) g[k++] = pool[i];
@@ -336,6 +339,7 @@ void run_cycle(Lab *l, const PoolEntry *pool, int n, Rng *rng, int ticks, CycleR
     WorldConfig cfg = cfg_default();
     if (l->def->config) l->def->config(&cfg);
     World *w = world_new(g, k, rng, &cfg, l);
+    if (l->def->init) l->def->init(l, w);
     free(g);
     int survived = 0;
     for (int t = 0; t < ticks; t++) {

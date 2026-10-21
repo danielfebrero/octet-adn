@@ -41,7 +41,7 @@ static int write_file(const char *path, const uint8_t *p, int n) {
 
 int collect_foreign(const char *dir, PoolEntry *out) {
     int n = 0;
-    for (int i = 1; i < N_LABS; i++) {                 /* tous sauf org-seeds, ordre du registre */
+    for (int i = 1; i < N_CORE_LABS; i++) {            /* labos historiques sauf org-seeds, ordre du registre */
         char p[4096]; Checkpoint ck;
         snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
         if (ck_load(p, &ck) == 0 && ck.has_best) out[n++] = ck.best;

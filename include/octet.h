@@ -29,6 +29,7 @@
 #define CMAX          1024   /* plafond dur de créatures par liste */
 #define N_EXTRA       6
 #define N_LABS        10
+#define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */
 
 /* ---------------- RNG déterministe (xoshiro256**) ---------------- */
 typedef struct { uint64_t s[4]; } Rng;
@@ -64,6 +65,10 @@ typedef struct Creature {
     int len;
     uint8_t dna[MAX_LEN];
     uint8_t dirty[MAX_LEN / 8];   /* codons réécrits par STORE, pas encore exécutés */
+    /* état propre à un labo (0 ailleurs, ne change rien aux 10 labos historiques) */
+    int ls[6]; double lscore;
+    int win_len;                  /* code-repair : > 0 = fenêtre patient mappée sur STORE/LOAD imm >= 0xE0 */
+    uint8_t win[32], win0[32];
 } Creature;
 
 typedef struct {
@@ -78,6 +83,7 @@ typedef struct {
     int attack_cost;      /* énergie payée par ATTACK (défaut 1) */
     int pred_metab;       /* métabolisme supplémentaire par tick des prédateurs */
     int pred_max_age;     /* plafond d'âge des prédateurs (0 = aucun) */
+    int self_evo;         /* self-evolve : paramètres de mutation lus dans le génome à SPLIT (0 = constantes) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -103,6 +109,7 @@ typedef struct World {
     Stats st;
     Creature *cs[CMAX]; int ncs;
     Creature *nb[CMAX]; int nnb;
+    void (*before_vm)(struct World *w, Creature *c);   /* hook par créature (NULL hors labos qui le posent) */
 } World;
 
 typedef struct { int species, len; uint8_t dna[MAX_LEN]; } PoolEntry;
@@ -115,6 +122,7 @@ Creature *creature_new(int x, int y, const uint8_t *dna, int len, int e, int id,
 int      food_ahead(const World *w, const Creature *c);
 int      neighbors(const World *w, const Creature *c);
 int      history_at(const World *w, int k);
+void     world_spawn(World *w, Creature *c);   /* ajoute une créature (rejoint la population en fin de tick) */
 
 /* VM : exécute un tick ; 0 = la créature meurt */
 int vm_run(Creature *c, World *w);
@@ -123,6 +131,13 @@ int vm_run(Creature *c, World *w);
 int mutate(const uint8_t *in, int n, Rng *r, double rate, double dup_rate, uint8_t *out);
 int duplicate_block(uint8_t *buf, int n, Rng *r);       /* in place, retourne la nouvelle taille */
 int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_t *out);
+/* self-evolve : paramètres d'évolution portés par le génome */
+#define EVO_MUT_MAX   0.12
+#define EVO_INDEL_MAX 0.06
+#define EVO_PROT_MAX  32
+typedef struct { double mut, indel; int xover, prot; } EvoParams;
+EvoParams evo_params(const uint8_t *dna, int len);
+int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *out);
 
 /* ---------------- Labos ---------------- */
 typedef struct Lab Lab;
@@ -136,6 +151,8 @@ typedef struct LabDef {
     double (*fitness)(Lab *l, World *w, int ticks);
     void   (*rank)(const Creature *c, double k[2]);
     int    (*select)(Lab *l, World *w, PoolEntry *out);  /* NULL = top-16 par rank */
+    void   (*init)(Lab *l, World *w);   /* après world_new (NULL = rien) */
+    int    ticks_mult;                  /* horizon = ticks × mult (0 = 1) */
 } LabDef;
 
 struct Lab {
@@ -154,6 +171,11 @@ struct Lab {
     int *prey, *pred;
     /* org-seeds : champions étrangers */
     PoolEntry *foreign; int nforeign;
+    /* labos humanité */
+    int counterfactual;                  /* 1 = rejouer sans interventions / paramètres fixes */
+    const PoolEntry *pool0; int npool0; Rng rng0;
+    void *ext;                           /* état alloué par le labo (libéré par lab_free) */
+    double acc[16];
 };
 
 extern const LabDef LABS[N_LABS];
