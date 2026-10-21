@@ -333,7 +333,7 @@ const LabDef LABS[N_LABS] = {
       "population moyenne (/100) sur la 2e moitié d'un horizon de 5 × ticks × fraction de capacité restante ; vider une case la dégrade pour toujours ; baseline = fourrageur glouton",
       { "pop_late", "resource_frac", "dead_cells", "baseline", "vs_baseline" }, hl_cm_cfg, hl_cm_seeds, hl_cm_pre, NULL, hl_cm_fit, rank_default, NULL, hl_cm_init, 5 },
     { "pandemic", "Pandémie : contagion SEIR entre agents",
-      "(morts − morts sans actions) / max(morts sans actions, 5) × maintien pop − énergie des actions / énergie mangée ; baseline = même pool, actions sans effet",
+      "(morts − morts sans actions) / max(morts sans actions, 10) × maintien pop − énergie des actions / énergie mangée ; baseline = même pool, actions sans effet",
       { "deaths", "pop_mean", "deaths_no_action", "cost", "vaccinated", "isolations" }, NULL, hl_pd_seeds, NULL, hl_pd_post, hl_pd_fit, rank_default, NULL, hl_pd_init, 0 },
     { "code-repair", "Réparer un programme cassé via STORE",
       "score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière",

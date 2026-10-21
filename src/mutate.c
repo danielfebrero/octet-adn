@@ -53,7 +53,7 @@ int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_
 }
 
 /* self-evolve : le génome porte ses paramètres d'évolution aux octets 2..5 (la seed commence par
- * JMP +4 pour les sauter). Bornes dures : substitution ≤ 12 %, indel ≤ 6 %, zone protégée ≤ 32 o
+ * JMP +4 pour les sauter). Bornes dures : substitution ≤ 12 %, indel ≤ 6 %, zone protégée ≤ 16 o
  * et ≤ moitié du génome. Taux 0 permis (gel) : c'est l'environnement changeant qui le fait perdre. */
 EvoParams evo_params(const uint8_t *dna, int len) {
     EvoParams p = { 0, 0, 0, 0 };

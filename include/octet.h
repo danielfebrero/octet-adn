@@ -134,7 +134,7 @@ int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_
 /* self-evolve : paramètres d'évolution portés par le génome */
 #define EVO_MUT_MAX   0.12
 #define EVO_INDEL_MAX 0.06
-#define EVO_PROT_MAX  32
+#define EVO_PROT_MAX  16
 typedef struct { double mut, indel; int xover, prot; } EvoParams;
 EvoParams evo_params(const uint8_t *dna, int len);
 int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *out);

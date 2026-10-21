@@ -272,7 +272,7 @@ double hl_cm_fit(Lab *l, World *w, int ticks) {
 }
 
 /* ======================= 4. pandemic : contagion SEIR =======================
- * À t = 20, 4 créatures sont infectées. Infectieux (I) → sain (S) à Chebyshev ≤ 1 : p = 0.3 / tick →
+ * À t = 20, 8 créatures sont infectées. Infectieux (I) → sain (S) à Chebyshev ≤ 1 : p = 0.3 / tick →
  * exposé (E, 3 ticks, sans symptôme) → I (12 ticks) → mort (p = 0.3) ou guéri (R). Stimulus par créature :
  * bit0 = je suis I (symptômes), bit1 = alerte reçue (5 ticks), bit2 = immunisé. Actions par EMIT v&3 :
  * 1 alerter (rayon 2, coût 1), 2 s'isoler ce tick (ni contaminer ni être contaminé, coût 2),
@@ -298,7 +298,7 @@ void hl_pd_post(Lab *l, World *w) {
             else if (a == 3 && c->ls[1] == PS_S) { c->e -= 25; s->cost += 25; s->vacc++; c->ls[1] = PS_R; }
         }
     if (w->t == 20) {                                   /* patient(s) zéro */
-        for (int k = 0, tries = 0; k < 4 && w->ncs && tries < 100; tries++) {
+        for (int k = 0, tries = 0; k < 8 && w->ncs && tries < 100; tries++) {
             Creature *c = w->cs[rng_below(w->rng, (uint32_t)w->ncs)];
             if (c->ls[1] == PS_S) { c->ls[1] = PS_I; c->ls[2] = 12; k++; }
         }
@@ -329,7 +329,7 @@ double hl_pd_fit(Lab *l, World *w, int ticks) {
     if (l->counterfactual) return 0;
     double ex[N_EXTRA]; replay(l, ticks, ex);
     double d0 = ex[0], p0 = ex[1];
-    double avoided = (d0 - s->deaths) / fmax(d0, 5.0);
+    double avoided = (d0 - s->deaths) / fmax(d0, 10.0);
     double cost = (double)s->cost / (w->st.energy_eaten + 1.0);
     double f = avoided * fmin(1.0, p0 > 0 ? pm / p0 : 0) - cost;
     l->extra[2] = d0; l->extra[3] = cost; l->extra[4] = (double)s->vacc; l->extra[5] = (double)s->isol;
