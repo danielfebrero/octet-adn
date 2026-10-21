@@ -101,11 +101,11 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 **Déterminisme** : tout l'aléa vient d'un RNG xoshiro256** amorcé par
 `FNV-1a("labo:cycle:seed")`. Même seed → même monde, même `state_hash` (testé).
 
-## Les 10 éprouvettes
+## Les 16 éprouvettes (10 historiques + 6 humanité)
 
 | # | labo | objectif | fitness |
 |---|---|---|---|
-| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos (crossover) ; lignées distinctes viables (clusters Hamming) × diversité |
+| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos historiques (crossover) ; lignées distinctes viables (clusters Hamming) × diversité |
 | 2 | `max-pop` | population la plus haute | population moyenne + 10 % du pic |
 | 3 | `survival` | longévité | espérance de vie moyenne × fraction du cycle survécue (monde pauvre) |
 | 4 | `energy-eff` | efficacité métabolique | énergie mangée / créature-tick |
@@ -116,13 +116,74 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 | 9 | `predict-stock` | direction d'un « prix » | précision hausse/baisse du pas suivant ; série GBM synthétique ou CSV local |
 | 10 | `predator-prey` | écologie | coexistence proies/prédateurs × équilibre des effectifs |
 
+## Les 6 labos « humanité » (11 à 16) — modèles jouets
+
+⚠️ **Ce sont des terrains d'entraînement, pas des percées.** Chaque labo est la miniature d'un vrai
+problème, avec une fitness mesurable et une baseline naïve chiffrée (colonne `baseline` de
+`status.md` et de `eval`). Un gagnant donne un algorithme à étudier, rien de plus. Les mécanismes
+passent par des hooks de labo (`init`, `pre`, `post`, `before_vm`, `ticks_mult`, rejeu
+contrefactuel) ; les 10 labos historiques ne les voient pas (chiffres identiques à l'octet près,
+vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
+
+| # | labo | miniature de | fitness | baseline naïve |
+|---|---|---|---|---|
+| 11 | `fold` | repliement des protéines (modèle HP 2D) | contacts H-H / optimum connu, moyenne sur 6 benchmarks (Unger & Moult, 20 à 50 résidus) | marche auto-évitante aléatoire |
+| 12 | `antibiotic` | antibiothérapie face à la résistance | ticks avant échappement / ticks, ×1.25 si éradiqué, × hôtes vivants, × (1 − dégâts) | même pool sans traitement |
+| 13 | `commons` | tragédie des biens communs | pop. moyenne (2e moitié d'un horizon 5×) / 100 × capacité restante | fourrageur glouton |
+| 14 | `pandemic` | épidémie SEIR | morts évitées vs même pool sans effet des actions × maintien pop − coût | rejeu sans actions |
+| 15 | `code-repair` | réparation automatique de bugs | patients réparés (équivalence sur 256 entrées) / résolus, +0.5 × patch minimal | flips aléatoires sans retour arrière |
+| 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks | même pool, paramètres d'évolution fixes |
+
+**fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
+H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,
+sinon repliement tronqué. Score ≤ 1 par construction (optimum connu). Bien plier donne de l'énergie
+à la naissance. Seed `fold` : spirale (toujours à gauche) + fourrageur.
+
+**antibiotic.** 40 cellules hôtes immobiles, 12 pathogènes injectés à chaque cycle (jamais dans le
+pool : la sélection garderait sinon des pathogènes faibles). La cible d'un pathogène est
+`dna[0] & 7`, héritée, et change chez 15 % des nouveau-nés (hypermutation) : la résistance apparaît
+*pendant* le cycle. Les agents lisent un antibiogramme (stimulus = cible majoritaire) ; `EMIT v` libère
+le médicament v&7 en rayon 1 (coût 2, 1 de dégât par hôte touché).
+
+**commons.** Repousse logistique par case (capacité 14), plus de repousse aléatoire globale. Vider
+une case lui retire 4 de capacité **pour toujours**. Seed `commons` : ne mange qu'une case à ≥ 8 et ne
+se divise qu'à ≥ 128 d'énergie.
+
+**pandemic.** À t = 20, 8 cas index. I → S voisin : p = 0.3 / tick ; E 3 ticks (sans symptômes) ; I
+12 ticks puis mort (30 %) ou guérison. Stimulus propre à chaque créature (hook `before_vm`) :
+bit0 malade, bit1 alerte reçue, bit2 immunisé. `EMIT` 1 = alerter (rayon 2), 2 = s'isoler ce tick,
+3 = se vacciner (25 d'énergie). La baseline rejoue le même pool sur la même graine, actions sans effet.
+Seed : s'isoler quand on est malade.
+
+**code-repair.** Chaque créature reçoit un patient de 8 octets (SENSE_STIM ; MOV_BA ; 2 ops tirées
+parmi INC/DEC/ADD/SUB/XOR/AND k ; EMIT ; YIELD), cassé par 1 ou 2 bit-flips. Le patient est mappé sur
+`STORE`/`LOAD` imm 0xE0..0xE7 **uniquement si la créature a une fenêtre** (`win_len > 0`, posé par ce
+seul labo). Signal : nombre de tests passés sur 16, + 0x40 si mieux que le meilleur vu. La réussite
+exige l'équivalence sur les 256 entrées, pas seulement sur les 16 tests. Seed `repair` : recherche
+locale bit à bit avec retour arrière (generate-and-validate).
+
+**self-evolve.** Les octets 2..5 du génome sont ses paramètres d'évolution, lus à chaque SPLIT
+(`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
+zone protégée ≤ 16 octets et ≤ la moitié du génome. Une cible 0..15 change toutes les 50 ticks (tirée
+par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. Les
+moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`,
+`crossover`, `protected`).
+
+**Exploits testés et fermés** (`test_new_labs_exploits_closed`) : ne rien faire (fold, commons,
+code-repair → 0 ; pandemic → ≈ 0 malgré zéro mort, car la population n'est pas maintenue) ; tuer les
+hôtes pour affamer le pathogène (→ 0, facteur hôtes vivants) ; arroser des 8 médicaments (dégâts) ;
+vacciner ou s'isoler en permanence (coût) ; balayer 0..15 dans self-evolve ; geler l'évolution
+(mutation 0 : perd dès que la cible change) ; surapprendre les 16 tests de code-repair (refusé par
+l'équivalence sur 256 entrées) ; sélectionner des pathogènes faibles (ils ne sont pas dans le pool).
+
 **Sélection entre cycles (appariée, robuste au bruit)** : après le cycle, le nouveau pool
 (les survivants les mieux classés) et le pool en place sont **réévalués sur les mêmes
 `SEL_EVALS` = 4 graines** (indépendantes de celle du cycle). Le nouveau pool remplace l'ancien
 s'il fait au moins aussi bien en moyenne ; sinon l'ancien pool est retenté avec un autre aléa.
 L'ancienne règle (« garder si ≥ 90 % du meilleur historique », qui gelait un labo derrière un
 pic chanceux) reste disponible via `--select legacy`. Coût : ~9 cycles simulés par labo et
-par cycle (≈ 0,3 s pour les 10 labos). Les labos de communication / prédiction donnent aussi de l'énergie aux
+par cycle (≈ 0,31 s CPU pour les 10 labos historiques, ≈ 0,95 s pour les 16 ; commons tourne sur 5 × ticks et
+antibiotic, commons, pandemic, code-repair, self-evolve rejouent une baseline). Les labos de communication / prédiction donnent aussi de l'énergie aux
 bonnes réponses : la sélection naturelle agit dans le monde.
 
 **La « popote » partagée** : les 10 labos tournent dans le même binaire. Si on recompile
@@ -180,3 +241,10 @@ appel réseau.**
 - Aucune « émergence » au-delà de stratégies simples ; pas de conscience, pas d'autonomie hors de la VM.
 - Le moteur est du C compilé, pas de l'assembleur écrit à la main octet par octet : ce qui
   est « octet only », ce sont le produit livré (un ELF), les génomes et toutes les données.
+- Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart) : `fold`, `antibiotic`,
+  `commons` et `code-repair` battent nettement leur baseline. **`self-evolve`** : la seed bat les
+  paramètres fixes (+0.08), mais après 40 cycles les pools évolués font un peu moins bien que le même
+  pool rejoué à paramètres fixes (−0.01 à −0.09) : la population pousse sa zone protégée au maximum
+  (16 o), ce qui gèle aussi ses propres paramètres (octets 2..5). **`pandemic`** : très bruité (sd ≈ 0.24
+  sur 8 graines, le rejeu contrefactuel diverge), et les pools évolués (≈ 0.02 à 0.08) font moins bien
+  que la seed (0.28). Les deux sont des chantiers ouverts, pas des résultats.
