@@ -358,12 +358,14 @@ TEST(test_evo_params_bounded) {
     uint8_t out[MAX_LEN + 16]; Rng r; rng_seed(&r, 1);
     EvoParams z = { 0, 0, 0, 0 };
     for (int i = 0; i < 40; i++) g[i] = (uint8_t)i;
-    assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 40));      /* taux 0 = copie exacte */
+    assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 34));   /* taux 0 = copie, sauf paramètres */
+    int moved = 0;                                                            /* les octets 2..5 dérivent toujours (méta) */
+    EvoParams pr = { 0, 0, 0, 16 };
+    for (int k = 0; k < 200; k++) { mutate_evo(g, 40, &r, &pr, out); moved += memcmp(out + 2, g + 2, 4) != 0; assert(!memcmp(out + 6, g + 6, 10)); }
+    assert(moved > 0);
     EvoParams all = { 1.0, 0, 0, 12 };
     mutate_evo(g, 40, &r, &all, out);
-    /* octets 2..5 dérivent toujours (EVO_META), même sous une zone protégée de 12 */
-    assert(!memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 6));
-    assert(memcmp(out + 12, g + 12, 28));
+    assert(!memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 6) && memcmp(out + 12, g + 12, 28));   /* zone protégée intacte (hors paramètres) */
 }
 
 TEST(test_new_labs_beat_naive_baselines) {
@@ -378,8 +380,8 @@ TEST(test_new_labs_beat_naive_baselines) {
     assert(ex[1] > 0);                                                      /* bat le moteur fixe 2 % / 5 % */
     for (int k = 0; k < n; k++) { p[k].dna[2] = 0; p[k].dna[3] = 0; }
     double gel = ev4("self-evolve", p, n, NULL);
-    assert(fabs(se - gel) < 1e-9);                                          /* la seed écrit déjà 0 dans 2 et 3 */
-    printf("    fold=%.3f antibiotic=%.3f commons=%.3f pandemic=%.3f code-repair=%.3f self-evolve=%.3f vs=%+.3f\n", fo, ab, cm, pd, cr, se, ex[1]);
+    assert(se > gel);                                                       /* geler mut et indel fait perdre */
+    printf("    fold=%.3f antibiotic=%.3f commons=%.3f pandemic=%.3f code-repair=%.3f self-evolve=%.3f vs=%+.3f gel=%.3f\n", fo, ab, cm, pd, cr, se, ex[1], gel);
 }
 
 TEST(test_new_labs_exploits_closed) {
@@ -388,7 +390,7 @@ TEST(test_new_labs_exploits_closed) {
     assert(ev4("fold", p, raw_pool(p, inert), NULL) == 0);                     /* tout droit = 0 contact */
     assert(ev4("commons", p, raw_pool(p, inert), NULL) == 0);                  /* ne rien faire = s'éteindre */
     assert(ev4("code-repair", p, raw_pool(p, inert), NULL) == 0);
-    assert(fabs(ev4("pandemic", p, raw_pool(p, inert), NULL)) < 0.05);         /* mourir de faim n'évite rien */
+    assert(ev4("pandemic", p, raw_pool(p, inert), NULL) == 0);                 /* aléa commun : sans action, paires identiques */
     assert(ev4("antibiotic", p, raw_pool(p, "1a1a0d0a09030c0e0f010b0c1a0e0f1e"), ex) < 0.05);   /* tuer les hôtes */
     double spam = ev4("antibiotic", p, raw_pool(p, "01140d0a09030c0e0f010b0c0d0e0f1e"), NULL);   /* tous les médicaments */
     int n = LABS[lab_index("antibiotic")].seeds(p);
@@ -445,25 +447,13 @@ TEST(test_contribution_outranks_energy) {
     assert(hamming128(top.dna, top.len, pand.dna, pand.len) < hamming128(top.dna, top.len, fora.dna, fora.len));
 }
 
-TEST(test_selfevo_seed_writes_rates) {
+TEST(test_selfevo_seed_keeps_a_mutation_rate) {
+    /* Geler mut et indel à 0 perd sous le mètre actuel (mort à 60, dérive saturée).
+     * La seed porte un taux non nul et ne le réécrit pas à chaque tick. */
     PoolEntry s; seed_entry(&s, "selfevo", 0);
-    int saw2 = 0, saw3 = 0;
-    for (int i = 0; i + 1 < s.len; i++) {
-        if (s.dna[i] == OP_STORE && s.dna[i + 1] == 2) saw2 = 1;
-        if (s.dna[i] == OP_STORE && s.dna[i + 1] == 3) saw3 = 1;
-    }
-    assert(saw2 && saw3);
-    uint8_t b2 = s.dna[2], b3 = s.dna[3];
-    int id = lab_index("self-evolve");
-    Lab l; lab_init(&l, id, 40);
-    Rng r; rng_seed(&r, 3);
-    WorldConfig cfg = cfg_default(); cfg.split_energy = 1000;   /* pas de SPLIT : seul STORE réécrit 2..3 */
-    World *w = world_new(&s, 1, &r, &cfg, &l);
-    hl_se_init(&l, w);
-    for (int t = 0; t < 30 && w->ncs; t++) world_step(w);
-    assert(w->ncs == 1);
-    assert(w->cs[0]->dna[2] != b2 || w->cs[0]->dna[3] != b3);
-    world_free(w); lab_free(&l);
+    assert(s.dna[2] != 0);
+    for (int i = 0; i + 1 < s.len; i++)
+        assert(!(s.dna[i] == OP_STORE && (s.dna[i + 1] == 2 || s.dna[i + 1] == 3)));
 }
 
 TEST(test_foreign_admits_only_positive_gap) {
@@ -581,7 +571,7 @@ int main(void) {
     RUN(test_new_labs_exploits_closed);
     RUN(test_resume_legacy_checkpoints_with_16_labs);
     RUN(test_contribution_outranks_energy);
-    RUN(test_selfevo_seed_writes_rates);
+    RUN(test_selfevo_seed_keeps_a_mutation_rate);
     RUN(test_foreign_admits_only_positive_gap);
     RUN(test_code_repair_pool_beats_flips);
     RUN(test_core_state_hash_matches_main);
