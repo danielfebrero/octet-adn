@@ -16,4 +16,10 @@
         SEED adn_social,   "seeds/social.adn"
         SEED adn_predator, "seeds/predator.adn"
         SEED adn_walk,     "seeds/walk.adn"
+        SEED adn_fold,     "seeds/fold.adn"
+        SEED adn_antibiotic, "seeds/antibiotic.adn"
+        SEED adn_commons,  "seeds/commons.adn"
+        SEED adn_pandemic, "seeds/pandemic.adn"
+        SEED adn_repair,   "seeds/repair.adn"
+        SEED adn_selfevo,  "seeds/selfevo.adn"
         .section .note.GNU-stack,"",@progbits

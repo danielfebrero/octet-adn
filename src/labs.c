@@ -7,14 +7,17 @@
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
 EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
+EXT(adn_fold) EXT(adn_antibiotic) EXT(adn_commons) EXT(adn_pandemic) EXT(adn_repair) EXT(adn_selfevo)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
     BLOB("predator", adn_predator), BLOB("walk", adn_walk),
+    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic), BLOB("commons", adn_commons), BLOB("pandemic", adn_pandemic), BLOB("repair", adn_repair), BLOB("selfevo", adn_selfevo),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
-                                      adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end };
+                                      adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end,
+                                      adn_fold_end, adn_antibiotic_end, adn_commons_end, adn_pandemic_end, adn_repair_end, adn_selfevo_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -282,32 +285,62 @@ static int sel_org(Lab *l, World *w, PoolEntry *out) {
     return k;
 }
 
+/* labos humanité (src/labs_h.c) */
+void hl_rank_score(const Creature *c, double k[2]);
+void hl_fold_cfg(WorldConfig *c); int hl_fold_seeds(PoolEntry *o); double hl_fold_fit(Lab *l, World *w, int t); void hl_fold_initp(Lab *l, World *w);
+void hl_ab_cfg(WorldConfig *c); int hl_ab_seeds(PoolEntry *o); void hl_ab_init(Lab *l, World *w); void hl_ab_pre(Lab *l, World *w);
+void hl_ab_post(Lab *l, World *w); double hl_ab_fit(Lab *l, World *w, int t); int hl_ab_sel(Lab *l, World *w, PoolEntry *out);
+void hl_cm_cfg(WorldConfig *c); int hl_cm_seeds(PoolEntry *o); void hl_cm_init(Lab *l, World *w); void hl_cm_pre(Lab *l, World *w); double hl_cm_fit(Lab *l, World *w, int t);
+int hl_pd_seeds(PoolEntry *o); void hl_pd_rank(const Creature *c, double k[2]); void hl_pd_init(Lab *l, World *w); void hl_pd_post(Lab *l, World *w); double hl_pd_fit(Lab *l, World *w, int t);
+int hl_cr_seeds(PoolEntry *o); void hl_cr_init(Lab *l, World *w); double hl_cr_fit(Lab *l, World *w, int t); void hl_cr_rank(const Creature *c, double k[2]);
+void hl_se_cfg(WorldConfig *c); int hl_se_seeds(PoolEntry *o); void hl_se_init(Lab *l, World *w); void hl_se_pre(Lab *l, World *w);
+void hl_se_post(Lab *l, World *w); double hl_se_fit(Lab *l, World *w, int t);
+
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
     { "org-seeds", "Organiser d'autres seeds",
       "lignées distinctes viables (clusters Hamming) × diversité (génomes uniques / pop)",
-      { "clusters", "unique", "crossovers" }, cfg_org, s_org, NULL, NULL, f_org, rank_default, sel_org },
+      { "clusters", "unique", "crossovers" }, cfg_org, s_org, NULL, NULL, f_org, rank_default, sel_org, NULL, 0 },
     { "max-pop", "Population la plus haute", "population moyenne sur le cycle (+10 % du pic)",
-      { "peak" }, NULL, s_forager, NULL, NULL, f_maxpop, rank_default, NULL },
+      { "peak" }, NULL, s_forager, NULL, NULL, f_maxpop, rank_default, NULL, NULL, 0 },
     { "survival", "Longévité", "espérance de vie moyenne × fraction du cycle survécue (monde pauvre)",
-      { "median_age", "mean_death_age", "mean_lifespan" }, cfg_poor, s_forager, NULL, NULL, f_survival, r_age, NULL },
+      { "median_age", "mean_death_age", "mean_lifespan" }, cfg_poor, s_forager, NULL, NULL, f_survival, r_age, NULL, NULL, 0 },
     { "energy-eff", "Efficacité métabolique", "énergie mangée / créature-tick",
-      { "energy_eaten" }, NULL, s_forager, NULL, NULL, f_energy, r_energy, NULL },
+      { "energy_eaten" }, NULL, s_forager, NULL, NULL, f_energy, r_energy, NULL, NULL, 0 },
     { "self-rewrite", "Auto-réécriture utile", "STORE utiles (codon réécrit PUIS exécuté) / créature-tick",
-      { "store_writes", "useful_stores" }, NULL, s_forager, NULL, NULL, f_rewrite, r_rewrite, NULL },
+      { "store_writes", "useful_stores" }, NULL, s_forager, NULL, NULL, f_rewrite, r_rewrite, NULL, NULL, 0 },
     { "emit-echo", "Communiquer : écho d'un stimulus", "EMIT == stimulus (0..15) ; corrects / créature-tick",
-      { "correct", "emits", "accuracy" }, NULL, s_echo, pre_echo, post_echo, f_emit, rank_default, NULL },
+      { "correct", "emits", "accuracy" }, NULL, s_echo, pre_echo, post_echo, f_emit, rank_default, NULL, NULL, 0 },
     { "emit-dialog", "Dialogue : protocole stimulus → réponse",
       "hello 00→AC, s→s+1, bye 0F→00 ; corrects / créature-tick",
-      { "correct", "emits", "accuracy" }, NULL, s_dialog, pre_dialog, post_dialog, f_emit, rank_default, NULL },
+      { "correct", "emits", "accuracy" }, NULL, s_dialog, pre_dialog, post_dialog, f_emit, rank_default, NULL, NULL, 0 },
     { "predict-walk", "Prédire une série AR(2) bruitée", "précision sur le bin (0..7) du prochain point ; baseline = répéter la dernière valeur",
-      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_walk, pre_walk, post_predict, f_predict, rank_default, NULL },
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_walk, pre_walk, post_predict, f_predict, rank_default, NULL, NULL, 0 },
     { "predict-stock", "Direction d'un prix (proxy GBM / CSV local)",
       "précision hausse/baisse du pas suivant (A&1) ; hasard = 50 %",
-      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL },
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL, NULL, 0 },
     { "predator-prey", "Proies (espèce 0) et prédateurs (espèce 1, ATTACK)",
       "fraction des ticks de coexistence × équilibre min(proies/20, préd/5)",
-      { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp },
+      { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp, NULL, 0 },
+    /* ---- humanité ---- */
+    { "fold", "Repliement de protéine (modèle HP 2D)",
+      "contacts H-H / optimum connu, moyenne sur 6 benchmarks ; baseline = marche auto-évitante aléatoire",
+      { "mean_score", "max_score", "baseline", "vs_baseline" }, hl_fold_cfg, hl_fold_seeds, NULL, NULL, hl_fold_fit, hl_rank_score, NULL, hl_fold_initp, 0 },
+    { "antibiotic", "Antibiotique contre pathogène co-évolutif",
+      "ticks avant échappement (> 60 pathogènes) / ticks, ×1.25 si éradiqué, × hôtes vivants, × (1 − dégâts médicament) ; baseline = sans traitement",
+      { "t_ctrl", "eradicated", "hosts_alive", "drug_damage", "baseline", "vs_baseline" }, hl_ab_cfg, hl_ab_seeds, hl_ab_pre, hl_ab_post, hl_ab_fit, rank_default, hl_ab_sel, hl_ab_init, 0 },
+    { "commons", "Biens communs : ressource à repousse lente",
+      "population moyenne (/100) sur la 2e moitié d'un horizon de 5 × ticks × fraction de capacité restante ; vider une case la dégrade pour toujours ; baseline = fourrageur glouton",
+      { "pop_late", "resource_frac", "dead_cells", "baseline", "vs_baseline" }, hl_cm_cfg, hl_cm_seeds, hl_cm_pre, NULL, hl_cm_fit, rank_default, NULL, hl_cm_init, 5 },
+    { "pandemic", "Pandémie : contagion SEIR entre agents",
+      "moyenne sur 4 paires appariées (nombres aléatoires communs) de : morts évitées / max(morts sans actions, 10) × maintien pop − énergie des actions / mangée ; baseline = même pool, même graine, actions sans effet",
+      { "deaths", "pop_mean", "deaths_no_action", "cost", "vaccinated", "isolations" }, NULL, hl_pd_seeds, NULL, hl_pd_post, hl_pd_fit, hl_pd_rank, NULL, hl_pd_init, 0 },
+    { "code-repair", "Réparer un programme cassé via STORE",
+      "score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière",
+      { "repaired", "resolved", "success_rate", "patch_bonus", "baseline", "vs_baseline" }, NULL, hl_cr_seeds, NULL, NULL, hl_cr_fit, hl_cr_rank, NULL, hl_cr_init, 0 },
+    { "self-evolve", "La seed pilote sa propre évolution",
+      "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 50 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
+      { "baseline", "vs_baseline", "mut_rate", "indel_rate", "crossover", "protected" }, hl_se_cfg, hl_se_seeds, hl_se_pre, hl_se_post, hl_se_fit, rank_default, NULL, hl_se_init, 0 },
 };
 
 int lab_index(const char *name) {
@@ -317,15 +350,18 @@ int lab_index(const char *name) {
 void lab_init(Lab *l, int id, int max_ticks) {
     memset(l, 0, sizeof *l);
     l->id = id; l->def = &LABS[id];
+    if (LABS[id].ticks_mult > 1) max_ticks *= LABS[id].ticks_mult;
     l->pops = calloc((size_t)max_ticks + 1, sizeof(int));
     l->prey = calloc((size_t)max_ticks + 1, sizeof(int));
     l->pred = calloc((size_t)max_ticks + 1, sizeof(int));
 }
-void lab_free(Lab *l) { free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
+void lab_free(Lab *l) { if (l->ext_free) l->ext_free(l); free(l->ext); l->ext = NULL; free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
 void lab_pre(Lab *l, World *w) { if (l->def->pre) l->def->pre(l, w); }
 void lab_post(Lab *l, World *w) { if (l->def->post) l->def->post(l, w); }
 
 void run_cycle(Lab *l, const PoolEntry *pool, int n, Rng *rng, int ticks, CycleResult *res) {
+    if (l->def->ticks_mult > 1) ticks *= l->def->ticks_mult;
+    l->pool0 = pool; l->npool0 = n; l->rng0 = *rng;      /* pour les rejeux contrefactuels */
     PoolEntry *g = malloc(sizeof(PoolEntry) * (POOL_MAX + 8 + POOL_SIZE));
     int k = 0;
     for (int i = 0; i < n && k < POOL_MAX; i++) g[k++] = pool[i];
@@ -336,6 +372,7 @@ void run_cycle(Lab *l, const PoolEntry *pool, int n, Rng *rng, int ticks, CycleR
     WorldConfig cfg = cfg_default();
     if (l->def->config) l->def->config(&cfg);
     World *w = world_new(g, k, rng, &cfg, l);
+    if (l->def->init) l->def->init(l, w);
     free(g);
     int survived = 0;
     for (int t = 0; t < ticks; t++) {

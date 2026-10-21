@@ -51,3 +51,49 @@ int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_
     memcpy(out + cut, b + cut, (size_t)(lb - cut));
     return lb;
 }
+
+/* self-evolve : le génome porte ses paramètres d'évolution aux octets 2..5 (la seed commence par
+ * JMP +4 pour les sauter). Bornes dures : substitution ≤ 12 %, indel ≤ 6 %, zone protégée ≤ 16 o
+ * et ≤ moitié du génome. La zone ne couvre jamais les octets 2..5 : ils dérivent toujours (±1/±3, saturé)
+ * à EVO_META ; protéger coûte prot/4 d'énergie à chaque SPLIT (world_split). Un taux 0 ne reste donc pas 0. */
+EvoParams evo_params(const uint8_t *dna, int len) {
+    EvoParams p = { 0, 0, 0, 0 };
+    if (len < 6) return p;
+    p.mut = dna[2] / 255.0 * EVO_MUT_MAX;
+    p.indel = dna[3] / 255.0 * EVO_INDEL_MAX;
+    p.xover = dna[4] & 1;
+    p.prot = dna[5] > EVO_PROT_MAX ? EVO_PROT_MAX : dna[5];
+    if (p.prot > len / 2) p.prot = len / 2;
+    return p;
+}
+int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *out) {
+    static const int drift[4] = { -3, -1, 1, 3 };
+    memcpy(out, in, (size_t)n);
+    int i = 0;
+    while (i < n) {
+        if (i >= 2 && i < 6) {                         /* paramètres : jamais protégés, taux méta fixe */
+            if (rng_double(r) < EVO_META) { int v = out[i] + drift[rng_below(r, 4)]; out[i] = (uint8_t)(v < 0 ? 0 : v > 255 ? 255 : v); }   /* saturé, pas de bouclage 0↔255 */
+            i++; continue;
+        }
+        if (i < p->prot) { i++; continue; }            /* zone protégée (hors paramètres) */
+        if (rng_double(r) < p->mut) {
+            int k = (int)rng_below(r, 4);
+            if (k <= 1) out[i] = (uint8_t)rng_below(r, OP_COUNT);
+            else if (k == 2) out[i] = (uint8_t)rng_below(r, 256);
+            else out[i] = (uint8_t)(out[i] + drift[rng_below(r, 4)]);
+        }
+        if (i >= 6 && rng_double(r) < p->indel) {
+            if (rng_below(r, 2) && n < MAX_LEN) {
+                memmove(out + i + 1, out + i, (size_t)(n - i));
+                out[i] = (uint8_t)rng_below(r, OP_COUNT);
+                n++; i++;
+            } else if (n > MIN_LEN) {
+                memmove(out + i, out + i + 1, (size_t)(n - i - 1));
+                n--;
+                continue;
+            }
+        }
+        i++;
+    }
+    return n;
+}

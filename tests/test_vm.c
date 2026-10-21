@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <math.h>
 #include "octet.h"
 
 int hamming128(const uint8_t *a, int la, const uint8_t *b, int lb);
@@ -117,9 +118,9 @@ TEST(test_duplication_and_crossover) {
 }
 
 TEST(test_ten_labs_registered) {
-    const char *names[N_LABS] = { "org-seeds", "max-pop", "survival", "energy-eff", "self-rewrite",
+    const char *names[N_CORE_LABS] = { "org-seeds", "max-pop", "survival", "energy-eff", "self-rewrite",
                                   "emit-echo", "emit-dialog", "predict-walk", "predict-stock", "predator-prey" };
-    for (int i = 0; i < N_LABS; i++) assert(lab_index(names[i]) == i);
+    for (int i = 0; i < N_CORE_LABS; i++) assert(lab_index(names[i]) == i);
     assert(lab_index("nope") == -1);
     assert(dialog_reply(0x00) == 0xAC && dialog_reply(0x0F) == 0x00 && dialog_reply(5) == 6);
 }
@@ -307,6 +308,111 @@ TEST(test_reseed_on_engine_change) {
     assert(system(cmd) == 0);
 }
 
+/* ======================= labos humanité ======================= */
+static double ev4(const char *lab, const PoolEntry *p, int n, double *ex_mean) {
+    int id = lab_index(lab); double s = 0, ex[N_EXTRA];
+    if (ex_mean) memset(ex_mean, 0, sizeof(double) * N_EXTRA);
+    for (int j = 0; j < 4; j++) {
+        char k[64]; snprintf(k, sizeof k, "test:%s:%d", lab, j);
+        s += pool_eval_x(id, p, n, k, 200, NULL, 0, ex) / 4;
+        if (ex_mean) for (int i = 0; i < N_EXTRA; i++) ex_mean[i] += ex[i] / 4;
+    }
+    return s;
+}
+static int raw_pool(PoolEntry *p, const char *hex) {
+    for (int k = 0; k < 4; k++) {
+        int L = 0;
+        for (const char *h = hex; h[0] && h[1]; h += 2) { unsigned v; sscanf(h, "%2x", &v); p[k].dna[L++] = (uint8_t)v; }
+        while (L < 8) p[k].dna[L++] = 0xff;
+        p[k].len = L; p[k].species = 0;
+    }
+    return 4;
+}
+
+TEST(test_sixteen_labs_and_core_untouched) {
+    const char *nw[6] = { "fold", "antibiotic", "commons", "pandemic", "code-repair", "self-evolve" };
+    for (int i = 0; i < 6; i++) assert(lab_index(nw[i]) == N_CORE_LABS + i);
+    assert(N_LABS == 16 && cfg_default().self_evo == 0);
+    Rng r; rng_seed(&r, 0); WorldConfig cfg = cfg_default();
+    World *w = world_new(NULL, 0, &r, &cfg, NULL);
+    assert(w->before_vm == NULL);
+    /* LOADI 7 ; STORE 0xE0 ; YIELD : sans fenêtre, écrit dans le génome (0xE0 % 16 = 0) ; avec, dans win */
+    uint8_t g[16] = { 0x1c, 0x07, 0x06, 0xe0, 0x0f }; memset(g + 5, 0xff, 11);
+    for (int win = 0; win < 2; win++) {
+        Creature *c = creature_new(1, 1, g, 16, 100, 0, 0, -1);
+        if (win) c->win_len = 8;
+        vm_run(c, w);
+        if (win) assert(c->dna[0] == 0x1c && c->win[0] == 7);
+        else assert(c->dna[0] == 7);
+        free(c);
+    }
+    world_free(w);
+}
+
+TEST(test_evo_params_bounded) {
+    uint8_t g[40]; memset(g, 0xff, sizeof g);
+    EvoParams p = evo_params(g, 40);
+    assert(p.mut <= EVO_MUT_MAX + 1e-12 && p.indel <= EVO_INDEL_MAX + 1e-12 && p.prot <= EVO_PROT_MAX && p.xover == 1);
+    p = evo_params(g, 20); assert(p.prot <= 10);
+    uint8_t out[MAX_LEN + 16]; Rng r; rng_seed(&r, 1);
+    EvoParams z = { 0, 0, 0, 0 };
+    for (int i = 0; i < 40; i++) g[i] = (uint8_t)i;
+    assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 34));   /* taux 0 = copie, sauf paramètres */
+    int moved = 0;                                                            /* les octets 2..5 dérivent toujours (méta) */
+    EvoParams pr = { 0, 0, 0, 16 };
+    for (int k = 0; k < 200; k++) { mutate_evo(g, 40, &r, &pr, out); moved += memcmp(out + 2, g + 2, 4) != 0; assert(!memcmp(out + 6, g + 6, 10)); }
+    assert(moved > 0);
+    EvoParams all = { 1.0, 0, 0, 12 };
+    mutate_evo(g, 40, &r, &all, out);
+    assert(!memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 6) && memcmp(out + 12, g + 12, 28));   /* zone protégée intacte (hors paramètres) */
+}
+
+TEST(test_new_labs_beat_naive_baselines) {
+    PoolEntry p[POOL_MAX], f4[4]; double ex[N_EXTRA]; int n;
+    for (int k = 0; k < 4; k++) seed_entry(&f4[k], "forager", 0);
+    n = LABS[lab_index("fold")].seeds(p);        double fo = ev4("fold", p, n, ex);       assert(fo > ex[2]);   /* > marche aléatoire */
+    n = LABS[lab_index("antibiotic")].seeds(p);  double ab = ev4("antibiotic", p, n, ex); assert(ab > ex[4] + 0.2);
+    n = LABS[lab_index("commons")].seeds(p);     double cm = ev4("commons", p, n, ex);    assert(cm > ex[3] + 0.05);
+    n = LABS[lab_index("pandemic")].seeds(p);    double pd = ev4("pandemic", p, n, ex);   double pdf = ev4("pandemic", f4, 4, NULL); fprintf(stderr, "    pandemic seed=%.3f forager=%.3f\n", pd, pdf); assert(pd > 0.2 && pd > pdf);
+    n = LABS[lab_index("code-repair")].seeds(p); double cr = ev4("code-repair", p, n, ex); assert(cr > ex[4] + 0.1);
+    n = LABS[lab_index("self-evolve")].seeds(p); double se = ev4("self-evolve", p, n, ex);
+    for (int k = 0; k < n; k++) { p[k].dna[2] = 0; p[k].dna[3] = 0; }
+    double gel = ev4("self-evolve", p, n, NULL);
+    assert(se > gel);                                                       /* mutation 0 = gel : perd */
+    printf("    fold=%.3f antibiotic=%.3f commons=%.3f pandemic=%.3f code-repair=%.3f self-evolve=%.3f (gel %.3f)\n", fo, ab, cm, pd, cr, se, gel);
+}
+
+TEST(test_new_labs_exploits_closed) {
+    PoolEntry p[POOL_MAX]; double ex[N_EXTRA];
+    const char *inert = "0f0f0f0f0f0f0f0f";
+    assert(ev4("fold", p, raw_pool(p, inert), NULL) == 0);                     /* tout droit = 0 contact */
+    assert(ev4("commons", p, raw_pool(p, inert), NULL) == 0);                  /* ne rien faire = s'éteindre */
+    assert(ev4("code-repair", p, raw_pool(p, inert), NULL) == 0);
+    assert(ev4("pandemic", p, raw_pool(p, inert), NULL) == 0);                 /* aléa commun : sans action, paires identiques */
+    assert(ev4("antibiotic", p, raw_pool(p, "1a1a0d0a09030c0e0f010b0c1a0e0f1e"), ex) < 0.05);   /* tuer les hôtes */
+    double spam = ev4("antibiotic", p, raw_pool(p, "01140d0a09030c0e0f010b0c0d0e0f1e"), NULL);   /* tous les médicaments */
+    int n = LABS[lab_index("antibiotic")].seeds(p);
+    assert(spam < ev4("antibiotic", p, n, NULL));
+    double sweep = ev4("self-evolve", p, raw_pool(p, "080400000000011400140d0a09030c0e0f010b0c0e0f1e"), NULL);
+    n = LABS[lab_index("self-evolve")].seeds(p);
+    assert(sweep < ev4("self-evolve", p, n, NULL));                            /* balayer 0..15 ne paie pas */
+}
+
+TEST(test_resume_legacy_checkpoints_with_16_labs) {
+    char d[] = "/tmp/oadn-rs16-XXXXXX"; assert(mkdtemp(d));
+    RunOpts o = { .ticks = 50, .cycles = 1, .quiet = 1, .no_reload = 1, .data_dir = d };
+    o.labs[o.nlabs++] = lab_index("max-pop");
+    assert(runner(&o, NULL, 0) == 1);
+    RunOpts a = { .ticks = 50, .cycles = 1, .quiet = 1, .no_reload = 1, .data_dir = d };
+    for (int i = 0; i < N_LABS; i++) a.labs[a.nlabs++] = i;
+    MetricRec rows[N_LABS];
+    assert(runner(&a, rows, N_LABS) == N_LABS);
+    assert(rows[1].cycle == 2);                                                /* repris */
+    for (int i = N_CORE_LABS; i < N_LABS; i++) assert(rows[i].cycle == 1 && rows[i].lab_id == i);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d);
+    assert(system(cmd) == 0);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -327,6 +433,11 @@ int main(void) {
     RUN(test_walk_seed_shrinks_and_survives_indels);
     RUN(test_predict_walk_beats_persistence);
     RUN(test_reseed_on_engine_change);
-    printf("\n%d/%d tests OK\n", passed, 19);
+    RUN(test_sixteen_labs_and_core_untouched);
+    RUN(test_evo_params_bounded);
+    RUN(test_new_labs_beat_naive_baselines);
+    RUN(test_new_labs_exploits_closed);
+    RUN(test_resume_legacy_checkpoints_with_16_labs);
+    printf("\n%d/%d tests OK\n", passed, 24);
     return 0;
 }

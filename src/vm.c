@@ -56,7 +56,9 @@ int vm_run(Creature *c, World *w) {
         case OP_DEC_B: c->b--; break;
         case OP_CLR_A: c->a = 0; break;
         case OP_STORE:                                 /* genome[imm] = A */
-            k = imm8(c) % L;
+            k = imm8(c);
+            if (c->win_len > 0 && k >= 0xE0) { c->win[(k - 0xE0) % c->win_len] = c->a; break; }   /* code-repair */
+            k %= L;
             if (dna[k] != c->a) {
                 dna[k] = c->a;
                 c->stores++;
@@ -64,7 +66,10 @@ int vm_run(Creature *c, World *w) {
                 w->st.store_writes++;
             }
             break;
-        case OP_LOAD: c->a = dna[imm8(c) % L]; break;
+        case OP_LOAD:
+            k = imm8(c);
+            c->a = (c->win_len > 0 && k >= 0xE0) ? c->win[(k - 0xE0) % c->win_len] : dna[k % L];
+            break;
         case OP_JMP: k = imm8(c); c->ip = (c->ip + k) % L; break;
         case OP_JZ: k = imm8(c); if (c->a == 0) c->ip = (c->ip + k) % L; break;
         case OP_SENSE: c->a = (uint8_t)food_ahead(w, c); break;

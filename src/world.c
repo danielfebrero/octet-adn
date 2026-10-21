@@ -28,6 +28,7 @@ static void add(World *w, Creature *c) {
     w->nb[w->nnb++] = c;
     w->occ[c->y][c->x]++;
 }
+void world_spawn(World *w, Creature *c) { add(w, c); }   /* labos : injecter une créature (pathogène, hôte...) */
 
 World *world_new(const PoolEntry *g, int n, Rng *rng, const WorldConfig *cfg, struct Lab *lab) {
     World *w = calloc(1, sizeof *w);
@@ -93,9 +94,10 @@ static int near(const Creature *a, const Creature *b) { return abs(a->x - b->x) 
 void world_split(World *w, Creature *c) {
     if (c->e < w->cfg.split_energy || w->ncs + w->nnb >= w->cfg.max_pop) return;
     uint8_t tmp[MAX_LEN], child[MAX_LEN + 16];
+    EvoParams ep = w->cfg.self_evo ? evo_params(c->dna, c->len) : (EvoParams){ 0, 0, 0, 0 };
     int n = c->len;
     memcpy(tmp, c->dna, (size_t)n);
-    if (w->cfg.crossover) {
+    if (w->cfg.self_evo ? (ep.xover) : w->cfg.crossover) {
         for (int i = 0; i < w->ncs; i++) {
             Creature *o = w->cs[i];
             if (o != c && o->species == c->species && o->e > 0 && near(o, c)) {
@@ -105,11 +107,13 @@ void world_split(World *w, Creature *c) {
             }
         }
     }
-    int m = mutate(tmp, n, w->rng, w->cfg.mut_rate, w->cfg.dup_rate, child);
+    int m;
+    if (w->cfg.self_evo) m = mutate_evo(tmp, n, w->rng, &ep, child);
+    else m = mutate(tmp, n, w->rng, w->cfg.mut_rate, w->cfg.dup_rate, child);
     int d = (c->d + 1) & 3, give = c->e / 3;
     add(w, creature_new((c->x + DX[d] + w->cfg.w) % w->cfg.w, (c->y + DY[d] + w->cfg.h) % w->cfg.h,
                         child, m, give, w->nid++, c->species, c->id));
-    c->e -= give + 8;
+    c->e -= give + 8 + ep.prot / 4;                      /* self-evolve : la protection coûte (0 ailleurs) */
     w->st.born++;
 }
 void world_attack(World *w, Creature *c) {
@@ -150,6 +154,7 @@ void world_step(World *w) {
     int nl = 0, ng = 0;
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
+        if (w->before_vm) w->before_vm(w, c);
         int ok = vm_run(c, w);
         if (ok && c->species != 0) {                 /* prédateurs : coût de vie + vieillissement */
             c->e -= w->cfg.pred_metab;
