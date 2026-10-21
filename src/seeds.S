@@ -19,4 +19,5 @@
         SEED adn_fold,     "seeds/fold.adn"
         SEED adn_antibiotic, "seeds/antibiotic.adn"
         SEED adn_commons,  "seeds/commons.adn"
+        SEED adn_pandemic, "seeds/pandemic.adn"
         .section .note.GNU-stack,"",@progbits

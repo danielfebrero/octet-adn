@@ -271,3 +271,68 @@ double hl_cm_fit(Lab *l, World *w, int ticks) {
     }
     return f;
 }
+
+/* ======================= 4. pandemic : contagion SEIR =======================
+ * À t = 20, 4 créatures sont infectées. Infectieux (I) → sain (S) à Chebyshev ≤ 1 : p = 0.3 / tick →
+ * exposé (E, 3 ticks, sans symptôme) → I (12 ticks) → mort (p = 0.3) ou guéri (R). Stimulus par créature :
+ * bit0 = je suis I (symptômes), bit1 = alerte reçue (5 ticks), bit2 = immunisé. Actions par EMIT v&3 :
+ * 1 alerter (rayon 2, coût 1), 2 s'isoler ce tick (ni contaminer ni être contaminé, coût 2),
+ * 3 se vacciner (S → R, coût 25). Score = morts évitées vs le MÊME pool rejoué sans effet des actions,
+ * × maintien de la population, − énergie dépensée / énergie mangée. */
+enum { PS_S = 0, PS_E, PS_I, PS_R };
+typedef struct { long deaths, cost, vacc, alerts, isol; } PdState;
+void hl_pd_init(Lab *l, World *w);
+static void pd_before(World *w, Creature *c) {
+    w->stimulus = (c->ls[1] == PS_I) | ((c->ls[4] > w->t) << 1) | ((c->ls[1] == PS_R) << 2);
+}
+void hl_pd_init(Lab *l, World *w) { l->ext = calloc(1, sizeof(PdState)); w->before_vm = pd_before; }
+int hl_pd_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "pandemic", 0); return 4; }
+void hl_pd_post(Lab *l, World *w) {
+    PdState *s = l->ext; int W = w->cfg.w, H = w->cfg.h;
+    if (!l->counterfactual)
+        for (int i = 0; i < w->nem; i++) {
+            Creature *c = w->em[i].c; int a = w->em[i].v & 3;
+            if (c->e <= 0) continue;
+            if (a == 1) { c->e -= 1; s->cost += 1; s->alerts++;
+                for (int j = 0; j < w->ncs; j++) if (w->cs[j] != c && cheb(c, w->cs[j], W, H) <= 2) w->cs[j]->ls[4] = (int)w->t + 5; }
+            else if (a == 2) { c->e -= 2; s->cost += 2; s->isol++; c->ls[3] = (int)w->t; }
+            else if (a == 3 && c->ls[1] == PS_S) { c->e -= 25; s->cost += 25; s->vacc++; c->ls[1] = PS_R; }
+        }
+    if (w->t == 20) {                                   /* patient(s) zéro */
+        for (int k = 0, tries = 0; k < 4 && w->ncs && tries < 100; tries++) {
+            Creature *c = w->cs[rng_below(w->rng, (uint32_t)w->ncs)];
+            if (c->ls[1] == PS_S) { c->ls[1] = PS_I; c->ls[2] = 12; k++; }
+        }
+    }
+    for (int i = 0; i < w->ncs; i++) {                  /* transmission */
+        Creature *c = w->cs[i];
+        if (c->ls[1] != PS_I || c->e <= 0 || c->ls[3] == w->t) continue;
+        for (int j = 0; j < w->ncs; j++) {
+            Creature *o = w->cs[j];
+            if (o->ls[1] != PS_S || o->ls[3] == w->t || o->e <= 0 || cheb(c, o, W, H) > 1) continue;
+            if (rng_double(w->rng) < 0.3) { o->ls[1] = PS_E; o->ls[2] = 4; }
+        }
+    }
+    for (int i = 0; i < w->ncs; i++) {                  /* progression */
+        Creature *c = w->cs[i];
+        if (c->ls[1] == PS_E && --c->ls[2] <= 0) { c->ls[1] = PS_I; c->ls[2] = 12; }
+        else if (c->ls[1] == PS_I && --c->ls[2] <= 0) {
+            if (rng_double(w->rng) < 0.3) { if (c->e > 0) { c->e = 0; s->deaths++; } }
+            else c->ls[1] = PS_R;
+        }
+    }
+}
+double hl_pd_fit(Lab *l, World *w, int ticks) {
+    PdState *s = l->ext;
+    double pm = 0; for (int i = 0; i < l->npops; i++) pm += l->pops[i];
+    pm /= ticks;
+    l->extra[0] = (double)s->deaths; l->extra[1] = pm;
+    if (l->counterfactual) return 0;
+    double ex[N_EXTRA]; replay(l, ticks, ex);
+    double d0 = ex[0], p0 = ex[1];
+    double avoided = (d0 - s->deaths) / fmax(d0, 5.0);
+    double cost = (double)s->cost / (w->st.energy_eaten + 1.0);
+    double f = avoided * fmin(1.0, p0 > 0 ? pm / p0 : 0) - cost;
+    l->extra[2] = d0; l->extra[3] = cost; l->extra[4] = (double)s->vacc; l->extra[5] = (double)s->isol;
+    return f;
+}
