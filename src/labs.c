@@ -7,14 +7,17 @@
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
 EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
+EXT(adn_fold)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
     BLOB("predator", adn_predator), BLOB("walk", adn_walk),
+    BLOB("fold", adn_fold),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
-                                      adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end };
+                                      adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end,
+                                      adn_fold_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -282,6 +285,10 @@ static int sel_org(Lab *l, World *w, PoolEntry *out) {
     return k;
 }
 
+/* labos humanité (src/labs_h.c) */
+void hl_rank_score(const Creature *c, double k[2]);
+void hl_fold_cfg(WorldConfig *c); int hl_fold_seeds(PoolEntry *o); double hl_fold_fit(Lab *l, World *w, int t); void hl_fold_initp(Lab *l, World *w);
+
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
     { "org-seeds", "Organiser d'autres seeds",
@@ -308,6 +315,10 @@ const LabDef LABS[N_LABS] = {
     { "predator-prey", "Proies (espèce 0) et prédateurs (espèce 1, ATTACK)",
       "fraction des ticks de coexistence × équilibre min(proies/20, préd/5)",
       { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp, NULL, 0 },
+    /* ---- humanité ---- */
+    { "fold", "Repliement de protéine (modèle HP 2D)",
+      "contacts H-H / optimum connu, moyenne sur 6 benchmarks ; baseline = marche auto-évitante aléatoire",
+      { "mean_score", "max_score", "baseline", "vs_baseline" }, hl_fold_cfg, hl_fold_seeds, NULL, NULL, hl_fold_fit, hl_rank_score, NULL, hl_fold_initp, 0 },
 };
 
 int lab_index(const char *name) {
@@ -322,7 +333,7 @@ void lab_init(Lab *l, int id, int max_ticks) {
     l->prey = calloc((size_t)max_ticks + 1, sizeof(int));
     l->pred = calloc((size_t)max_ticks + 1, sizeof(int));
 }
-void lab_free(Lab *l) { free(l->ext); l->ext = NULL; free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
+void lab_free(Lab *l) { if (l->ext_free) l->ext_free(l); free(l->ext); l->ext = NULL; free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
 void lab_pre(Lab *l, World *w) { if (l->def->pre) l->def->pre(l, w); }
 void lab_post(Lab *l, World *w) { if (l->def->post) l->def->post(l, w); }
 

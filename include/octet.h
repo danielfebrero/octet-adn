@@ -28,7 +28,7 @@
 #define GRID_H        32
 #define CMAX          1024   /* plafond dur de créatures par liste */
 #define N_EXTRA       6
-#define N_LABS        10
+#define N_LABS        11
 #define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */
 
 /* ---------------- RNG déterministe (xoshiro256**) ---------------- */
@@ -175,6 +175,7 @@ struct Lab {
     int counterfactual;                  /* 1 = rejouer sans interventions / paramètres fixes */
     const PoolEntry *pool0; int npool0; Rng rng0;
     void *ext;                           /* état alloué par le labo (libéré par lab_free) */
+    void (*ext_free)(struct Lab *l);     /* libère ce que ext contient (appelé avant free(ext)) */
     double acc[16];
 };
 

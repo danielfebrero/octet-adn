@@ -117,9 +117,9 @@ TEST(test_duplication_and_crossover) {
 }
 
 TEST(test_ten_labs_registered) {
-    const char *names[N_LABS] = { "org-seeds", "max-pop", "survival", "energy-eff", "self-rewrite",
+    const char *names[N_CORE_LABS] = { "org-seeds", "max-pop", "survival", "energy-eff", "self-rewrite",
                                   "emit-echo", "emit-dialog", "predict-walk", "predict-stock", "predator-prey" };
-    for (int i = 0; i < N_LABS; i++) assert(lab_index(names[i]) == i);
+    for (int i = 0; i < N_CORE_LABS; i++) assert(lab_index(names[i]) == i);
     assert(lab_index("nope") == -1);
     assert(dialog_reply(0x00) == 0xAC && dialog_reply(0x0F) == 0x00 && dialog_reply(5) == 6);
 }
