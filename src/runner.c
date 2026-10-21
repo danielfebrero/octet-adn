@@ -39,12 +39,45 @@ static int write_file(const char *path, const uint8_t *p, int n) {
     return (fclose(f) == 0 && w == (size_t)n) ? 0 : -1;
 }
 
+/* Écart à la baseline du dernier cycle enregistré. Pandemic : la fitness EST l'écart. */
+static double humanity_gap(int id, const MetricRec *r) {
+    const char *n = LABS[id].name;
+    if (!strcmp(n, "fold")) return r->extra[3];
+    if (!strcmp(n, "antibiotic")) return r->extra[5];
+    if (!strcmp(n, "commons")) return r->extra[4];
+    if (!strcmp(n, "pandemic")) return r->fitness;
+    if (!strcmp(n, "code-repair")) return r->extra[5];
+    if (!strcmp(n, "self-evolve")) return r->extra[1];
+    return 0;
+}
+
 int collect_foreign(const char *dir, PoolEntry *out) {
     int n = 0;
     for (int i = 1; i < N_CORE_LABS; i++) {            /* labos historiques sauf org-seeds, ordre du registre */
         char p[4096]; Checkpoint ck;
         snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
         if (ck_load(p, &ck) == 0 && ck.has_best) out[n++] = ck.best;
+    }
+    /* Un champion humanité n'entre que si son dernier vs_baseline est positif.
+     * Le génome importé est celui du pool (celui que la métrique a mesuré), pas le
+     * sommet d'un cycle que la sélection appariée a refusé. Il prend la 8e place. */
+    PoolEntry champ; int have = 0; double best_gap = 0;
+    for (int i = N_CORE_LABS; i < N_LABS; i++) {
+        char p[4096]; Checkpoint ck;
+        snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
+        if (ck_load(p, &ck) || !ck.has_best) continue;
+        snprintf(p, sizeof p, "%s/%s/metrics.bin", dir, LABS[i].name);
+        MetricRec *v = NULL; int m = met_read(p, &v);
+        double gap = (m > 0) ? humanity_gap(i, &v[m - 1]) : 0;
+        free(v);
+        if (gap > best_gap) {
+            best_gap = gap; have = 1;
+            champ = ck.npool > 0 ? ck.pool[0] : ck.best;
+        }
+    }
+    if (have) {
+        if (n >= 8) out[7] = champ;
+        else out[n++] = champ;
     }
     return n;
 }

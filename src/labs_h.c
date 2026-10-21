@@ -134,9 +134,12 @@ static int sel_species0(Lab *l, World *w, PoolEntry *out) {
     (void)l;
     Creature *v[CMAX]; int n = 0, k = 0;
     for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
-    for (int i = 1; i < n; i++) {                       /* tri stable décroissant (énergie, âge) */
+    for (int i = 1; i < n; i++) {                       /* contribution (lscore), puis énergie, puis âge */
         Creature *c = v[i]; int j = i - 1;
-        while (j >= 0 && (v[j]->e < c->e || (v[j]->e == c->e && v[j]->age < c->age))) { v[j + 1] = v[j]; j--; }
+        while (j >= 0 && (v[j]->lscore < c->lscore
+               || (v[j]->lscore == c->lscore && (v[j]->e < c->e || (v[j]->e == c->e && v[j]->age < c->age))))) {
+            v[j + 1] = v[j]; j--;
+        }
         v[j + 1] = c;
     }
     for (int i = 0; i < n && k < POOL_SIZE; i++) {
@@ -156,7 +159,10 @@ static int sel_species0(Lab *l, World *w, PoolEntry *out) {
 #define AB_HOSTS 40
 #define AB_PATH  12
 #define AB_KEY_MUT 0.15   /* prob. qu'un pathogène né change de cible (virus à ARN) */
-typedef struct { int esc_t, erad_t, peak; long damage; } AbState;
+typedef struct {
+    int esc_t, erad_t, peak; long damage;
+    PoolEntry champ; double champ_ls; int has_champ;   /* meilleur apport vivant ou mort */
+} AbState;
 static int ab_key(const Creature *c) { return c->dna[0] & 7; }
 void hl_ab_cfg(WorldConfig *c) { c->max_pop = 260; c->attack_steal = 6; }
 int hl_ab_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "antibiotic", 0); return 4; }
@@ -208,8 +214,15 @@ void hl_ab_post(Lab *l, World *w) {
         for (int j = 0; j < w->ncs; j++) {
             Creature *o = w->cs[j];
             if (o->e <= 0 || cheb(a, o, w->cfg.w, w->cfg.h) > 1) continue;
-            if (o->species == 1 && ab_key(o) == drug) o->e = 0;
-            else if (o->species == 2) { o->e -= 1; s->damage++; }
+            if (o->species == 1 && ab_key(o) == drug) { o->e = 0; a->lscore += 1; }
+            else if (o->species == 2) { o->e -= 1; s->damage++; a->lscore -= 0.25; }
+        }
+        /* Le corps meurt souvent (coût du médicament). Le pic positif reste : c'est ce génome
+         * qui a fait le travail, pas le glouton encore en vie à score nul. */
+        if (a->lscore > s->champ_ls) {
+            s->champ_ls = a->lscore; s->has_champ = 1;
+            s->champ.species = 0; s->champ.len = a->len;
+            memcpy(s->champ.dna, a->dna, (size_t)a->len);
         }
     }
 }
@@ -224,14 +237,26 @@ double hl_ab_fit(Lab *l, World *w, int ticks) {
     if (!l->counterfactual) { l->extra[4] = replay(l, ticks, NULL); l->extra[5] = f - l->extra[4]; }
     return f;
 }
-int hl_ab_sel(Lab *l, World *w, PoolEntry *out) { return sel_species0(l, w, out); }
+int hl_ab_sel(Lab *l, World *w, PoolEntry *out) {
+    int n = sel_species0(l, w, out);
+    AbState *s = l->ext;
+    if (!s->has_champ || s->champ_ls <= 0) return n;
+    double top = 0;
+    for (int i = 0; i < w->ncs; i++)
+        if (w->cs[i]->species == 0 && w->cs[i]->lscore > top) top = w->cs[i]->lscore;
+    if (s->champ_ls <= top) return n;                   /* un vivant porte déjà mieux */
+    if (n < POOL_SIZE) n++;
+    for (int i = n - 1; i > 0; i--) out[i] = out[i - 1];
+    out[0] = s->champ;
+    return n;
+}
 
 /* ======================= 3. commons : biens communs =======================
  * Horizon 5 × ticks. Chaque case a une capacité (14) ; la nourriture repousse en logistique
  * (rien ne repousse d'une case vide). Vider une case (stock → 0) lui retire 4 de capacité POUR
  * TOUJOURS ; capacité 0 = case morte. Pas de repousse aléatoire globale. */
 typedef struct { uint8_t cap[GRID_H][GRID_W], snap[GRID_H][GRID_W]; long r0; } CmState;
-void hl_cm_cfg(WorldConfig *c) { c->food_density = 1.0; c->food_regrow = 0; c->max_pop = 150; }
+void hl_cm_cfg(WorldConfig *c) { c->food_density = 1.0; c->food_regrow = 0; c->max_pop = 150; c->eat_guard = 1; }
 int hl_cm_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "commons", 0); return 4; }
 static long cm_cap(const World *w, const CmState *s) {
     long r = 0;
@@ -305,9 +330,11 @@ void hl_pd_post(Lab *l, World *w) {
             Creature *c = w->em[i].c; int a = w->em[i].v & 3;
             if (c->e <= 0) continue;
             if (a == 1) { c->e -= 1; s->cost += 1; s->alerts++;
+                if (c->ls[1] == PS_I) c->lscore += 0.25;
                 for (int j = 0; j < w->ncs; j++) if (w->cs[j] != c && cheb(c, w->cs[j], W, H) <= 2) w->cs[j]->ls[4] = (int)w->t + 5; }
-            else if (a == 2) { c->e -= 2; s->cost += 2; s->isol++; c->ls[3] = (int)w->t; }
-            else if (a == 3 && c->ls[1] == PS_S) { c->e -= 25; s->cost += 25; s->vacc++; c->ls[1] = PS_R; }
+            else if (a == 2) { c->e -= 2; s->cost += 2; s->isol++; c->ls[3] = (int)w->t;
+                if (c->ls[1] == PS_I) c->lscore += 1; }
+            else if (a == 3 && c->ls[1] == PS_S) { c->e -= 25; s->cost += 25; s->vacc++; c->lscore += 0.5; c->ls[1] = PS_R; }
         }
     if (w->t == 20) {                                   /* cas index : les 8 plus petits hachages d'id */
         for (int k = 0; k < 8; k++) {
@@ -504,7 +531,7 @@ void hl_se_post(Lab *l, World *w) {
         Creature *c = w->em[i].c;
         int d = abs((w->em[i].v & 15) - s->R);           /* récompense graduée : la dérive ±1 peut grimper */
         c->e += d < 4 ? 6 - 2 * d : -1; cap_e(c);
-        if (d < 4) s->corr[g] += 1.0 - d / 4.0;
+        if (d < 4) { double cred = 1.0 - d / 4.0; s->corr[g] += cred; c->lscore += cred; }
     }
     s->ct[g] += w->ncs;
 }

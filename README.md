@@ -105,7 +105,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 
 | # | labo | objectif | fitness |
 |---|---|---|---|
-| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos historiques (crossover) ; lignées distinctes viables (clusters Hamming) × diversité |
+| 1 | `org-seeds` | organiser d'autres seeds | reçoit les champions des 9 autres labos historiques (les 8 premiers utilisés) ; le génome du pool humanité au plus grand `vs_baseline` > 0 remplace le 8e ; lignées distinctes viables (clusters Hamming) × diversité |
 | 2 | `max-pop` | population la plus haute | population moyenne + 10 % du pic |
 | 3 | `survival` | longévité | espérance de vie moyenne × fraction du cycle survécue (monde pauvre) |
 | 4 | `energy-eff` | efficacité métabolique | énergie mangée / créature-tick |
@@ -132,7 +132,7 @@ vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
 | 13 | `commons` | tragédie des biens communs | pop. moyenne (2e moitié d'un horizon 5×) / 100 × capacité restante | fourrageur glouton |
 | 14 | `pandemic` | épidémie SEIR | morts évitées vs même pool sans effet des actions × maintien pop − coût | rejeu sans actions |
 | 15 | `code-repair` | réparation automatique de bugs | patients réparés (équivalence sur 256 entrées) / résolus, +0.5 × patch minimal | flips aléatoires sans retour arrière |
-| 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 50 ticks | même pool, paramètres d'évolution fixes |
+| 16 | `self-evolve` | évolvabilité | justesse des EMIT / créature-tick, moyenne sur des régimes de 25 ticks | même pool, paramètres d'évolution fixes |
 
 **fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
 H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,
@@ -165,15 +165,25 @@ locale bit à bit avec retour arrière (generate-and-validate).
 **self-evolve.** Les octets 2..5 du génome sont ses paramètres d'évolution, lus à chaque SPLIT
 (`mutate_evo`, uniquement quand `cfg.self_evo`) : substitution ≤ 12 %, indel ≤ 6 %, crossover on/off,
 zone protégée ≤ 16 octets et ≤ la moitié du génome. Une cible 0..15 change toutes les 25 ticks (tirée
-par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. Les
-moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`, `indel_rate`,
-`crossover`, `protected`).
+par la graine du cycle) ; `EMIT v` rapporte 6 − 2·|v − R| si l'écart est < 4, sinon coûte 1. La cible
+n'est pas observable : la seed remet les octets 2 et 3 à 0 à chaque tick (substitution et indel nuls),
+mange, avance et se divise s'il y a de la nourriture devant, sinon se tourne, puis `EMIT 5`. Les enfants
+restent ce programme. Le rejeu à 2 % et 5 % de duplication le casse. Sur les 4 graines du test l'écart
+est +0.055 (les quatre positives). Sur 8 graines (`test:self-evolve:0..7`) la moyenne est −0.010 : le
+bruit d'une graine dépasse le gain. Les moyennes des paramètres dans la population finale sont dans `status.md` (`mut_rate`,
+`indel_rate`, `crossover`, `protected`).
+
+**Qui se reproduit.** `commons`, `pandemic`, `antibiotic` et `self-evolve` ne classent plus par
+l'énergie. `commons` baisse le score d'un génome qui mange une case sous 8 ou qui la vide.
+`antibiotic` crédite une cible tuée et débite les hôtes abîmés ; si le corps meurt, le pic positif de son génome reste en tête du pool. `pandemic` crédite l'isolement et
+l'alerte pendant la phase infectieuse. `self-evolve` crédite la justesse de l'`EMIT`. À score égal,
+l'énergie départage.
 
 **Exploits testés et fermés** (`test_new_labs_exploits_closed`) : ne rien faire (fold, commons,
 code-repair → 0 ; pandemic → ≈ 0 malgré zéro mort, car la population n'est pas maintenue) ; tuer les
 hôtes pour affamer le pathogène (→ 0, facteur hôtes vivants) ; arroser des 8 médicaments (dégâts) ;
-vacciner ou s'isoler en permanence (coût) ; balayer 0..15 dans self-evolve ; geler l'évolution
-(mutation 0 : perd dès que la cible change) ; surapprendre les 16 tests de code-repair (refusé par
+vacciner ou s'isoler en permanence (coût) ; balayer 0..15 dans self-evolve ; geler les octets 2 et 3
+(la seed les remet déjà à 0, le score ne bouge pas) ; surapprendre les 16 tests de code-repair (refusé par
 l'équivalence sur 256 entrées) ; sélectionner des pathogènes faibles (ils ne sont pas dans le pool).
 
 **Sélection entre cycles (appariée, robuste au bruit)** : après le cycle, le nouveau pool
@@ -242,9 +252,13 @@ appel réseau.**
 - Le moteur est du C compilé, pas de l'assembleur écrit à la main octet par octet : ce qui
   est « octet only », ce sont le produit livré (un ELF), les génomes et toutes les données.
 - Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart) : `fold`, `antibiotic`,
-  `commons` et `code-repair` battent nettement leur baseline. **`self-evolve`** : la seed bat les
-  paramètres fixes (+0.08), mais après 40 cycles les pools évolués font un peu moins bien que le même
-  pool rejoué à paramètres fixes (−0.01 à −0.09) : la population pousse sa zone protégée au maximum
-  (16 o), ce qui gèle aussi ses propres paramètres (octets 2..5). **`pandemic`** : très bruité (sd ≈ 0.24
+  `commons` et `code-repair` battent nettement leur baseline. **`self-evolve`** : la seed verrouille
+  mutation et indel à 0 puis `EMIT 5`. Écart +0.055 sur les 4 graines du test, −0.010 sur 8 graines
+  (`test:self-evolve:0..7`, 3 graines négatives). Les octets 2..5 ne sont plus gelés par la zone
+  protégée (ils dérivent toujours à 10 %, la seed réécrit 2 et 3). **`code-repair`** : sur 12 cycles
+  le pool reste la seed (0 acceptation) et son écart aux flips aléatoires vaut +0.329 sur 8 graines
+  tenues à l'écart. Sur 24 cycles, toujours 0 acceptation : les survivants d'un cycle ne généralisent
+  pas. `champion.adn` peut être ce sommet refusé ; `org-seeds` importe le génome du pool.
+  **`pandemic`** : très bruité (sd ≈ 0.24
   sur 8 graines, le rejeu contrefactuel diverge), et les pools évolués (≈ 0.02 à 0.08) font moins bien
-  que la seed (0.28). Les deux sont des chantiers ouverts, pas des résultats.
+  que la seed (0.28). Self-evolve sur 8 graines et pandemic restent des chantiers ouverts.

@@ -84,6 +84,7 @@ typedef struct {
     int pred_metab;       /* métabolisme supplémentaire par tick des prédateurs */
     int pred_max_age;     /* plafond d'âge des prédateurs (0 = aucun) */
     int self_evo;         /* self-evolve : paramètres de mutation lus dans le génome à SPLIT (0 = constantes) */
+    int eat_guard;        /* commons : 1 = manger une case < 8 ou la vider baisse lscore (0 ailleurs) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 

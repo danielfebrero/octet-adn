@@ -10,6 +10,7 @@
 
 int hamming128(const uint8_t *a, int la, const uint8_t *b, int lb);
 int dialog_reply(int s);
+void hl_se_init(Lab *l, World *w);
 static int passed;
 #define TEST(name) static void name(void)
 #define RUN(name) do { name(); printf("ok  %s\n", #name); passed++; } while (0)
@@ -360,7 +361,9 @@ TEST(test_evo_params_bounded) {
     assert(mutate_evo(g, 40, &r, &z, out) == 40 && !memcmp(out, g, 40));      /* taux 0 = copie exacte */
     EvoParams all = { 1.0, 0, 0, 12 };
     mutate_evo(g, 40, &r, &all, out);
-    assert(!memcmp(out, g, 12) && memcmp(out + 12, g + 12, 28));              /* zone protégée intacte */
+    /* octets 2..5 dérivent toujours (EVO_META), même sous une zone protégée de 12 */
+    assert(!memcmp(out, g, 2) && !memcmp(out + 6, g + 6, 6));
+    assert(memcmp(out + 12, g + 12, 28));
 }
 
 TEST(test_new_labs_beat_naive_baselines) {
@@ -369,13 +372,14 @@ TEST(test_new_labs_beat_naive_baselines) {
     n = LABS[lab_index("fold")].seeds(p);        double fo = ev4("fold", p, n, ex);       assert(fo > ex[2]);   /* > marche aléatoire */
     n = LABS[lab_index("antibiotic")].seeds(p);  double ab = ev4("antibiotic", p, n, ex); assert(ab > ex[4] + 0.2);
     n = LABS[lab_index("commons")].seeds(p);     double cm = ev4("commons", p, n, ex);    assert(cm > ex[3] + 0.05);
-    n = LABS[lab_index("pandemic")].seeds(p);    double pd = ev4("pandemic", p, n, ex);   double pdf = ev4("pandemic", f4, 4, NULL); fprintf(stderr, "    pandemic seed=%.3f forager=%.3f\n", pd, pdf); assert(pd > 0.2 && pd > pdf);
+    n = LABS[lab_index("pandemic")].seeds(p);    double pd = ev4("pandemic", p, n, ex);   double pdf = ev4("pandemic", f4, 4, NULL); assert(pd > 0.2 && pd > pdf);
     n = LABS[lab_index("code-repair")].seeds(p); double cr = ev4("code-repair", p, n, ex); assert(cr > ex[4] + 0.1);
     n = LABS[lab_index("self-evolve")].seeds(p); double se = ev4("self-evolve", p, n, ex);
+    assert(ex[1] > 0);                                                      /* bat le moteur fixe 2 % / 5 % */
     for (int k = 0; k < n; k++) { p[k].dna[2] = 0; p[k].dna[3] = 0; }
     double gel = ev4("self-evolve", p, n, NULL);
-    assert(se > gel);                                                       /* mutation 0 = gel : perd */
-    printf("    fold=%.3f antibiotic=%.3f commons=%.3f pandemic=%.3f code-repair=%.3f self-evolve=%.3f (gel %.3f)\n", fo, ab, cm, pd, cr, se, gel);
+    assert(fabs(se - gel) < 1e-9);                                          /* la seed écrit déjà 0 dans 2 et 3 */
+    printf("    fold=%.3f antibiotic=%.3f commons=%.3f pandemic=%.3f code-repair=%.3f self-evolve=%.3f vs=%+.3f\n", fo, ab, cm, pd, cr, se, ex[1]);
 }
 
 TEST(test_new_labs_exploits_closed) {
@@ -409,6 +413,148 @@ TEST(test_resume_legacy_checkpoints_with_16_labs) {
     assert(system(cmd) == 0);
 }
 
+static PoolEntry cycle_top(const char *lab, PoolEntry *pool, int n, int ticks) {
+    int id = lab_index(lab);
+    Lab l; lab_init(&l, id, ticks);
+    Rng r; rng_seed(&r, 1);
+    static CycleResult res;
+    run_cycle(&l, pool, n, &r, ticks, &res);
+    assert(res.nnew > 0);
+    PoolEntry top = res.newpool[0];
+    world_free(res.w); lab_free(&l);
+    return top;
+}
+
+TEST(test_contribution_outranks_energy) {
+    /* Le glouton (forager) et le muet énergétique ne doivent plus passer devant
+     * la seed qui fait le travail du labo. */
+    PoolEntry pool[4], commons, fora, anti, top;
+    seed_entry(&commons, "commons", 0); seed_entry(&fora, "forager", 0); seed_entry(&anti, "antibiotic", 0);
+    for (int i = 0; i < 2; i++) pool[i] = fora;
+    for (int i = 2; i < 4; i++) pool[i] = commons;
+    top = cycle_top("commons", pool, 4, 16);   /* ×5 : 80 ticks, la population est encore là */
+    assert(hamming128(top.dna, top.len, commons.dna, commons.len) < hamming128(top.dna, top.len, fora.dna, fora.len));
+    for (int i = 0; i < 2; i++) pool[i] = fora;
+    for (int i = 2; i < 4; i++) pool[i] = anti;
+    top = cycle_top("antibiotic", pool, 4, 80);
+    assert(hamming128(top.dna, top.len, anti.dna, anti.len) < hamming128(top.dna, top.len, fora.dna, fora.len));
+    PoolEntry pand; seed_entry(&pand, "pandemic", 0);
+    for (int i = 0; i < 2; i++) pool[i] = fora;
+    for (int i = 2; i < 4; i++) pool[i] = pand;
+    top = cycle_top("pandemic", pool, 4, 80);
+    assert(hamming128(top.dna, top.len, pand.dna, pand.len) < hamming128(top.dna, top.len, fora.dna, fora.len));
+}
+
+TEST(test_selfevo_seed_writes_rates) {
+    PoolEntry s; seed_entry(&s, "selfevo", 0);
+    int saw2 = 0, saw3 = 0;
+    for (int i = 0; i + 1 < s.len; i++) {
+        if (s.dna[i] == OP_STORE && s.dna[i + 1] == 2) saw2 = 1;
+        if (s.dna[i] == OP_STORE && s.dna[i + 1] == 3) saw3 = 1;
+    }
+    assert(saw2 && saw3);
+    uint8_t b2 = s.dna[2], b3 = s.dna[3];
+    int id = lab_index("self-evolve");
+    Lab l; lab_init(&l, id, 40);
+    Rng r; rng_seed(&r, 3);
+    WorldConfig cfg = cfg_default(); cfg.split_energy = 1000;   /* pas de SPLIT : seul STORE réécrit 2..3 */
+    World *w = world_new(&s, 1, &r, &cfg, &l);
+    hl_se_init(&l, w);
+    for (int t = 0; t < 30 && w->ncs; t++) world_step(w);
+    assert(w->ncs == 1);
+    assert(w->cs[0]->dna[2] != b2 || w->cs[0]->dna[3] != b3);
+    world_free(w); lab_free(&l);
+}
+
+TEST(test_foreign_admits_only_positive_gap) {
+    char d[] = "/tmp/oadn-fr-XXXXXX"; assert(mkdtemp(d));
+    char cmd[800];
+    snprintf(cmd, sizeof cmd, "mkdir -p %s/max-pop/checkpoints %s/fold/checkpoints %s/code-repair/checkpoints", d, d, d);
+    assert(system(cmd) == 0);
+    Checkpoint ck; memset(&ck, 0, sizeof ck); ck.has_best = 1; ck.cycle = 1;
+    seed_entry(&ck.best, "forager", 0); ck.lab_id = lab_index("max-pop");
+    char p[512]; snprintf(p, sizeof p, "%s/max-pop/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    seed_entry(&ck.best, "fold", 0); ck.lab_id = lab_index("fold");
+    snprintf(p, sizeof p, "%s/fold/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    seed_entry(&ck.best, "repair", 0); ck.lab_id = lab_index("code-repair");
+    snprintf(p, sizeof p, "%s/code-repair/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    MetricRec rec; memset(&rec, 0, sizeof rec);
+    rec.lab_id = (uint8_t)lab_index("fold"); rec.extra[3] = -0.4;
+    snprintf(p, sizeof p, "%s/fold/metrics.bin", d); assert(met_append(p, &rec) == 0);
+    memset(&rec, 0, sizeof rec);
+    rec.lab_id = (uint8_t)lab_index("code-repair"); rec.extra[5] = 0.2;
+    snprintf(p, sizeof p, "%s/code-repair/metrics.bin", d); assert(met_append(p, &rec) == 0);
+    PoolEntry out[16], repair, fold, fora;
+    seed_entry(&repair, "repair", 0); seed_entry(&fold, "fold", 0); seed_entry(&fora, "forager", 0);
+    int n = collect_foreign(d, out);
+    assert(n == 2);
+    assert(!memcmp(out[0].dna, fora.dna, (size_t)fora.len));
+    assert(!memcmp(out[1].dna, repair.dna, (size_t)repair.len));
+    assert(memcmp(out[1].dna, fold.dna, 8));
+    /* Le sommet d'un cycle refusé (best) ne passe pas devant le pool mesuré. */
+    seed_entry(&ck.best, "forager", 0);
+    seed_entry(&ck.pool[0], "repair", 0); ck.npool = 1; ck.has_best = 1;
+    snprintf(p, sizeof p, "%s/code-repair/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    n = collect_foreign(d, out);
+    assert(n == 2 && !memcmp(out[1].dna, repair.dna, (size_t)repair.len));
+    assert(memcmp(out[1].dna, fora.dna, 8));
+    /* écart négatif : le champion humanité reste dehors */
+    rec.extra[5] = -0.05; snprintf(p, sizeof p, "%s/code-repair/metrics.bin", d); unlink(p); assert(met_append(p, &rec) == 0);
+    n = collect_foreign(d, out);
+    assert(n == 1 && !memcmp(out[0].dna, fora.dna, (size_t)fora.len));
+    snprintf(cmd, sizeof cmd, "rm -rf %s", d); assert(system(cmd) == 0);
+}
+
+TEST(test_code_repair_pool_beats_flips) {
+    /* Après 12 cycles, le pool bat les flips aléatoires sur 8 graines tenues à l'écart.
+     * La sélection peut garder la seed : l'écart mesuré est celui du pool réel. */
+    char d[] = "/tmp/oadn-cr-XXXXXX"; assert(mkdtemp(d));
+    RunOpts o = { .ticks = 200, .cycles = 12, .quiet = 1, .no_reload = 1, .data_dir = d };
+    int id = lab_index("code-repair");
+    o.labs[o.nlabs++] = id;
+    assert(runner(&o, NULL, 0) == 12);
+    char p[512]; snprintf(p, sizeof p, "%s/code-repair/checkpoints/latest.ck", d);
+    static Checkpoint ck; assert(ck_load(p, &ck) == 0 && ck.npool > 0);
+    PoolEntry seed[4]; int ns = LABS[id].seeds(seed);
+    int replaced = ck.npool != ns || memcmp(ck.pool[0].dna, seed[0].dna, (size_t)seed[0].len);
+    double gap = 0;
+    for (int j = 0; j < 8; j++) {
+        char key[64]; snprintf(key, sizeof key, "holdout:code-repair:%d", j);
+        double ex[N_EXTRA];
+        pool_eval_x(id, ck.pool, ck.npool, key, 200, NULL, 0, ex);
+        gap += ex[5] / 8;
+    }
+    printf("    code-repair 12 cycles : vs_baseline moyen = %+.4f  pool_remplace=%d\n", gap, replaced);
+    assert(gap > 0);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d);
+    assert(system(cmd) == 0);
+}
+
+/* 1 cycle, 50 ticks, graine 0. Relevés sur origin/main 9b57fb9. */
+TEST(test_core_state_hash_matches_main) {
+    static const struct { const char *name; uint64_t hash; } want[] = {
+        { "org-seeds",     0xa0fa0608f5856113ULL },
+        { "max-pop",       0x5c214ea538538273ULL },
+        { "survival",      0x12191814d6e72613ULL },
+        { "energy-eff",    0x45073d51311ff435ULL },
+        { "self-rewrite",  0xc02ecc32b6826a19ULL },
+        { "emit-echo",     0x40a3793d144cd485ULL },
+        { "emit-dialog",   0xfa6b54894526b4b0ULL },
+        { "predict-walk",  0x06a9b0fb1ac9fd67ULL },
+        { "predict-stock", 0xdb8a47db549d815cULL },
+        { "predator-prey", 0x7cdfa8ae1a89366eULL },
+    };
+    RunOpts o = { .ticks = 50, .cycles = 1, .quiet = 1, .no_reload = 1, .dry_run = 1,
+                  .data_dir = "/tmp/unused-hash" };
+    for (int i = 0; i < 10; i++) o.labs[o.nlabs++] = lab_index(want[i].name);
+    MetricRec rows[10];
+    assert(runner(&o, rows, 10) == 10);
+    for (int i = 0; i < 10; i++) {
+        assert(rows[i].lab_id == o.labs[i]);
+        assert(rows[i].state_hash == want[i].hash);
+    }
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -434,6 +580,11 @@ int main(void) {
     RUN(test_new_labs_beat_naive_baselines);
     RUN(test_new_labs_exploits_closed);
     RUN(test_resume_legacy_checkpoints_with_16_labs);
-    printf("\n%d/%d tests OK\n", passed, 24);
+    RUN(test_contribution_outranks_energy);
+    RUN(test_selfevo_seed_writes_rates);
+    RUN(test_foreign_admits_only_positive_gap);
+    RUN(test_code_repair_pool_beats_flips);
+    RUN(test_core_state_hash_matches_main);
+    printf("\n%d/%d tests OK\n", passed, 29);
     return 0;
 }

@@ -11,7 +11,7 @@ WorldConfig cfg_default(void) {
     WorldConfig c = { .w = 48, .h = 20, .food_density = 0.35, .food_regrow = 4, .max_pop = 120,
                       .split_energy = 70, .start_energy = 160, .mut_rate = 0.02, .dup_rate = 0.05,
                       .crossover = 0, .pred_eat_factor = 0.2, .attack_steal = 30,
-                      .attack_cost = 1, .pred_metab = 0, .pred_max_age = 0 };
+                      .attack_cost = 1, .pred_metab = 0, .pred_max_age = 0, .eat_guard = 0 };
     return c;
 }
 
@@ -81,7 +81,8 @@ void world_move(World *w, Creature *c) {
     c->steps++;
 }
 void world_eat(World *w, Creature *c) {
-    int take = w->food[c->y][c->x];
+    int before = w->food[c->y][c->x];
+    int take = before;
     if (take > 6) take = 6;
     if (!take) return;
     w->food[c->y][c->x] -= (uint8_t)take;
@@ -89,6 +90,10 @@ void world_eat(World *w, Creature *c) {
     c->e = c->e + gain > 220 ? 220 : c->e + gain;
     c->eaten += gain;
     w->st.energy_eaten += gain;
+    /* commons seulement : la seed ne mange qu'une case ≥ 8. Un glouton qui vide ou
+     * entame une case plus basse marque son génome, la file des parents le voit. */
+    if (w->cfg.eat_guard && c->species == 0 && (before < 8 || w->food[c->y][c->x] == 0))
+        c->lscore -= 1;
 }
 static int near(const Creature *a, const Creature *b) { return abs(a->x - b->x) <= 1 && abs(a->y - b->y) <= 1; }
 void world_split(World *w, Creature *c) {
