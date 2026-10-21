@@ -182,8 +182,8 @@ l'équivalence sur 256 entrées) ; sélectionner des pathogènes faibles (ils ne
 s'il fait au moins aussi bien en moyenne ; sinon l'ancien pool est retenté avec un autre aléa.
 L'ancienne règle (« garder si ≥ 90 % du meilleur historique », qui gelait un labo derrière un
 pic chanceux) reste disponible via `--select legacy`. Coût : ~9 cycles simulés par labo et
-par cycle (≈ 0,31 s CPU pour les 10 labos historiques, ≈ 0,95 s pour les 16 ; commons tourne sur 5 × ticks et
-antibiotic, commons, pandemic, code-repair, self-evolve rejouent une baseline). Les labos de communication / prédiction donnent aussi de l'énergie aux
+par cycle (≈ 0,31 s CPU pour les 10 labos historiques, ≈ 1,3 s pour les 16 ; commons tourne sur 5 × ticks,
+antibiotic, commons, code-repair rejouent une baseline, pandemic et self-evolve 4 paires appariées). Les labos de communication / prédiction donnent aussi de l'énergie aux
 bonnes réponses : la sélection naturelle agit dans le monde.
 
 **La « popote » partagée** : les 10 labos tournent dans le même binaire. Si on recompile
