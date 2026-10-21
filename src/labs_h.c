@@ -272,23 +272,35 @@ double hl_cm_fit(Lab *l, World *w, int ticks) {
 }
 
 /* ======================= 4. pandemic : contagion SEIR =======================
- * À t = 20, 8 créatures sont infectées. Infectieux (I) → sain (S) à Chebyshev ≤ 1 : p = 0.3 / tick →
- * exposé (E, 3 ticks, sans symptôme) → I (12 ticks) → mort (p = 0.3) ou guéri (R). Stimulus par créature :
- * bit0 = je suis I (symptômes), bit1 = alerte reçue (5 ticks), bit2 = immunisé. Actions par EMIT v&3 :
- * 1 alerter (rayon 2, coût 1), 2 s'isoler ce tick (ni contaminer ni être contaminé, coût 2),
- * 3 se vacciner (S → R, coût 25). Score = morts évitées vs le MÊME pool rejoué sans effet des actions,
- * × maintien de la population, − énergie dépensée / énergie mangée. */
+ * À t = 20, 8 cas index. Infectieux (I) → sain (S) à Chebyshev ≤ 1 : p = 0.3 / tick → exposé (E, 3 ticks,
+ * sans symptôme) → I (12 ticks) → mort (p = 0.3) ou guéri (R). Stimulus par créature : bit0 = je suis I,
+ * bit1 = alerte reçue (5 ticks), bit2 = immunisé. Actions par EMIT v&3 : 1 alerter (rayon 2, coût 1),
+ * 2 s'isoler ce tick (ni contaminer ni être contaminé, coût 2), 3 se vacciner (S → R, coût 25).
+ * Nombres aléatoires communs : chaque tirage épidémique (contagion par paire d'agents et par tick,
+ * issue de la maladie, cas index) est un hachage (clé d'épidémie, ids, tick), indépendant des actions
+ * et du RNG du monde. Score = moyenne sur PD_REPS paires appariées (même graine avec / sans effet des
+ * actions) de : morts évitées / max(morts sans actions, 10) × maintien pop − énergie des actions / mangée. */
+#define PD_REPS 4
 enum { PS_S = 0, PS_E, PS_I, PS_R };
-typedef struct { long deaths, cost, vacc, alerts, isol; } PdState;
+typedef struct { long deaths, cost, vacc, alerts, isol; uint64_t key; } PdState;
+static double pd_u(uint64_t key, uint64_t a, uint64_t b, uint64_t t) {   /* uniforme [0,1) haché */
+    uint64_t z = key ^ (a * 0x9E3779B97F4A7C15ULL) ^ (b * 0xC2B2AE3D27D4EB4FULL) ^ (t * 0x165667B19E3779F9ULL);
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL; z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL; z ^= z >> 31;
+    return (double)(z >> 11) * 0x1.0p-53;
+}
 void hl_pd_init(Lab *l, World *w);
 static void pd_before(World *w, Creature *c) {
     w->stimulus = (c->ls[1] == PS_I) | ((c->ls[4] > w->t) << 1) | ((c->ls[1] == PS_R) << 2);
 }
-void hl_pd_init(Lab *l, World *w) { l->ext = calloc(1, sizeof(PdState)); w->before_vm = pd_before; }
+void hl_pd_init(Lab *l, World *w) {
+    PdState *s = calloc(1, sizeof *s);
+    s->key = fnv1a(l->rng0.s, sizeof l->rng0.s, FNV_INIT);   /* identique dans les deux runs d'une paire */
+    l->ext = s; w->before_vm = pd_before;
+}
 int hl_pd_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "pandemic", 0); return 4; }
 void hl_pd_post(Lab *l, World *w) {
     PdState *s = l->ext; int W = w->cfg.w, H = w->cfg.h;
-    if (!l->counterfactual)
+    if (l->counterfactual != 1)
         for (int i = 0; i < w->nem; i++) {
             Creature *c = w->em[i].c; int a = w->em[i].v & 3;
             if (c->e <= 0) continue;
@@ -297,10 +309,16 @@ void hl_pd_post(Lab *l, World *w) {
             else if (a == 2) { c->e -= 2; s->cost += 2; s->isol++; c->ls[3] = (int)w->t; }
             else if (a == 3 && c->ls[1] == PS_S) { c->e -= 25; s->cost += 25; s->vacc++; c->ls[1] = PS_R; }
         }
-    if (w->t == 20) {                                   /* patient(s) zéro */
-        for (int k = 0, tries = 0; k < 8 && w->ncs && tries < 100; tries++) {
-            Creature *c = w->cs[rng_below(w->rng, (uint32_t)w->ncs)];
-            if (c->ls[1] == PS_S) { c->ls[1] = PS_I; c->ls[2] = 12; k++; }
+    if (w->t == 20) {                                   /* cas index : les 8 plus petits hachages d'id */
+        for (int k = 0; k < 8; k++) {
+            Creature *best = NULL; double bu = 2;
+            for (int i = 0; i < w->ncs; i++) {
+                Creature *c = w->cs[i];
+                if (c->ls[1] != PS_S || c->e <= 0) continue;
+                double u = pd_u(s->key, (uint64_t)c->id, 7, 0);
+                if (u < bu) { bu = u; best = c; }
+            }
+            if (best) { best->ls[1] = PS_I; best->ls[2] = 12; }
         }
     }
     for (int i = 0; i < w->ncs; i++) {                  /* transmission */
@@ -309,30 +327,49 @@ void hl_pd_post(Lab *l, World *w) {
         for (int j = 0; j < w->ncs; j++) {
             Creature *o = w->cs[j];
             if (o->ls[1] != PS_S || o->ls[3] == w->t || o->e <= 0 || cheb(c, o, W, H) > 1) continue;
-            if (rng_double(w->rng) < 0.3) { o->ls[1] = PS_E; o->ls[2] = 4; }
+            if (pd_u(s->key, (uint64_t)c->id, (uint64_t)o->id, (uint64_t)w->t) < 0.3) { o->ls[1] = PS_E; o->ls[2] = 4; }
         }
     }
     for (int i = 0; i < w->ncs; i++) {                  /* progression */
         Creature *c = w->cs[i];
         if (c->ls[1] == PS_E && --c->ls[2] <= 0) { c->ls[1] = PS_I; c->ls[2] = 12; }
         else if (c->ls[1] == PS_I && --c->ls[2] <= 0) {
-            if (rng_double(w->rng) < 0.3) { if (c->e > 0) { c->e = 0; s->deaths++; } }
+            if (pd_u(s->key, (uint64_t)c->id, 3, 1) < 0.3) { if (c->e > 0) { c->e = 0; s->deaths++; } }
             else c->ls[1] = PS_R;
         }
     }
+}
+/* un run du labo sur une graine donnée ; cf = 1 sans effet des actions, 2 avec (pas de récursion) */
+static void pd_run(Lab *l, int ticks, const Rng *rng, int cf, double *ex) {
+    Lab l2; lab_init(&l2, l->id, ticks);
+    l2.counterfactual = cf;
+    Rng r = *rng;
+    CycleResult *res = malloc(sizeof *res);
+    run_cycle(&l2, l->pool0, l->npool0, &r, ticks, res);
+    memcpy(ex, l2.extra, sizeof l2.extra);
+    world_free(res->w); lab_free(&l2); free(res);
+}
+static double pd_pair(double d, double pm, double cost, const double *b) {
+    return (b[0] - d) / fmax(b[0], 10.0) * fmin(1.0, b[1] > 0 ? pm / b[1] : 0) - cost;
 }
 double hl_pd_fit(Lab *l, World *w, int ticks) {
     PdState *s = l->ext;
     double pm = 0; for (int i = 0; i < l->npops; i++) pm += l->pops[i];
     pm /= ticks;
-    l->extra[0] = (double)s->deaths; l->extra[1] = pm;
-    if (l->counterfactual) return 0;
-    double ex[N_EXTRA]; replay(l, ticks, ex);
-    double d0 = ex[0], p0 = ex[1];
-    double avoided = (d0 - s->deaths) / fmax(d0, 10.0);
     double cost = (double)s->cost / (w->st.energy_eaten + 1.0);
-    double f = avoided * fmin(1.0, p0 > 0 ? pm / p0 : 0) - cost;
-    l->extra[2] = d0; l->extra[3] = cost; l->extra[4] = (double)s->vacc; l->extra[5] = (double)s->isol;
+    l->extra[0] = (double)s->deaths; l->extra[1] = pm; l->extra[3] = cost;
+    l->extra[4] = (double)s->vacc; l->extra[5] = (double)s->isol;
+    if (l->counterfactual) return 0;
+    double ex[N_EXTRA], f = 0, d0 = 0;
+    for (int k = 0; k < PD_REPS; k++) {
+        Rng r = l->rng0;
+        if (k) { uint64_t sd = l->rng0.s[0] ^ (0x9E3779B97F4A7C15ULL * (uint64_t)k); rng_seed(&r, sd); }
+        double d = s->deaths, p = pm, c = cost;
+        if (k) { pd_run(l, ticks, &r, 2, ex); d = ex[0]; p = ex[1]; c = ex[3]; }
+        pd_run(l, ticks, &r, 1, ex);                    /* baseline appariée : même graine, actions sans effet */
+        f += pd_pair(d, p, c, ex) / PD_REPS; d0 += ex[0] / PD_REPS;
+    }
+    l->extra[2] = d0;
     return f;
 }
 
