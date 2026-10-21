@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+labs_data/**/checkpoints/
+labs_data/**/*.adn
+labs_data/**/metrics.jsonl
+!labs_data/sample/**
+run.log
+labs_data/status.md
+TASK.md
