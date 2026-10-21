@@ -2,17 +2,17 @@
 
 | labo | cycle | fitness | meilleure | pop fin | génome moy. (o) | moteur | tendance (30 derniers) | détails |
 |---|---:|---:|---:|---:|---:|---|---|---|
-| org-seeds | 40 | 16.19 | 26.13 | 21 | 265 | `c6e154b48a` | ▁▂▁▁▁▂▁▂▂▄▃▂▄█▃▃▅▄▃▅▄▅▄▄▅▃▄▅▄▃ | clusters=17, unique=20, crossovers=167 |
-| max-pop | 40 | 66.87 | 76.8 | 19 | 278 | `c6e154b48a` | ▇██▅▂▇▆█▅▄▇▅▇▇▇▅▄▄▆▆▁▂▁▄▅▂▂▅▅▄ | peak=120 |
-| survival | 40 | 170.6 | 193.2 | 9 | 258 | `c6e154b48a` | ▂▄▅▃▄▂▅▂▃▅▃█▂▄▅▂▃▁▄▄▆▆▆▇▃▆▄▃▄▁ | median_age=200, mean_death_age=132.9, mean_lifespan=170.6 |
-| energy-eff | 40 | 3.648 | 4.001 | 19 | 276 | `c6e154b48a` | ▆▂▂▃▄▃▁▆▅▁▅▇▅▄▅▅▃▇▅▁▄▅▆█▅▃▄▆▄▆ | energy_eaten=20715 |
-| self-rewrite | 40 | 0.318 | 0.3694 | 11 | 255 | `c6e154b48a` | ▁▁▅▆▄▆▂▃▅▂▅▄█▂▅█▃▆▃▆▄▄▆▅▆▄▄▅▅▅ | store_writes=923, useful_stores=922 |
-| emit-echo | 40 | 0.9479 | 0.9666 | 120 | 257 | `c6e154b48a` | ▂▃▆▆█▇▁▇▃▅▂▁▄▄▂▆▇▂▃▅▅▃▃█▇▂█▅█▇ | correct=21855, emits=21936, accuracy=0.9963 |
-| emit-dialog | 40 | 0.6517 | 0.7022 | 120 | 257 | `c6e154b48a` | ▇▅▂▇█▄▄▃▃▃▅▂▄▃▅▄▂▇▂▃▃▁▄▄▁▅▅▂▁▃ | correct=15042, emits=21474, accuracy=0.7005 |
-| predict-walk | 40 | 0.259 | 0.3738 | 19 | 257 | `c6e154b48a` | ▆▃▆▆▂▄▄▅▄▅▆▇▆▆▅▇▅█▆▁▁▄▃▂▄▅▅▆▇▄ | correct=534, emits=2062, accuracy=0.259, baseline=0.3317 |
-| predict-stock | 40 | 0.5028 | 0.5848 | 16 | 252 | `c6e154b48a` | ▂▅▆▃▂▂▂▁▅▃▂▃▃▂▄▂▂▄▁▅▃▄▅▁▄▄▁▆█▄ | correct=1446, emits=2876, accuracy=0.5028, baseline=0.4925, source=gbm |
-| predator-prey | 40 | 0.829 | 1 | 22 | 256 | `c6e154b48a` | ▂█▁▇██▆▇█▅█▆▇██████▇██▇█▃▅██▇█ | mean_prey=59.4, mean_pred=4.1, attacks=201 |
+| org-seeds | 40 | 20.17 | 23 | 24 | 259 | `5c732f9206` | ▅▂▁▆▃▅▄▇▅█▄▃▄▃▃▅▆▄▅▇▅▅▄▆▂▂▄▄▅▇ | clusters=22, unique=22, crossovers=40 |
+| max-pop | 40 | 61.46 | 73.98 | 16 | 256 | `5c732f9206` | ████▇███▅▇▆▅▆▅▆▄▄▄▅▃▃▅▃▄▄▃▃▄▁▂ | peak=120 |
+| survival | 40 | 178.4 | 191 | 7 | 255 | `5c732f9206` | ▅▇▇▄▅▅▄█▄▆▅▃█▁███▄▅█▅▂▆▃▁█▃▅▄▅ | median_age=200, mean_death_age=161.667, mean_lifespan=178.438 |
+| energy-eff | 40 | 4.995 | 5.318 | 12 | 259 | `5c732f9206` | ▆▂▇▄▆▆▄▇▃▃▆▃▃█▁▄▂▄▁▆▆▇▁▇▇▅▃▃██ | energy_eaten=14680 |
+| self-rewrite | 40 | 0.1155 | 0.2627 | 25 | 254 | `5c732f9206` | ▂▃▄▄▄█▄▆▁▃▁▄▁▇▅▂▄▃▄▂▃▃▃▅▅▆▃▄▄▃ | store_writes=1528, useful_stores=1495 |
+| emit-echo | 40 | 0.9674 | 0.9674 | 120 | 258 | `5c732f9206` | ▃▆▅▂▂▁▇▇▇▄▂▃▆▄▅▂▃▆▆▇▁▇██▇█▄▇▇█ | correct=22648, emits=22687, accuracy=0.998281 |
+| emit-dialog | 40 | 0.6541 | 0.6852 | 120 | 257 | `5c732f9206` | █▆▅▅▄▃█▄▆▂▆▄▇▅▂█▇▆▆▆▄▁█▄▄▆▇█▆▅ | correct=14904, emits=21155, accuracy=0.704514 |
+| predict-walk | 40 | 0.1045 | 0.342 | 19 | 251 | `5c732f9206` | ▇▆▅▇▆▅▄▅▇▇▇▇█▂▃▃▁▁▁▁▁▂▁▂▁▂▁▃▁▃ | correct=28, emits=268, accuracy=0.104478, baseline=0.316583, csv=0 |
+| predict-stock | 40 | 0.4863 | 0.5526 | 19 | 274 | `5c732f9206` | ▅▇█▅▄▇▄▆▅▆▅█▁▃▇▁▆▆▆▆▆▅█▃▇▆▇▄▅▆ | correct=496, emits=1020, accuracy=0.486275, baseline=0.537688, csv=0 |
+| predator-prey | 40 | 0.4 | 1 | 10 | 254 | `5c732f9206` | ███████▄█████▅██████▁██▄██████ | mean_prey=51.15, mean_pred=2, attacks=152 |
 
-Dernière mise à jour : 2026-10-21T17:37:29+02:00
+Dernière mise à jour : 2026-10-21T17:57:30+02:00
 
-`moteur` = empreinte du code du package : quand elle change, l'amélioration de la VM/ISA (la « popote ») s'applique à tous les labos dès le cycle suivant.
+`moteur` = empreinte du binaire `octet-adn` : quand il est recompilé, le runner se ré-exécute et l'amélioration de la VM/ISA (la « popote ») s'applique à tous les labos dès le cycle suivant.

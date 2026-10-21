@@ -1,0 +1,154 @@
+/* Orchestrateur continu des 10 éprouvettes.
+ * Chaque cycle : reprend le checkpoint de chaque labo, fait vivre son pool, mesure la
+ * fitness, sélectionne, sauvegarde (binaire), ajoute un enregistrement à metrics.bin et
+ * régénère status.md. Si le binaire est recompilé pendant que le runner tourne, il se
+ * ré-exécute (execv) : la nouvelle « popote » s'applique à tous les labos au cycle suivant. */
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include "octet.h"
+
+uint64_t engine_version(void) {
+    static uint64_t cached;
+    if (cached) return cached;
+    FILE *f = fopen("/proc/self/exe", "rb");
+    uint64_t h = FNV_INIT;
+    if (f) {
+        uint8_t buf[65536]; size_t n;
+        while ((n = fread(buf, 1, sizeof buf, f)) > 0) h = fnv1a(buf, n, h);
+        fclose(f);
+    }
+    return cached = h;
+}
+
+static int mkdirs(const char *p) {
+    char b[4096]; snprintf(b, sizeof b, "%s", p);
+    for (char *s = b + 1; *s; s++)
+        if (*s == '/') { *s = 0; if (mkdir(b, 0755) && errno != EEXIST) return -1; *s = '/'; }
+    return (mkdir(b, 0755) && errno != EEXIST) ? -1 : 0;
+}
+static double now_s(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return t.tv_sec + t.tv_nsec * 1e-9; }
+static int write_file(const char *path, const uint8_t *p, int n) {
+    FILE *f = fopen(path, "wb");
+    if (!f) return -1;
+    size_t w = fwrite(p, 1, (size_t)n, f);
+    return (fclose(f) == 0 && w == (size_t)n) ? 0 : -1;
+}
+
+static int collect_foreign(const char *dir, PoolEntry *out) {
+    int n = 0;
+    for (int i = 1; i < N_LABS; i++) {                 /* tous sauf org-seeds, ordre du registre */
+        char p[4096]; Checkpoint ck;
+        snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
+        if (ck_load(p, &ck) == 0 && ck.has_best) out[n++] = ck.best;
+    }
+    return n;
+}
+
+static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int nforeign, int persist) {
+    static Checkpoint ck;
+    char dir[4096], p[4096];
+    snprintf(dir, sizeof dir, "%s/%s", o->data_dir ? o->data_dir : ".", LABS[id].name);
+    snprintf(p, sizeof p, "%s/checkpoints/latest.ck", dir);
+    if (!persist || ck_load(p, &ck) || ck.npool == 0) {
+        memset(&ck, 0, sizeof ck);
+        ck.lab_id = id;
+        ck.npool = LABS[id].seeds(ck.pool);
+    }
+    uint64_t eng = engine_version();
+    if (persist && ck.engine && ck.engine != eng && !o->quiet)
+        printf("[popote] %s : moteur %010llx → %010llx (amélioration appliquée)\n", LABS[id].name,
+               (unsigned long long)(ck.engine & 0xffffffffffULL), (unsigned long long)(eng & 0xffffffffffULL));
+    uint32_t cycle = ck.cycle + 1;
+    char key[256];
+    snprintf(key, sizeof key, "%s:%u:%llu", LABS[id].name, cycle, (unsigned long long)o->seed);
+    Rng rng; rng_seed(&rng, fnv1a(key, strlen(key), FNV_INIT));   /* déterministe par (labo, cycle, seed) */
+    Lab lab; lab_init(&lab, id, o->ticks);
+    lab.foreign = foreign; lab.nforeign = nforeign;
+    static CycleResult res;
+    double t0 = now_s();
+    run_cycle(&lab, ck.pool, ck.npool, &rng, o->ticks, &res);
+    double fit = res.fitness;
+    int accepted = res.nnew > 0 && fit >= ACCEPT_RATIO * ck.best_fitness;
+    if (accepted) { memcpy(ck.pool, res.newpool, sizeof(PoolEntry) * (size_t)res.nnew); ck.npool = res.nnew; }
+    if (fit > ck.best_fitness && res.nnew > 0) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
+    ck.cycle = cycle; ck.engine = eng;
+
+    MetricRec r; memset(&r, 0, sizeof r);
+    time_t now = time(NULL); struct tm lt; localtime_r(&now, &lt);
+    r.ts = now; r.tz_off = (int32_t)lt.tm_gmtoff;
+    r.cycle = cycle; r.ticks = (uint32_t)o->ticks; r.survived = (uint32_t)res.survived;
+    r.fitness = fit; r.best_fitness = ck.best_fitness; r.accepted = (uint8_t)accepted; r.lab_id = (uint8_t)id;
+    World *w = res.w;
+    long lens = 0; for (int i = 0; i < w->ncs; i++) lens += w->cs[i]->len;
+    r.pop_final = (uint16_t)w->ncs;
+    long sp = 0; for (int i = 0; i < lab.npops; i++) sp += lab.pops[i];
+    r.pop_mean = lab.npops ? (double)sp / lab.npops : 0;
+    r.born = (uint32_t)w->st.born; r.dead = (uint32_t)w->st.dead;
+    r.store_writes = (uint32_t)w->st.store_writes; r.useful_stores = (uint32_t)w->st.useful_stores;
+    r.emits = (uint32_t)w->st.emits;
+    r.genome_len_mean = w->ncs ? (double)lens / w->ncs : 0;
+    r.engine = eng; r.state_hash = world_hash(w);
+    r.elapsed_s = now_s() - t0;
+    memcpy(r.extra, lab.extra, sizeof r.extra);
+    world_free(w); lab_free(&lab);
+
+    if (persist) {
+        snprintf(p, sizeof p, "%s/checkpoints", dir);
+        mkdirs(p);
+        snprintf(p, sizeof p, "%s/checkpoints/latest.ck", dir);
+        if (ck_save(p, &ck)) fprintf(stderr, "erreur : checkpoint %s\n", p);
+        if (ck.has_best) { snprintf(p, sizeof p, "%s/champion.adn", dir); write_file(p, ck.best.dna, ck.best.len); }
+        snprintf(p, sizeof p, "%s/metrics.bin", dir);
+        if (met_append(p, &r)) fprintf(stderr, "erreur : metrics %s\n", p);
+    }
+    return r;
+}
+
+static int exe_changed(const char *path, struct stat *ref) {
+    struct stat st;
+    if (!path || stat(path, &st)) return 0;
+    return st.st_ino != ref->st_ino || st.st_mtim.tv_sec != ref->st_mtim.tv_sec || st.st_size != ref->st_size;
+}
+
+int runner(RunOpts *o, MetricRec *rows, int cap) {
+    int cycles = o->dry_run ? 1 : o->cycles, persist = !o->dry_run, nrows = 0;
+    struct stat ref; int have_ref = o->exe_path && !stat(o->exe_path, &ref);
+    static PoolEntry foreign[N_LABS];
+    if (persist) mkdirs(o->data_dir);
+    for (int k = o->cycles_done; cycles == 0 || k < cycles; k++) {
+        if (!o->no_reload && have_ref && k > o->cycles_done && exe_changed(o->exe_path, &ref) && o->argv) {
+            char done[32]; snprintf(done, sizeof done, "--cycles-done=%d", k);
+            int n = 0; while (o->argv[n]) n++;
+            char **av = calloc((size_t)n + 2, sizeof *av);
+            for (int i = 0; i < n; i++) av[i] = strncmp(o->argv[i], "--cycles-done=", 14) ? o->argv[i] : done;
+            int has = 0; for (int i = 0; i < n; i++) if (av[i] == done) has = 1;
+            if (!has) av[n++] = done;
+            printf("[popote] nouveau binaire détecté → ré-exécution (cycle %d)\n", k + 1);
+            fflush(stdout);
+            execv(o->exe_path, av);
+            perror("execv");                           /* échec : on continue avec l'ancien moteur */
+            free(av); have_ref = 0;
+        }
+        int nf = persist ? collect_foreign(o->data_dir, foreign) : 0;
+        for (int i = 0; i < o->nlabs; i++) {
+            MetricRec r = run_lab_cycle(o->labs[i], o, foreign, nf, persist);
+            if (rows && nrows < cap) rows[nrows] = r;
+            nrows++;
+            if (!o->quiet)
+                printf("[%13s] cycle %4u  fitness=%-9.4g best=%-9.4g pop=%3u  %s  %.3fs\n", LABS[r.lab_id].name,
+                       r.cycle, r.fitness, r.best_fitness, r.pop_final, r.accepted ? "✓" : "·", r.elapsed_s);
+            fflush(stdout);
+        }
+        if (persist) write_status(o->data_dir, o->labs, o->nlabs);
+        if (o->sleep_s > 0 && (cycles == 0 || k + 1 < cycles)) {
+            struct timespec ts = { (time_t)o->sleep_s, (long)((o->sleep_s - (time_t)o->sleep_s) * 1e9) };
+            nanosleep(&ts, NULL);
+        }
+    }
+    return nrows;
+}

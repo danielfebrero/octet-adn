@@ -1,10 +1,13 @@
-__pycache__/
-*.pyc
-.pytest_cache/
+# artefacts de build
+*.o
+/octet-adn
+/octet-adn-static
+/tests/test_vm
+# données des labos (régénérées par le runner) ; un exemple reste dans labs_data/sample
 labs_data/**/checkpoints/
 labs_data/**/*.adn
-labs_data/**/metrics.jsonl
+labs_data/**/metrics.bin
+labs_data/status.md
 !labs_data/sample/**
 run.log
-labs_data/status.md
 TASK.md
