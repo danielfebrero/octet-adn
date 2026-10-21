@@ -28,7 +28,7 @@
 #define GRID_H        32
 #define CMAX          1024   /* plafond dur de créatures par liste */
 #define N_EXTRA       6
-#define N_LABS        17
+#define N_LABS        18
 #define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */
 
 /* ---------------- RNG déterministe (xoshiro256**) ---------------- */
@@ -155,6 +155,7 @@ typedef struct LabDef {
     int    (*select)(Lab *l, World *w, PoolEntry *out);  /* NULL = top-16 par rank */
     void   (*init)(Lab *l, World *w);   /* après world_new (NULL = rien) */
     int    ticks_mult;                  /* horizon = ticks × mult (0 = 1) */
+    int    show_extra;                  /* > 0 : la fitness affichée est extra[show_extra - 1] (la sélection garde le retour de fitness) */
 } LabDef;
 
 struct Lab {

@@ -123,6 +123,7 @@ int main(int argc, char **argv) {
             for (int j = 0; j < n; j++) {
                 char key[128]; snprintf(key, sizeof key, "holdout:%s:%d", LABS[id].name, j);
                 double f = pool_eval_x(id, ck.pool, ck.npool, key, ticks, foreign, nf, ex);
+                if (LABS[id].show_extra) f = ex[LABS[id].show_extra - 1];
                 s += f; s2 += f * f; if (bi >= 0) sb += ex[bi];
             }
             double m = s / n, sd = n > 1 ? sqrt(fmax(0, (s2 - n * m * m) / (n - 1))) : 0;
