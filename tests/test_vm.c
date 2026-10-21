@@ -235,6 +235,78 @@ TEST(test_pp_selection_not_frozen) {
     assert(system(cmd) == 0);
 }
 
+/* emis par un individu walk seul (sans labo) pour un stimulus donné, après insertion optionnelle d'un octet */
+static int walk_emit(int stim, int insert_at) {
+    PoolEntry g; seed_entry(&g, "walk", 0);
+    if (insert_at >= 0) {
+        memmove(g.dna + insert_at + 1, g.dna + insert_at, (size_t)(g.len - insert_at)); g.dna[insert_at] = 0xff; g.len++;
+    }
+    Rng r; rng_seed(&r, 0);
+    WorldConfig cfg = cfg_default();
+    World *w = world_new(&g, 1, &r, &cfg, NULL);
+    w->stimulus = stim;
+    int v = -1;
+    for (int t = 0; t < 3 && v < 0; t++) { vm_run(w->cs[0], w); if (w->nem) v = w->em[0].v; }
+    world_free(w);
+    return v;
+}
+
+TEST(test_walk_seed_shrinks_and_survives_indels) {
+    /* La seed walk prédit floor(s/2)+2 (régression vers la moyenne : optimum ≈ 0.358 contre 0.332 pour
+     * la persistance) et ses poids NEURAL sont aux octets 0..4 : une insertion après le code ne les
+     * décale plus (la seed neural, poids à 128, tombait à 0.24 car presque chaque enfant les perdait). */
+    const int want[8] = { 2, 2, 3, 3, 4, 4, 5, 5 };
+    for (int s = 0; s < 8; s++) {
+        assert(walk_emit(s, -1) == want[s]);
+        assert(walk_emit(s, 0x40) == want[s]);
+        assert(walk_emit(s, 0xb0) == want[s]);
+    }
+}
+
+TEST(test_predict_walk_beats_persistence) {
+    /* Régression predict-walk : après 40 cycles (graine 0), le pool doit battre « répéter la dernière
+     * valeur » sur 8 graines tenues à l'écart, même série pour les deux. Avant : -0.003 (graine 0),
+     * -0.070 (graine 1). Mesuré ici : +0.027. Plafond théorique sur cette série ≈ +0.027 (bins 0..7). */
+    char d[] = "/tmp/oadn-pw-XXXXXX"; assert(mkdtemp(d));
+    RunOpts o = { .ticks = 200, .cycles = 40, .quiet = 1, .no_reload = 1, .data_dir = d };
+    int id = lab_index("predict-walk");
+    o.labs[o.nlabs++] = id;
+    assert(runner(&o, NULL, 0) == 40);
+    char p[512]; snprintf(p, sizeof p, "%s/predict-walk/checkpoints/latest.ck", d);
+    static Checkpoint ck; assert(ck_load(p, &ck) == 0 && ck.npool > 0);
+    double gap = 0, ex[N_EXTRA];
+    for (int j = 0; j < 8; j++) {
+        char key[64]; snprintf(key, sizeof key, "holdout:predict-walk:%d", j);
+        double f = pool_eval_x(id, ck.pool, ck.npool, key, 200, NULL, 0, ex);
+        assert(ex[1] >= 1000);                      /* le pool prédit vraiment (pas d'EMIT abandonné) */
+        gap += (f - ex[3]) / 8;
+    }
+    printf("    predict-walk 40 cycles : écart moyen à la persistance = %+.4f\n", gap);
+    assert(gap > 0.015);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d);
+    assert(system(cmd) == 0);
+}
+
+TEST(test_reseed_on_engine_change) {
+    /* Un pool en place qui n'émet plus (cas du runner 24/7 : fitness 0.02) est remplacé par la seed
+     * au premier cycle d'un nouveau moteur, si elle fait nettement mieux sur les mêmes graines. */
+    char d[] = "/tmp/oadn-rs-XXXXXX"; assert(mkdtemp(d));
+    int id = lab_index("predict-walk");
+    static Checkpoint ck; memset(&ck, 0, sizeof ck);
+    ck.lab_id = id; ck.cycle = 7; ck.engine = 1;    /* moteur « ancien » factice */
+    seed_entry(&ck.pool[0], "forager", 0); ck.npool = 1;   /* fourrageur muet : jamais d'EMIT */
+    char p[512]; snprintf(p, sizeof p, "%s/predict-walk", d); mkdir(p, 0755);
+    snprintf(p, sizeof p, "%s/predict-walk/checkpoints", d); mkdir(p, 0755);
+    snprintf(p, sizeof p, "%s/predict-walk/checkpoints/latest.ck", d);
+    assert(ck_save(p, &ck) == 0);
+    RunOpts o = { .ticks = 200, .cycles = 1, .quiet = 1, .no_reload = 1, .data_dir = d };
+    o.labs[o.nlabs++] = id;
+    MetricRec r; assert(runner(&o, &r, 1) == 1);
+    assert(r.cycle == 8 && r.extra[1] >= 1000 && r.fitness > 0.25);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d);
+    assert(system(cmd) == 0);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -252,6 +324,9 @@ int main(void) {
     RUN(test_checkpoint_roundtrip);
     RUN(test_pp_predators_are_mortal);
     RUN(test_pp_selection_not_frozen);
-    printf("\n%d/%d tests OK\n", passed, 16);
+    RUN(test_walk_seed_shrinks_and_survives_indels);
+    RUN(test_predict_walk_beats_persistence);
+    RUN(test_reseed_on_engine_change);
+    printf("\n%d/%d tests OK\n", passed, 19);
     return 0;
 }
