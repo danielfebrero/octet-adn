@@ -116,3 +116,112 @@ double hl_fold_fit(Lab *l, World *w, int t) {
     return m;
 }
 void hl_fold_initp(Lab *l, World *w) { fold_init(l, w); }
+
+/* rejeu contrefactuel : même pool, même graine, interventions coupées (l->counterfactual) */
+static double replay(Lab *l, int ticks, double *extra) {
+    int base = l->def->ticks_mult > 1 ? ticks / l->def->ticks_mult : ticks;
+    Lab l2; lab_init(&l2, l->id, base);
+    l2.counterfactual = 1;
+    Rng r = l->rng0;
+    CycleResult *res = malloc(sizeof *res);
+    run_cycle(&l2, l->pool0, l->npool0, &r, base, res);
+    double f = res->fitness;
+    if (extra) memcpy(extra, l2.extra, sizeof l2.extra);
+    world_free(res->w); lab_free(&l2); free(res);
+    return f;
+}
+static int sel_species0(Lab *l, World *w, PoolEntry *out) {
+    (void)l;
+    Creature *v[CMAX]; int n = 0, k = 0;
+    for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
+    for (int i = 1; i < n; i++) {                       /* tri stable décroissant (énergie, âge) */
+        Creature *c = v[i]; int j = i - 1;
+        while (j >= 0 && (v[j]->e < c->e || (v[j]->e == c->e && v[j]->age < c->age))) { v[j + 1] = v[j]; j--; }
+        v[j + 1] = c;
+    }
+    for (int i = 0; i < n && k < POOL_SIZE; i++) {
+        out[k].species = 0; out[k].len = v[i]->len; memcpy(out[k].dna, v[i]->dna, (size_t)v[i]->len); k++;
+    }
+    return k;
+}
+
+/* ======================= 2. antibiotic : pathogène co-évolutif =======================
+ * Tissu de 40 cellules hôtes (espèce 2, immobiles). 12 pathogènes (espèce 2→1) y sont injectés ;
+ * ils volent l'énergie des hôtes (ATTACK) et se divisent. Cible du pathogène = dna[0] & 7, héritée
+ * et mutée à chaque division : la résistance émerge par mutation PENDANT le cycle. Les agents
+ * (espèce 0, le pool) lisent un antibiogramme (stimulus = clé majoritaire, 8 = aucun) et EMIT v
+ * libère le médicament v&7 en rayon 1 : tue les pathogènes de clé v&7, coûte 2 à l'agent, abîme
+ * de 1 chaque hôte touché. Les pathogènes ne font pas partie du pool : ré-injectés frais à chaque
+ * cycle (sinon la sélection garderait des pathogènes faibles). */
+#define AB_HOSTS 40
+#define AB_PATH  12
+#define AB_KEY_MUT 0.15   /* prob. qu'un pathogène né change de cible (virus à ARN) */
+typedef struct { int esc_t, erad_t, peak; long damage; } AbState;
+static int ab_key(const Creature *c) { return c->dna[0] & 7; }
+void hl_ab_cfg(WorldConfig *c) { c->max_pop = 260; c->attack_steal = 6; }
+int hl_ab_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "antibiotic", 0); return 4; }
+void hl_ab_init(Lab *l, World *w) {
+    l->ext = calloc(1, sizeof(AbState));
+    static const uint8_t host[8] = { 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f };
+    uint8_t path[8] = { 0x20, 0x1a, 0x0e, 0x0f, 0x1e, 0x1e, 0x1e, 0x1e };   /* clé ; ATTACK SPLIT YIELD LOOP */
+    int x0 = w->cfg.w / 2 - 4, y0 = w->cfg.h / 2 - 2;
+    for (int i = 0; i < w->ncs; i++) {                 /* agents administrés autour du tissu */
+        Creature *c = w->cs[i]; w->occ[c->y][c->x]--;
+        c->x = x0 - 2 + (int)rng_below(w->rng, 12); c->y = y0 - 2 + (int)rng_below(w->rng, 9); w->occ[c->y][c->x]++;
+    }
+    for (int i = 0; i < AB_HOSTS; i++)
+        world_spawn(w, creature_new(x0 + i % 8, y0 + i / 8, host, 8, 220, w->nid++, 2, -1));
+    path[0] = (uint8_t)(0x20 + rng_below(w->rng, 8));
+    for (int i = 0; i < AB_PATH; i++) {
+        int k = (int)rng_below(w->rng, AB_HOSTS);
+        world_spawn(w, creature_new(x0 + k % 8, y0 + k / 8, path, 8, 60, w->nid++, 1, -1));
+    }
+}
+void hl_ab_pre(Lab *l, World *w) {
+    AbState *s = l->ext; int cnt[8] = { 0 }, np = 0;
+    for (int i = 0; i < w->ncs; i++) {
+        Creature *c = w->cs[i];
+        if (c->species == 2) { c->e += 1; cap_e(c); }      /* les hôtes ne s'usent pas seuls */
+        else if (c->species == 1) {
+            if (!c->ls[0] && c->parent >= 0 && rng_double(w->rng) < AB_KEY_MUT)   /* hypermutation de la cible */
+                c->dna[0] = (uint8_t)(0x20 + rng_below(w->rng, 8));
+            c->ls[0] = 1;
+            cnt[ab_key(c)]++; np++;
+        }
+    }
+    int diag = 8, best = 0;
+    for (int k = 0; k < 8; k++) if (cnt[k] > best) { best = cnt[k]; diag = k; }
+    w->stimulus = diag;
+    if (w->t <= 1) return;                              /* pathogènes injectés en fin de tick 1 */
+    if (np > s->peak) s->peak = np;
+    if (!s->esc_t && np > 5 * AB_PATH) s->esc_t = (int)w->t;
+    if (!s->esc_t && !s->erad_t && np == 0) s->erad_t = (int)w->t;
+}
+void hl_ab_post(Lab *l, World *w) {
+    AbState *s = l->ext;
+    if (l->counterfactual) return;                      /* baseline : aucun traitement */
+    for (int i = 0; i < w->nem; i++) {
+        Creature *a = w->em[i].c;
+        if (a->species != 0) continue;
+        int drug = w->em[i].v & 7;
+        a->e -= 2;
+        for (int j = 0; j < w->ncs; j++) {
+            Creature *o = w->cs[j];
+            if (o->e <= 0 || cheb(a, o, w->cfg.w, w->cfg.h) > 1) continue;
+            if (o->species == 1 && ab_key(o) == drug) o->e = 0;
+            else if (o->species == 2) { o->e -= 1; s->damage++; }
+        }
+    }
+}
+double hl_ab_fit(Lab *l, World *w, int ticks) {
+    AbState *s = l->ext; int hosts = 0;
+    for (int i = 0; i < w->ncs; i++) hosts += w->cs[i]->species == 2;
+    double T = s->esc_t ? s->esc_t : ticks;
+    int erad = s->erad_t > 0;
+    double dmg = fmin(1.0, s->damage / (AB_HOSTS * 100.0));
+    double f = T / ticks * (1 + 0.25 * erad) * ((double)hosts / AB_HOSTS) * (1 - dmg);
+    l->extra[0] = T; l->extra[1] = erad; l->extra[2] = (double)hosts / AB_HOSTS; l->extra[3] = dmg;
+    if (!l->counterfactual) { l->extra[4] = replay(l, ticks, NULL); l->extra[5] = f - l->extra[4]; }
+    return f;
+}
+int hl_ab_sel(Lab *l, World *w, PoolEntry *out) { return sel_species0(l, w, out); }

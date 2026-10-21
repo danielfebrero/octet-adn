@@ -7,17 +7,17 @@
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
 EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
-EXT(adn_fold)
+EXT(adn_fold) EXT(adn_antibiotic)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
     BLOB("predator", adn_predator), BLOB("walk", adn_walk),
-    BLOB("fold", adn_fold),
+    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
                                       adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end,
-                                      adn_fold_end };
+                                      adn_fold_end, adn_antibiotic_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -288,6 +288,8 @@ static int sel_org(Lab *l, World *w, PoolEntry *out) {
 /* labos humanité (src/labs_h.c) */
 void hl_rank_score(const Creature *c, double k[2]);
 void hl_fold_cfg(WorldConfig *c); int hl_fold_seeds(PoolEntry *o); double hl_fold_fit(Lab *l, World *w, int t); void hl_fold_initp(Lab *l, World *w);
+void hl_ab_cfg(WorldConfig *c); int hl_ab_seeds(PoolEntry *o); void hl_ab_init(Lab *l, World *w); void hl_ab_pre(Lab *l, World *w);
+void hl_ab_post(Lab *l, World *w); double hl_ab_fit(Lab *l, World *w, int t); int hl_ab_sel(Lab *l, World *w, PoolEntry *out);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -319,6 +321,9 @@ const LabDef LABS[N_LABS] = {
     { "fold", "Repliement de protéine (modèle HP 2D)",
       "contacts H-H / optimum connu, moyenne sur 6 benchmarks ; baseline = marche auto-évitante aléatoire",
       { "mean_score", "max_score", "baseline", "vs_baseline" }, hl_fold_cfg, hl_fold_seeds, NULL, NULL, hl_fold_fit, hl_rank_score, NULL, hl_fold_initp, 0 },
+    { "antibiotic", "Antibiotique contre pathogène co-évolutif",
+      "ticks avant échappement (> 60 pathogènes) / ticks, ×1.25 si éradiqué, × hôtes vivants, × (1 − dégâts médicament) ; baseline = sans traitement",
+      { "t_ctrl", "eradicated", "hosts_alive", "drug_damage", "baseline", "vs_baseline" }, hl_ab_cfg, hl_ab_seeds, hl_ab_pre, hl_ab_post, hl_ab_fit, rank_default, hl_ab_sel, hl_ab_init, 0 },
 };
 
 int lab_index(const char *name) {

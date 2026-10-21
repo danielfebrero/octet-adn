@@ -17,4 +17,5 @@
         SEED adn_predator, "seeds/predator.adn"
         SEED adn_walk,     "seeds/walk.adn"
         SEED adn_fold,     "seeds/fold.adn"
+        SEED adn_antibiotic, "seeds/antibiotic.adn"
         .section .note.GNU-stack,"",@progbits
