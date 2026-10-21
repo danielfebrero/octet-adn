@@ -221,6 +221,8 @@ uint64_t engine_version(void);
 int runner(RunOpts *o, MetricRec *rows_out, int rows_cap);   /* retourne nb de lignes */
 /* fitness d'un pool sur la graine dérivée de key (monde jetable, rien n'est écrit) */
 double pool_eval(int lab_id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nforeign);
+/* idem, et copie les extras du labo (N_EXTRA) dans extra si non NULL */
+double pool_eval_x(int lab_id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nforeign, double *extra);
 /* champions des 9 autres labos (checkpoints de dir), pour org-seeds ; retourne leur nombre */
 int collect_foreign(const char *dir, PoolEntry *out);
 int write_status(const char *data_dir, const int *labs, int nlabs);

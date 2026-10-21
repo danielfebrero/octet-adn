@@ -27,7 +27,7 @@ make sanitize     # mêmes tests + 3 cycles sous ASan + UBSan
 ./octet-adn hexdump labs_data/emit-echo/champion.adn   # octets bruts
 ./octet-adn dump labs_data/predict-stock/metrics.bin   # métriques binaires → texte
 ./octet-adn ck labs_data/max-pop/checkpoints/latest.ck # inspecter un checkpoint
-./octet-adn eval labs_data 8                        # fitness des pools sur 8 graines tenues à l'écart
+./octet-adn eval labs_data 8                        # fitness des pools sur 8 graines tenues à l'écart (+ baseline des labos de prédiction)
 ./octet-adn seeds /tmp/out                             # réexporter les seeds embarquées
 ```
 
@@ -112,7 +112,7 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 | 5 | `self-rewrite` | auto-réécriture utile | STORE dont le codon réécrit est ensuite exécuté, / créature-tick |
 | 6 | `emit-echo` | communiquer | EMIT == stimulus envoyé par le labo ; corrects / créature-tick |
 | 7 | `emit-dialog` | protocole | hello(00)→ACK(AC), s→s+1, bye(0F)→00 ; corrects / créature-tick |
-| 8 | `predict-walk` | prédire une série AR(2) bruitée | précision sur le bin (0..7) du point suivant (baseline persistance affichée) |
+| 8 | `predict-walk` | prédire une série AR(2) bruitée | précision sur le bin (0..7) du point suivant ; `baseline` = répéter la dernière valeur, `vs_baseline` = écart (status.md et `eval`) |
 | 9 | `predict-stock` | direction d'un « prix » | précision hausse/baisse du pas suivant ; série GBM synthétique ou CSV local |
 | 10 | `predator-prey` | écologie | coexistence proies/prédateurs × équilibre des effectifs |
 
@@ -158,7 +158,16 @@ appel réseau.**
   chance. La sélection n'en dépend plus, mais 4 réévaluations restent un échantillon : un pool
   légèrement moins bon peut passer. Mesurer un pool : `octet-adn eval labs_data 8`.
 - `emit-echo` est quasi résolu par la seed : le labo mesure surtout la robustesse aux mutations.
-- `predict-walk` : les génomes font rarement mieux que la baseline de persistance.
+- `predict-walk` : la persistance (« répéter la dernière valeur ») fait ≈ 0.332 ; le meilleur prédicteur
+  possible à partir des bins (régression vers la moyenne, AR(2) de bruit σ = 1 pour des bins de largeur 1)
+  plafonne vers 0.36. La marge battable est donc ≈ +0.03, pas plus. Avant feat/opt-2, la seed `neural`
+  lisait ses poids à l'octet 128 : presque chaque enfant les décalait (insertion/délétion avant 128) et
+  prédisait au hasard (0.24 dès la seed), puis la sélection par énergie retirait EMIT (runner : 0.02).
+  La seed `walk` (poids aux octets 0..4, prédit floor(s/2)+2) et ses descendants font +0.027 sur
+  8 graines tenues à l'écart (`eval` affiche baseline et écart).
+- Réensemencement : au premier cycle d'un nouveau moteur, si la seed d'un labo bat de plus de 5 % son
+  pool en place sur 4 graines, elle le remplace (sinon une seed corrigée n'atteindrait jamais un labo
+  déjà lancé).
 - `survival` est saturé : la médiane d'âge atteint la durée du cycle (200 ticks), la sélection n'y
   change rien.
 - `predator-prey` : les prédateurs (espèce 1) meurent à `PP_PRED_MAX_AGE` = 100 ticks ; ils doivent

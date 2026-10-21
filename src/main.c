@@ -117,14 +117,18 @@ int main(int argc, char **argv) {
         for (int id = 0; id < N_LABS; id++) {
             char p[4096]; snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", argv[2], LABS[id].name);
             if (ck_load(p, &ck) || !ck.npool) continue;
-            double s = 0, s2 = 0;
+            double s = 0, s2 = 0, sb = 0, ex[N_EXTRA];
+            int bi = -1;                               /* labos de prédiction : colonne « baseline » */
+            for (int k = 0; k < N_EXTRA && LABS[id].extra_names[k]; k++) if (!strcmp(LABS[id].extra_names[k], "baseline")) bi = k;
             for (int j = 0; j < n; j++) {
                 char key[128]; snprintf(key, sizeof key, "holdout:%s:%d", LABS[id].name, j);
-                double f = pool_eval(id, ck.pool, ck.npool, key, ticks, foreign, nf);
-                s += f; s2 += f * f;
+                double f = pool_eval_x(id, ck.pool, ck.npool, key, ticks, foreign, nf, ex);
+                s += f; s2 += f * f; if (bi >= 0) sb += ex[bi];
             }
             double m = s / n, sd = n > 1 ? sqrt(fmax(0, (s2 - n * m * m) / (n - 1))) : 0;
-            printf("%-13s cycle=%u  holdout_mean=%.4f  sd=%.4f  n=%d\n", LABS[id].name, ck.cycle, m, sd, n);
+            printf("%-13s cycle=%u  holdout_mean=%.4f  sd=%.4f  n=%d", LABS[id].name, ck.cycle, m, sd, n);
+            if (bi >= 0) printf("  baseline=%.4f  écart=%+.4f", sb / n, m - sb / n);
+            putchar('\n');
         }
         return 0;
     }

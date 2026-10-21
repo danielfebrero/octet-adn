@@ -6,15 +6,15 @@
 
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
-EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator)
+EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
-    BLOB("predator", adn_predator),
+    BLOB("predator", adn_predator), BLOB("walk", adn_walk),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
-                                      adn_stock_end, adn_social_end, adn_predator_end };
+                                      adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -79,7 +79,7 @@ static void cfg_pp(WorldConfig *c) { c->pred_metab = PP_PRED_METAB; c->pred_max_
 static int s_forager(PoolEntry *o) { return one_seed(o, "forager"); }
 static int s_echo(PoolEntry *o) { return one_seed(o, "echo"); }
 static int s_dialog(PoolEntry *o) { return one_seed(o, "dialog"); }
-static int s_neural(PoolEntry *o) { return one_seed(o, "neural"); }
+static int s_walk(PoolEntry *o) { return one_seed(o, "walk"); }
 static int s_stock(PoolEntry *o) { return one_seed(o, "stock"); }
 static int s_org(PoolEntry *o) {
     const char *n[] = { "forager", "neural", "echo", "social", "predator" };
@@ -218,6 +218,7 @@ static double f_predict(Lab *l, World *w, int t) {
     l->extra[0] = (double)l->correct; l->extra[1] = (double)l->total; l->extra[2] = acc;
     l->extra[3] = (double)l->base_correct / (l->base_total ? l->base_total : 1);
     l->extra[4] = (l->csv && l->ncsv > 1) ? 1 : 0;
+    l->extra[5] = acc - l->extra[3];                  /* > 0 : bat la persistance (répéter la dernière valeur) */
     return l->total >= 30 ? acc : 0.0;
 }
 
@@ -299,11 +300,11 @@ const LabDef LABS[N_LABS] = {
     { "emit-dialog", "Dialogue : protocole stimulus → réponse",
       "hello 00→AC, s→s+1, bye 0F→00 ; corrects / créature-tick",
       { "correct", "emits", "accuracy" }, NULL, s_dialog, pre_dialog, post_dialog, f_emit, rank_default, NULL },
-    { "predict-walk", "Prédire une série AR(2) bruitée", "précision sur le bin (0..7) du prochain point",
-      { "correct", "emits", "accuracy", "baseline", "csv" }, NULL, s_neural, pre_walk, post_predict, f_predict, rank_default, NULL },
+    { "predict-walk", "Prédire une série AR(2) bruitée", "précision sur le bin (0..7) du prochain point ; baseline = répéter la dernière valeur",
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_walk, pre_walk, post_predict, f_predict, rank_default, NULL },
     { "predict-stock", "Direction d'un prix (proxy GBM / CSV local)",
       "précision hausse/baisse du pas suivant (A&1) ; hasard = 50 %",
-      { "correct", "emits", "accuracy", "baseline", "csv" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL },
+      { "correct", "emits", "accuracy", "baseline", "csv", "vs_baseline" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL },
     { "predator-prey", "Proies (espèce 0) et prédateurs (espèce 1, ATTACK)",
       "fraction des ticks de coexistence × équilibre min(proies/20, préd/5)",
       { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp },

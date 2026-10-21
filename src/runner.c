@@ -50,15 +50,19 @@ int collect_foreign(const char *dir, PoolEntry *out) {
 }
 
 /* Fitness d'un pool sur une graine donnée (cycle complet, monde jetable). */
-double pool_eval(int id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nf) {
+double pool_eval_x(int id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nf, double *extra) {
     Rng rng; rng_seed(&rng, fnv1a(key, strlen(key), FNV_INIT));
     Lab lab; lab_init(&lab, id, ticks);
     lab.foreign = foreign; lab.nforeign = nf;
     CycleResult *res = malloc(sizeof *res);
     run_cycle(&lab, pool, n, &rng, ticks, res);
     double f = res->fitness;
+    if (extra) memcpy(extra, lab.extra, sizeof lab.extra);
     world_free(res->w); lab_free(&lab); free(res);
     return f;
+}
+double pool_eval(int id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nf) {
+    return pool_eval_x(id, pool, n, key, ticks, foreign, nf, NULL);
 }
 
 static double g_eval_new, g_eval_old;   /* dernière réévaluation (affichage) */
@@ -77,6 +81,22 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
     if (persist && ck.engine && ck.engine != eng && !o->quiet)
         printf("[popote] %s : moteur %010llx → %010llx (amélioration appliquée)\n", LABS[id].name,
                (unsigned long long)(ck.engine & 0xffffffffffULL), (unsigned long long)(eng & 0xffffffffffULL));
+    if (persist && ck.engine && ck.engine != eng) {
+        /* Réensemencement au changement de moteur : si la seed du labo (peut-être améliorée par la
+         * nouvelle popote) bat le pool en place sur les mêmes SEL_EVALS graines, elle le remplace.
+         * Sinon une seed corrigée ne profiterait jamais aux labos qui tournent déjà. */
+        static PoolEntry sp[POOL_MAX]; int ns = LABS[id].seeds(sp);
+        double fs = 0, fo = 0;
+        for (int j = 0; j < SEL_EVALS; j++) {
+            char rk[300]; snprintf(rk, sizeof rk, "%s:reseed:%010llx:%d", LABS[id].name, (unsigned long long)(eng & 0xffffffffffULL), j);
+            fs += pool_eval(id, sp, ns, rk, o->ticks, foreign, nforeign) / SEL_EVALS;
+            fo += pool_eval(id, ck.pool, ck.npool, rk, o->ticks, foreign, nforeign) / SEL_EVALS;
+        }
+        if (fs > 1.05 * fo) {                          /* marge : pas de reset sur du bruit */
+            memcpy(ck.pool, sp, sizeof(PoolEntry) * (size_t)ns); ck.npool = ns;
+            if (!o->quiet) printf("[popote] %s : réensemencé (seed %.4g > pool en place %.4g)\n", LABS[id].name, fs, fo);
+        }
+    }
     uint32_t cycle = ck.cycle + 1;
     char key[256];
     snprintf(key, sizeof key, "%s:%u:%llu", LABS[id].name, cycle, (unsigned long long)o->seed);

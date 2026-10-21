@@ -15,4 +15,5 @@
         SEED adn_stock,    "seeds/stock.adn"
         SEED adn_social,   "seeds/social.adn"
         SEED adn_predator, "seeds/predator.adn"
+        SEED adn_walk,     "seeds/walk.adn"
         .section .note.GNU-stack,"",@progbits
