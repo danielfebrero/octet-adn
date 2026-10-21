@@ -39,7 +39,7 @@ static int write_file(const char *path, const uint8_t *p, int n) {
     return (fclose(f) == 0 && w == (size_t)n) ? 0 : -1;
 }
 
-static int collect_foreign(const char *dir, PoolEntry *out) {
+int collect_foreign(const char *dir, PoolEntry *out) {
     int n = 0;
     for (int i = 1; i < N_LABS; i++) {                 /* tous sauf org-seeds, ordre du registre */
         char p[4096]; Checkpoint ck;
@@ -48,6 +48,20 @@ static int collect_foreign(const char *dir, PoolEntry *out) {
     }
     return n;
 }
+
+/* Fitness d'un pool sur une graine donnée (cycle complet, monde jetable). */
+double pool_eval(int id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nf) {
+    Rng rng; rng_seed(&rng, fnv1a(key, strlen(key), FNV_INIT));
+    Lab lab; lab_init(&lab, id, ticks);
+    lab.foreign = foreign; lab.nforeign = nf;
+    CycleResult *res = malloc(sizeof *res);
+    run_cycle(&lab, pool, n, &rng, ticks, res);
+    double f = res->fitness;
+    world_free(res->w); lab_free(&lab); free(res);
+    return f;
+}
+
+static double g_eval_new, g_eval_old;   /* dernière réévaluation (affichage) */
 
 static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int nforeign, int persist) {
     static Checkpoint ck;
@@ -73,7 +87,21 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
     double t0 = now_s();
     run_cycle(&lab, ck.pool, ck.npool, &rng, o->ticks, &res);
     double fit = res.fitness;
-    int accepted = res.nnew > 0 && fit >= ACCEPT_RATIO * ck.best_fitness;
+    int accepted = 0;
+    g_eval_new = g_eval_old = 0;
+    if (o->sel_legacy) accepted = res.nnew > 0 && fit >= ACCEPT_RATIO * ck.best_fitness;
+    else if (res.nnew > 0) {
+        /* Sélection appariée, robuste au bruit : le nouveau pool et le pool en place sont
+         * réévalués sur les MÊMES SEL_EVALS graines (indépendantes de celle du cycle) ; on garde
+         * le nouveau s'il fait au moins aussi bien en moyenne. Plus de comparaison à un pic
+         * historique chanceux, donc plus de pool gelé. */
+        for (int j = 0; j < SEL_EVALS; j++) {
+            char ek[300]; snprintf(ek, sizeof ek, "%s:eval%d", key, j);
+            g_eval_new += pool_eval(id, res.newpool, res.nnew, ek, o->ticks, foreign, nforeign) / SEL_EVALS;
+            g_eval_old += pool_eval(id, ck.pool, ck.npool, ek, o->ticks, foreign, nforeign) / SEL_EVALS;
+        }
+        accepted = g_eval_new >= g_eval_old;
+    }
     if (accepted) { memcpy(ck.pool, res.newpool, sizeof(PoolEntry) * (size_t)res.nnew); ck.npool = res.nnew; }
     if (fit > ck.best_fitness && res.nnew > 0) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
     ck.cycle = cycle; ck.engine = eng;
@@ -140,8 +168,9 @@ int runner(RunOpts *o, MetricRec *rows, int cap) {
             if (rows && nrows < cap) rows[nrows] = r;
             nrows++;
             if (!o->quiet)
-                printf("[%13s] cycle %4u  fitness=%-9.4g best=%-9.4g pop=%3u  %s  %.3fs\n", LABS[r.lab_id].name,
-                       r.cycle, r.fitness, r.best_fitness, r.pop_final, r.accepted ? "✓" : "·", r.elapsed_s);
+                printf("[%13s] cycle %4u  fitness=%-9.4g best=%-9.4g pop=%3u  %s  eval nouveau/en place=%.4g/%.4g  %.3fs\n",
+                       LABS[r.lab_id].name, r.cycle, r.fitness, r.best_fitness, r.pop_final, r.accepted ? "✓" : "·",
+                       g_eval_new, g_eval_old, r.elapsed_s);
             fflush(stdout);
         }
         if (persist) write_status(o->data_dir, o->labs, o->nlabs);

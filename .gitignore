@@ -2,12 +2,14 @@
 *.o
 /octet-adn
 /octet-adn-static
+/octet-adn-san
 /tests/test_vm
-# données des labos (régénérées par le runner) ; un exemple reste dans labs_data/sample
-labs_data/**/checkpoints/
-labs_data/**/*.adn
-labs_data/**/metrics.bin
-labs_data/status.md
-!labs_data/sample/**
+/tests/test_vm_san
+# runner 24/7 : log et pid, où qu'ils soient
+runner.log
+runner.pid
 run.log
+# données des labos (régénérées par le runner) ; seul labs_data/sample reste versionné
+/labs_data/*
+!/labs_data/sample/
 TASK.md

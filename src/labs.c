@@ -71,6 +71,9 @@ static int one_seed(PoolEntry *o, const char *n) { seed_entry(o, n, 0); return 1
 /* ---------------- configs ---------------- */
 static void cfg_poor(WorldConfig *c) { c->food_density = 0.2; c->food_regrow = 2; }
 static void cfg_org(WorldConfig *c) { c->crossover = 1; c->mut_rate = 0.025; }
+/* Prédateurs mortels : sans ça deux prédateurs « immortels » (ATTACK vole 30, coûte 1) bloquent
+ * la fitness à 0.4 sans jamais se reproduire. Ils paient un métabolisme, vieillissent et ATTACK coûte. */
+static void cfg_pp(WorldConfig *c) { c->pred_metab = PP_PRED_METAB; c->pred_max_age = PP_PRED_MAX_AGE; c->attack_cost = PP_ATTACK_COST; }
 
 /* ---------------- seeds par labo ---------------- */
 static int s_forager(PoolEntry *o) { return one_seed(o, "forager"); }
@@ -303,7 +306,7 @@ const LabDef LABS[N_LABS] = {
       { "correct", "emits", "accuracy", "baseline", "csv" }, NULL, s_stock, pre_stock, post_predict, f_predict, rank_default, NULL },
     { "predator-prey", "Proies (espèce 0) et prédateurs (espèce 1, ATTACK)",
       "fraction des ticks de coexistence × équilibre min(proies/20, préd/5)",
-      { "mean_prey", "mean_pred", "attacks" }, NULL, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp },
+      { "mean_prey", "mean_pred", "attacks" }, cfg_pp, s_pp, NULL, post_pp, f_pp, rank_default, sel_pp },
 };
 
 int lab_index(const char *name) {

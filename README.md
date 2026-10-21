@@ -17,6 +17,7 @@ Prérequis : `cc` (gcc/clang) et `make`. Aucune autre dépendance (libc + libm).
 make              # → ./octet-adn (ELF x86_64, ~60 Ko, strippé)
 make static       # → ./octet-adn-static (glibc statique, ~0,9 Mo, copiable tel quel)
 make test         # tests C (tests/test_vm, assert) + garde-fou « no-python »
+make sanitize     # mêmes tests + 3 cycles sous ASan + UBSan
 
 ./octet-adn --dry-run                                  # 1 cycle des 10 labos, rien écrit
 ./octet-adn --labs all --ticks-per-cycle 200           # runner continu (Ctrl-C ; reprend aux checkpoints)
@@ -26,11 +27,12 @@ make test         # tests C (tests/test_vm, assert) + garde-fou « no-python »
 ./octet-adn hexdump labs_data/emit-echo/champion.adn   # octets bruts
 ./octet-adn dump labs_data/predict-stock/metrics.bin   # métriques binaires → texte
 ./octet-adn ck labs_data/max-pop/checkpoints/latest.ck # inspecter un checkpoint
+./octet-adn eval labs_data 8                        # fitness des pools sur 8 graines tenues à l'écart
 ./octet-adn seeds /tmp/out                             # réexporter les seeds embarquées
 ```
 
 Options du runner : `--cycles N` (0 = infini), `--data-dir DIR` (défaut `labs_data`),
-`--seed N` (graine globale), `--sleep S`, `--stock-csv FICHIER` (série locale, voir plus
+`--seed N` (graine globale), `--sleep S`, `--select paired|legacy`, `--stock-csv FICHIER` (série locale, voir plus
 bas), `--no-reload`, `--dry-run`.
 
 Vitesse : ~1–15 ms par labo et par cycle de 200 ticks (≈ 50× l'ancienne version Python) ;
@@ -114,9 +116,13 @@ nourriture devant, `NOP` (00) sinon, puis l'exécute — il réécrit son compor
 | 9 | `predict-stock` | direction d'un « prix » | précision hausse/baisse du pas suivant ; série GBM synthétique ou CSV local |
 | 10 | `predator-prey` | écologie | coexistence proies/prédateurs × équilibre des effectifs |
 
-**Sélection entre cycles** : le pool (16 génomes) est remplacé par les survivants les mieux
-classés si la fitness du cycle ≥ 90 % de la meilleure ; sinon l'ancien pool est retenté
-avec un autre aléa. Les labos de communication / prédiction donnent aussi de l'énergie aux
+**Sélection entre cycles (appariée, robuste au bruit)** : après le cycle, le nouveau pool
+(les survivants les mieux classés) et le pool en place sont **réévalués sur les mêmes
+`SEL_EVALS` = 4 graines** (indépendantes de celle du cycle). Le nouveau pool remplace l'ancien
+s'il fait au moins aussi bien en moyenne ; sinon l'ancien pool est retenté avec un autre aléa.
+L'ancienne règle (« garder si ≥ 90 % du meilleur historique », qui gelait un labo derrière un
+pic chanceux) reste disponible via `--select legacy`. Coût : ~9 cycles simulés par labo et
+par cycle (≈ 0,3 s pour les 10 labos). Les labos de communication / prédiction donnent aussi de l'énergie aux
 bonnes réponses : la sélection naturelle agit dans le monde.
 
 **La « popote » partagée** : les 10 labos tournent dans le même binaire. Si on recompile
@@ -148,12 +154,18 @@ appel réseau.**
 
 ## Limites honnêtes
 
-- Les fitness sont bruitées d'un cycle à l'autre ; « meilleure » peut être un coup de chance,
-  et la règle des 90 % peut bloquer un labo sur un ancien pool pendant longtemps.
+- Les fitness sont bruitées d'un cycle à l'autre ; « meilleure » (affichée) peut être un coup de
+  chance. La sélection n'en dépend plus, mais 4 réévaluations restent un échantillon : un pool
+  légèrement moins bon peut passer. Mesurer un pool : `octet-adn eval labs_data 8`.
 - `emit-echo` est quasi résolu par la seed : le labo mesure surtout la robustesse aux mutations.
 - `predict-walk` : les génomes font rarement mieux que la baseline de persistance.
-- `predator-prey` est instable (effondrements, plateaux) ; une immigration de seeds limite
-  l'extinction mais ne garantit pas l'équilibre.
+- `survival` est saturé : la médiane d'âge atteint la durée du cycle (200 ticks), la sélection n'y
+  change rien.
+- `predator-prey` : les prédateurs (espèce 1) meurent à `PP_PRED_MAX_AGE` = 100 ticks ; ils doivent
+  se reproduire pour durer (avant : deux prédateurs « immortels » sans SPLIT figeaient la fitness à
+  0.4). Les leviers `pred_metab` et `attack_cost` existent dans `WorldConfig` (0 et 1 par défaut :
+  plus durs, ils faisaient chuter la fitness, mesures dans la PR feat/opt-1). Le labo reste instable ; une immigration
+  de seeds limite l'extinction.
 - Les résultats numériques ne sont pas identiques à l'ancienne version Python (autre RNG) ;
   la sémantique (ISA, monde, fitness, sélection) est portée à l'identique, au plus près.
 - Aucune « émergence » au-delà de stratégies simples ; pas de conscience, pas d'autonomie hors de la VM.
