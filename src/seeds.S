@@ -21,4 +21,5 @@
         SEED adn_commons,  "seeds/commons.adn"
         SEED adn_pandemic, "seeds/pandemic.adn"
         SEED adn_repair,   "seeds/repair.adn"
+        SEED adn_selfevo,  "seeds/selfevo.adn"
         .section .note.GNU-stack,"",@progbits

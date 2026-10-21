@@ -28,7 +28,7 @@
 #define GRID_H        32
 #define CMAX          1024   /* plafond dur de créatures par liste */
 #define N_EXTRA       6
-#define N_LABS        15
+#define N_LABS        16
 #define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */
 
 /* ---------------- RNG déterministe (xoshiro256**) ---------------- */

@@ -7,7 +7,6 @@
 #include <string.h>
 #include "octet.h"
 
-static int clampi(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : v; }
 static int cheb(const Creature *a, const Creature *b, int W, int H) {
     int dx = abs(a->x - b->x), dy = abs(a->y - b->y);
     if (dx > W / 2) dx = W - dx;
@@ -442,6 +441,47 @@ double hl_cr_fit(Lab *l, World *w, int ticks) {
     if (!l->counterfactual) {
         PoolEntry g[4]; for (int i = 0; i < 4; i++) cr_random_genome(&g[i]);
         l->extra[4] = replay_pool(l, ticks, g, 4, NULL); l->extra[5] = f - l->extra[4];
+    }
+    return f;
+}
+
+/* ======================= 6. self-evolve : la seed pilote son évolution =======================
+ * Octets 2..5 du génome = taux de substitution, taux d'indel, crossover, zone protégée (lus à SPLIT
+ * par mutate_evo, bornés, voir mutate.c ; cfg.self_evo n'est posé QUE dans ce labo). Le monde change
+ * de régime toutes les 50 ticks : une cible R ∈ 0..15 (nouvelle à chaque régime, tirée par la graine
+ * du cycle, donc impossible à mémoriser) ; EMIT v rapporte 6 − 2·|v&15 − R| si l'écart d < 4, sinon coûte 1.
+ * Fitness = moyenne sur les régimes de Σ(1 − d/4)⁺ / créature-tick : vitesse d'adaptation.
+ * Baseline = même pool rejoué avec les paramètres fixes du moteur (mut 2 %, dup 5 %). */
+#define SE_PERIOD 50
+typedef struct { int R; double corr[16]; long ct[16]; } SeState;
+void hl_se_cfg(WorldConfig *c) { (void)c; }
+int hl_se_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "selfevo", 0); return 4; }
+void hl_se_init(Lab *l, World *w) { l->ext = calloc(1, sizeof(SeState)); w->cfg.self_evo = !l->counterfactual; }
+void hl_se_pre(Lab *l, World *w) {
+    SeState *s = l->ext;
+    if ((w->t - 1) % SE_PERIOD == 0) { int r; do r = (int)rng_below(w->rng, 16); while (w->t > 1 && r == s->R); s->R = r; }
+}
+void hl_se_post(Lab *l, World *w) {
+    SeState *s = l->ext; int g = (int)((w->t - 1) / SE_PERIOD) & 15;
+    for (int i = 0; i < w->nem; i++) {
+        Creature *c = w->em[i].c;
+        int d = abs((w->em[i].v & 15) - s->R);           /* récompense graduée : la dérive ±1 peut grimper */
+        c->e += d < 4 ? 6 - 2 * d : -1; cap_e(c);
+        if (d < 4) s->corr[g] += 1.0 - d / 4.0;
+    }
+    s->ct[g] += w->ncs;
+}
+double hl_se_fit(Lab *l, World *w, int ticks) {
+    SeState *s = l->ext; int ng = (ticks + SE_PERIOD - 1) / SE_PERIOD; double f = 0;
+    if (ng > 16) ng = 16;
+    for (int g = 0; g < ng; g++) f += s->ct[g] ? (double)s->corr[g] / s->ct[g] : 0;
+    f /= ng;
+    if (!l->counterfactual) {
+        l->extra[0] = replay(l, ticks, NULL); l->extra[1] = f - l->extra[0];
+        double m = 0, id = 0, xo = 0, pr = 0;
+        for (int i = 0; i < w->ncs; i++) { EvoParams p = evo_params(w->cs[i]->dna, w->cs[i]->len); m += p.mut; id += p.indel; xo += p.xover; pr += p.prot; }
+        int n = w->ncs ? w->ncs : 1;
+        l->extra[2] = m / n; l->extra[3] = id / n; l->extra[4] = xo / n; l->extra[5] = pr / n;
     }
     return f;
 }
