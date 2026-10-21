@@ -48,6 +48,7 @@ static double humanity_gap(int id, const MetricRec *r) {
     if (!strcmp(n, "pandemic")) return r->fitness;
     if (!strcmp(n, "code-repair")) return r->extra[5];
     if (!strcmp(n, "self-evolve")) return r->extra[1];
+    if (!strcmp(n, "diagnose")) return r->extra[4];
     return 0;
 }
 

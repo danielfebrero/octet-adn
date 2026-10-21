@@ -22,4 +22,5 @@
         SEED adn_pandemic, "seeds/pandemic.adn"
         SEED adn_repair,   "seeds/repair.adn"
         SEED adn_selfevo,  "seeds/selfevo.adn"
+        SEED adn_diagnose, "seeds/diagnose.adn"
         .section .note.GNU-stack,"",@progbits
