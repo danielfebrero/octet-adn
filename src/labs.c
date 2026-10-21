@@ -299,7 +299,7 @@ void hl_se_cfg(WorldConfig *c); int hl_se_seeds(PoolEntry *o); void hl_se_init(L
 void hl_se_post(Lab *l, World *w); double hl_se_fit(Lab *l, World *w, int t);
 void hl_dg_cfg(WorldConfig *c); int hl_dg_seeds(PoolEntry *o); void hl_dg_init(Lab *l, World *w); void hl_dg_pre(Lab *l, World *w);
 void hl_dg_post(Lab *l, World *w); double hl_dg_fit(Lab *l, World *w, int t); int hl_dg_sel(Lab *l, World *w, PoolEntry *out);
-void hl_gn_cfg(WorldConfig *c); int hl_gn_seeds(PoolEntry *o); void hl_gn_init(Lab *l, World *w); void hl_gn_pre(Lab *l, World *w); double hl_gn_fit(Lab *l, World *w, int t);
+void hl_gn_cfg(WorldConfig *c); int hl_gn_seeds(PoolEntry *o); void hl_gn_init(Lab *l, World *w); void hl_gn_pre(Lab *l, World *w); double hl_gn_fit(Lab *l, World *w, int t); int hl_gn_sel(Lab *l, World *w, PoolEntry *out);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -351,7 +351,7 @@ const LabDef LABS[N_LABS] = {
       { "accuracy", "emits", "best_rate", "blind", "vs_blind" }, hl_dg_cfg, hl_dg_seeds, hl_dg_pre, hl_dg_post, hl_dg_fit, hl_rank_score, hl_dg_sel, hl_dg_init, 0, 0 },
     { "general", "Apprendre pendant sa vie, généraliser à des tâches jamais vues",
       "justesse des essais 32..63 (2e moitié de vie) sur 32 tâches tenues à l'écart (tables réservées, bandits 0..3, famille mémoire jamais vue) ; la sélection ne voit que les tâches d'entraînement ; baseline = mêmes génomes, génome gelé",
-      { "heldout", "train", "frozen", "vs_frozen", "early", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, NULL, hl_gn_init, 0, 1 },
+      { "heldout", "train", "frozen", "vs_frozen", "early", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, hl_gn_sel, hl_gn_init, 0, 1 },
 };
 
 int lab_index(const char *name) {

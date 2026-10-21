@@ -181,6 +181,7 @@ struct Lab {
     void *ext;                           /* état alloué par le labo (libéré par lab_free) */
     void (*ext_free)(struct Lab *l);     /* libère ce que ext contient (appelé avant free(ext)) */
     double acc[16];
+    int eval_only;                       /* 1 = monde jetable de pool_eval (rien n'est sélectionné) */
 };
 
 extern const LabDef LABS[N_LABS];

@@ -797,10 +797,10 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     if (curve) { curve[0] = a / (16.0 * lives); curve[1] = b / (16.0 * lives); }
     return late / ((double)(GN_TRIALS - GN_LATE) * lives);
 }
-/* fitness de sélection : mélange fixe des 4 niveaux, 16 tâches chacun */
+/* fitness de sélection : mélange fixe des 4 niveaux, 8 tâches chacun */
 double gn_train(const PoolEntry *g, int n, uint64_t seed) {
     double s = 0;
-    for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 16, 0, -1, NULL);
+    for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 8, 0, -1, NULL);
     return s / GN_LEVELS;
 }
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
@@ -838,29 +838,60 @@ void hl_gn_init(Lab *l, World *w) {
     GnLab *s = calloc(1, sizeof *s);
     s->level = l->pool0 ? gn_level_of(l->pool0, l->npool0) : 0;
     l->ext = s; w->before_vm = gn_before;
+    if (l->eval_only) {                                 /* réévaluation : la fitness ne lit que le pool, pas de monde à simuler */
+        for (int i = 0; i < w->ncs; i++) free(w->cs[i]);
+        w->ncs = 0;
+    }
 }
 void hl_gn_pre(Lab *l, World *w) { (void)l; w->hist_n = 0; }
+/* Graine des tâches d'entraînement d'un cycle : dérivée de l'état initial du RNG, donc la même pour le
+ * nouveau pool et le pool en place dans la réévaluation appariée du runner. */
+static uint64_t gn_cycle_seed(const Lab *l) { Rng t = l->rng0; return rng_next(&t); }
+/* Fitness = le POOL lui-même (pas ses descendants après 200 ticks) : justesse d'entraînement de ses
+ * génomes en bac à sable. Le monde ne sert qu'à produire les candidats (mutation, héritage). */
 double hl_gn_fit(Lab *l, World *w, int ticks) {
-    (void)ticks;
+    (void)ticks; (void)w;
+    int n = l->npool0 < GN_TOP ? l->npool0 : GN_TOP;     /* les 8 premiers du pool (triés par la sélection) */
+    double curve[2] = { 0, 0 }, tr = 0;
+    memset(l->extra, 0, sizeof l->extra);
+    if (n > 0) {
+        tr = gn_train(l->pool0, n, gn_cycle_seed(l));
+        if (l->eval_only) return tr;                    /* réévaluation appariée : pas besoin du held-out */
+        l->extra[0] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, curve);
+        l->extra[2] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, -1, NULL);
+    }
+    l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2]; l->extra[4] = curve[0];
+    l->extra[5] = ((GnLab *)l->ext)->level;
+    return tr;                                          /* la sélection ne voit que l'entraînement */
+}
+/* Nouveau pool : les 32 meilleurs du monde (lscore) + le pool reçu, notés UN PAR UN en bac à sable sur
+ * les tâches d'entraînement du cycle ; on garde les 16 meilleurs génomes distincts. */
+int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
+    if (l->eval_only) return 0;                         /* réévaluation : seule la fitness du pool compte */
     Creature *v[CMAX]; int n = 0;
-    for (int i = 0; i < w->ncs; i++) v[n++] = w->cs[i];
-    for (int i = 1; i < n; i++) {                       /* lscore puis énergie */
+    for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
+    for (int i = 1; i < n; i++) {
         Creature *c = v[i]; int j = i - 1;
         while (j >= 0 && (v[j]->lscore < c->lscore || (v[j]->lscore == c->lscore && v[j]->e < c->e))) { v[j + 1] = v[j]; j--; }
         v[j + 1] = c;
     }
-    if (n > GN_TOP) n = GN_TOP;
-    PoolEntry *g = malloc(sizeof(PoolEntry) * GN_TOP);
-    for (int i = 0; i < n; i++) { g[i].species = 0; g[i].len = v[i]->len; memcpy(g[i].dna, v[i]->dna, (size_t)v[i]->len); }
-    double tr = 0, curve[2] = { 0, 0 };
-    memset(l->extra, 0, sizeof l->extra);
-    if (n) {
-        tr = gn_train(g, n, rng_next(w->rng));
-        l->extra[0] = gn_eval(g, n, 1, 0, 0, GN_HELD_N, 0, -1, curve);
-        l->extra[2] = gn_eval(g, n, 1, 0, 0, GN_HELD_N, 1, -1, NULL);
+    if (n > 32) n = 32;
+    int m = 0;
+    PoolEntry *cand = malloc(sizeof(PoolEntry) * (32 + POOL_MAX)); double *sc = malloc(sizeof(double) * (32 + POOL_MAX));
+    for (int i = 0; i < n; i++) { cand[m].species = 0; cand[m].len = v[i]->len; memcpy(cand[m].dna, v[i]->dna, (size_t)v[i]->len); m++; }
+    for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
+    uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
+    for (int i = 0; i < m; i++) sc[i] = gn_train(&cand[i], 1, seed);
+    int k = 0;
+    while (k < POOL_SIZE) {
+        int b = -1;
+        for (int i = 0; i < m; i++) if (sc[i] > -1 && (b < 0 || sc[i] > sc[b])) b = i;
+        if (b < 0) break;
+        sc[b] = -2;
+        int dup = 0;
+        for (int j = 0; j < k; j++) if (out[j].len == cand[b].len && !memcmp(out[j].dna, cand[b].dna, (size_t)cand[b].len)) { dup = 1; break; }
+        if (!dup) out[k++] = cand[b];
     }
-    free(g);
-    l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2]; l->extra[4] = curve[0];
-    l->extra[5] = ((GnLab *)l->ext)->level;
-    return tr;                                          /* la sélection ne voit que l'entraînement */
+    free(cand); free(sc);
+    return k;
 }
