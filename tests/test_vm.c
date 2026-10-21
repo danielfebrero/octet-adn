@@ -184,6 +184,57 @@ TEST(test_checkpoint_roundtrip) {
     unlink(p);
 }
 
+TEST(test_pp_predators_are_mortal) {
+    /* Régression : un prédateur qui ne fait que YIELD était « immortel » à l'échelle d'un cycle
+     * (220 d'énergie, ATTACK vole 30 pour 1). Avec la config predator-prey il meurt à PP_PRED_MAX_AGE. */
+    const uint8_t g[8] = { 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f };
+    int id = lab_index("predator-prey");
+    for (int pp = 0; pp < 2; pp++) {
+        Rng r; rng_seed(&r, 5);
+        WorldConfig cfg = cfg_default();
+        if (pp) LABS[id].config(&cfg);
+        assert(pp ? cfg.pred_max_age == PP_PRED_MAX_AGE : cfg.pred_max_age == 0);
+        World *w = world_new(NULL, 0, &r, &cfg, NULL);
+        Creature *c = creature_new(3, 3, g, 8, 220, 0, 1, -1);
+        w->cs[w->ncs++] = c; w->occ[3][3]++;
+        int t = 0;
+        while (w->ncs && t < 150) { world_step(w); t++; }
+        if (pp) assert(w->ncs == 0 && t <= PP_PRED_MAX_AGE);
+        else assert(w->ncs == 1);                   /* moteur par défaut : inchangé pour les autres labos */
+        world_free(w);
+    }
+    /* ATTACK coûte cfg.attack_cost */
+    Rng r; rng_seed(&r, 6);
+    WorldConfig cfg = cfg_default(); cfg.attack_cost = 5;
+    World *w = world_new(NULL, 0, &r, &cfg, NULL);
+    const uint8_t a[2] = { 0x1a, 0x0f };            /* ATTACK ; YIELD, seul : rien à voler */
+    Creature *c = creature_new(3, 3, a, 2, 100, 0, 1, -1);
+    w->cs[w->ncs++] = c; w->occ[3][3]++;
+    vm_run(c, w);
+    assert(c->e == 100 - 5 - 1);
+    world_free(w);
+}
+
+TEST(test_pp_selection_not_frozen) {
+    /* Régression : avant, un pic chanceux (fitness 1) puis la règle des 90 % gelait le pool et la
+     * fitness restait à 0.4 (mean_pred == 2 pile, 0 acceptation). On exige des acceptations
+     * après le cycle 5 et une population de prédateurs qui varie. */
+    char d[] = "/tmp/oadn-pp-XXXXXX"; assert(mkdtemp(d));
+    RunOpts o = { .ticks = 200, .cycles = 20, .quiet = 1, .no_reload = 1, .data_dir = d };
+    o.labs[o.nlabs++] = lab_index("predator-prey");
+    MetricRec rows[20];
+    assert(runner(&o, rows, 20) == 20);
+    int acc_late = 0, pred_is_2 = 0; double sum = 0;
+    for (int i = 5; i < 20; i++) { acc_late += rows[i].accepted; pred_is_2 += rows[i].extra[1] == 2.0; }
+    for (int i = 10; i < 20; i++) sum += rows[i].fitness;
+    /* seuils calibrés (déterministe, graine 0) : ancien moteur = 0.40 figé ; nouveau moteur + règle des
+     * 90 % = 2 acceptations, 0.29 ; nouveau moteur + sélection appariée = 4 acceptations, 0.61 */
+    assert(acc_late >= 3 && pred_is_2 < 15 && sum / 10 >= 0.45);
+    printf("    predator-prey 20 cycles : %d acceptations (c6-20), fitness moy. c11-20 = %.3f\n", acc_late, sum / 10);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d);
+    assert(system(cmd) == 0);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -199,6 +250,8 @@ int main(void) {
     RUN(test_runner_dry_run_two_labs);
     RUN(test_runner_persists_and_is_deterministic);
     RUN(test_checkpoint_roundtrip);
-    printf("\n%d/%d tests OK\n", passed, 14);
+    RUN(test_pp_predators_are_mortal);
+    RUN(test_pp_selection_not_frozen);
+    printf("\n%d/%d tests OK\n", passed, 16);
     return 0;
 }

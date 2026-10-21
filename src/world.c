@@ -10,7 +10,8 @@ void lab_post(struct Lab *l, World *w);
 WorldConfig cfg_default(void) {
     WorldConfig c = { .w = 48, .h = 20, .food_density = 0.35, .food_regrow = 4, .max_pop = 120,
                       .split_energy = 70, .start_energy = 160, .mut_rate = 0.02, .dup_rate = 0.05,
-                      .crossover = 0, .pred_eat_factor = 0.2, .attack_steal = 30 };
+                      .crossover = 0, .pred_eat_factor = 0.2, .attack_steal = 30,
+                      .attack_cost = 1, .pred_metab = 0, .pred_max_age = 0 };
     return c;
 }
 
@@ -112,7 +113,7 @@ void world_split(World *w, Creature *c) {
     w->st.born++;
 }
 void world_attack(World *w, Creature *c) {
-    c->e -= 1;
+    c->e -= w->cfg.attack_cost;
     for (int i = 0; i < w->ncs; i++) {
         Creature *o = w->cs[i];
         if (o->species != c->species && o->e > 0 && near(o, c)) {
@@ -149,7 +150,12 @@ void world_step(World *w) {
     int nl = 0, ng = 0;
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
-        if (vm_run(c, w) && c->e > 0) live[nl++] = c;
+        int ok = vm_run(c, w);
+        if (ok && c->species != 0) {                 /* prédateurs : coût de vie + vieillissement */
+            c->e -= w->cfg.pred_metab;
+            if (w->cfg.pred_max_age > 0 && c->age >= w->cfg.pred_max_age) c->e = 0;
+        }
+        if (ok && c->e > 0) live[nl++] = c;
         else { bury(w, c, 1); grave[ng++] = c; }
     }
     if (w->lab) lab_post(w->lab, w);

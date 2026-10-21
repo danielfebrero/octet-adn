@@ -10,7 +10,19 @@
 #define N_SYN         5      /* 4 poids (food, voisins, énergie, stimulus) + biais */
 #define POOL_SIZE     16
 #define POOL_MAX      32
-#define ACCEPT_RATIO  0.9
+#define ACCEPT_RATIO  0.9    /* règle historique (--select legacy) */
+#ifndef SEL_EVALS
+#define SEL_EVALS     4      /* sélection appariée : nb de graines de réévaluation */
+#endif
+#ifndef PP_PRED_MAX_AGE
+#define PP_PRED_MAX_AGE 100  /* predator-prey : âge max d'un prédateur (ticks) */
+#endif
+#ifndef PP_PRED_METAB
+#define PP_PRED_METAB   0    /* predator-prey : métabolisme supplémentaire des prédateurs */
+#endif
+#ifndef PP_ATTACK_COST
+#define PP_ATTACK_COST  1    /* predator-prey : coût d'un ATTACK */
+#endif
 #define HIST_N        256
 #define GRID_W        64
 #define GRID_H        32
@@ -62,6 +74,10 @@ typedef struct {
     int crossover;
     double pred_eat_factor;
     int attack_steal;
+    /* prédation (espèces != 0) : 0 = désactivé, valeurs neutres hors predator-prey */
+    int attack_cost;      /* énergie payée par ATTACK (défaut 1) */
+    int pred_metab;       /* métabolisme supplémentaire par tick des prédateurs */
+    int pred_max_age;     /* plafond d'âge des prédateurs (0 = aucun) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -194,6 +210,7 @@ void met_format(const MetricRec *r, char *out, size_t cap);
 typedef struct {
     int labs[N_LABS]; int nlabs;
     int ticks, cycles, cycles_done, dry_run, no_reload, quiet;
+    int sel_legacy;            /* 1 = ancienne règle « garder si ≥ 90 % du meilleur historique » */
     uint64_t seed;
     double sleep_s;
     const char *data_dir;
@@ -202,5 +219,9 @@ typedef struct {
 } RunOpts;
 uint64_t engine_version(void);
 int runner(RunOpts *o, MetricRec *rows_out, int rows_cap);   /* retourne nb de lignes */
+/* fitness d'un pool sur la graine dérivée de key (monde jetable, rien n'est écrit) */
+double pool_eval(int lab_id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nforeign);
+/* champions des 9 autres labos (checkpoints de dir), pour org-seeds ; retourne leur nombre */
+int collect_foreign(const char *dir, PoolEntry *out);
 int write_status(const char *data_dir, const int *labs, int nlabs);
 #endif

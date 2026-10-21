@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 #include "octet.h"
 
 static void usage(void) {
@@ -13,6 +14,7 @@ static void usage(void) {
          "        octet-adn hexdump FICHIER         octets bruts en hexadécimal\n"
          "        octet-adn ck FICHIER.ck           inspecte un checkpoint\n"
          "        octet-adn seeds DOSSIER           exporte les seeds embarquées en .adn\n"
+         "        octet-adn eval DATA_DIR [N] [TICKS] fitness des pools (checkpoints) sur N graines tenues à l'écart\n"
          "\noptions run :\n"
          "  --labs all|a,b,c        (défaut all)\n"
          "  --ticks-per-cycle N     (défaut 200)\n"
@@ -21,6 +23,7 @@ static void usage(void) {
          "  --seed N                graine RNG globale (défaut 0)\n"
          "  --sleep S               pause entre cycles (s)\n"
          "  --stock-csv FICHIER     série locale (colonne close) pour predict-stock ; aucun réseau\n"
+         "  --select paired|legacy  sélection : réévaluation appariée (défaut) ou règle des 90 %\n"
          "  --no-reload             pas de ré-exécution quand le binaire change\n"
          "  --dry-run               1 cycle, rien n'est écrit");
 }
@@ -105,6 +108,26 @@ int main(int argc, char **argv) {
         }
         return 0;
     }
+    if (!strcmp(cmd, "eval")) {                         /* qualité des pools : graines tenues à l'écart */
+        if (argc < 3) { usage(); return 2; }
+        int n = argc > 3 ? atoi(argv[3]) : 8, ticks = argc > 4 ? atoi(argv[4]) : 200;
+        if (n <= 0 || ticks <= 0) { usage(); return 2; }
+        static PoolEntry foreign[N_LABS]; static Checkpoint ck;
+        int nf = collect_foreign(argv[2], foreign);
+        for (int id = 0; id < N_LABS; id++) {
+            char p[4096]; snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", argv[2], LABS[id].name);
+            if (ck_load(p, &ck) || !ck.npool) continue;
+            double s = 0, s2 = 0;
+            for (int j = 0; j < n; j++) {
+                char key[128]; snprintf(key, sizeof key, "holdout:%s:%d", LABS[id].name, j);
+                double f = pool_eval(id, ck.pool, ck.npool, key, ticks, foreign, nf);
+                s += f; s2 += f * f;
+            }
+            double m = s / n, sd = n > 1 ? sqrt(fmax(0, (s2 - n * m * m) / (n - 1))) : 0;
+            printf("%-13s cycle=%u  holdout_mean=%.4f  sd=%.4f  n=%d\n", LABS[id].name, ck.cycle, m, sd, n);
+        }
+        return 0;
+    }
     if (strcmp(cmd, "run")) { usage(); return 2; }
 
     RunOpts o = { .ticks = 200, .data_dir = "labs_data", .argv = argv };
@@ -129,6 +152,10 @@ int main(int argc, char **argv) {
             stock_set_csv(v, n);
         }
         else if (!strncmp(a, "--cycles-done=", 14)) o.cycles_done = atoi(a + 14);
+        else if (ARG("--select")) {
+            if (!strcmp(nx, "legacy")) o.sel_legacy = 1;
+            else if (strcmp(nx, "paired")) { fprintf(stderr, "--select : paired|legacy\n"); return 2; }
+        }
         else if (!strcmp(a, "--no-reload")) o.no_reload = 1;
         else if (!strcmp(a, "--dry-run")) o.dry_run = 1;
         else { fprintf(stderr, "option inconnue : %s\n", a); usage(); return 2; }
