@@ -118,18 +118,19 @@ double hl_fold_fit(Lab *l, World *w, int t) {
 void hl_fold_initp(Lab *l, World *w) { fold_init(l, w); }
 
 /* rejeu contrefactuel : même pool, même graine, interventions coupées (l->counterfactual) */
-static double replay(Lab *l, int ticks, double *extra) {
+static double replay_pool(Lab *l, int ticks, const PoolEntry *pool, int n, double *extra) {
     int base = l->def->ticks_mult > 1 ? ticks / l->def->ticks_mult : ticks;
     Lab l2; lab_init(&l2, l->id, base);
     l2.counterfactual = 1;
     Rng r = l->rng0;
     CycleResult *res = malloc(sizeof *res);
-    run_cycle(&l2, l->pool0, l->npool0, &r, base, res);
+    run_cycle(&l2, pool, n, &r, base, res);
     double f = res->fitness;
     if (extra) memcpy(extra, l2.extra, sizeof l2.extra);
     world_free(res->w); lab_free(&l2); free(res);
     return f;
 }
+static double replay(Lab *l, int ticks, double *extra) { return replay_pool(l, ticks, l->pool0, l->npool0, extra); }
 static int sel_species0(Lab *l, World *w, PoolEntry *out) {
     (void)l;
     Creature *v[CMAX]; int n = 0, k = 0;
@@ -225,3 +226,48 @@ double hl_ab_fit(Lab *l, World *w, int ticks) {
     return f;
 }
 int hl_ab_sel(Lab *l, World *w, PoolEntry *out) { return sel_species0(l, w, out); }
+
+/* ======================= 3. commons : biens communs =======================
+ * Horizon 5 × ticks. Chaque case a une capacité (14) ; la nourriture repousse en logistique
+ * (rien ne repousse d'une case vide). Vider une case (stock → 0) lui retire 4 de capacité POUR
+ * TOUJOURS ; capacité 0 = case morte. Pas de repousse aléatoire globale. */
+typedef struct { uint8_t cap[GRID_H][GRID_W], snap[GRID_H][GRID_W]; long r0; } CmState;
+void hl_cm_cfg(WorldConfig *c) { c->food_density = 1.0; c->food_regrow = 0; c->max_pop = 150; }
+int hl_cm_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "commons", 0); return 4; }
+static long cm_cap(const World *w, const CmState *s) {
+    long r = 0;
+    for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) r += s->cap[y][x];
+    return r;
+}
+void hl_cm_init(Lab *l, World *w) {
+    CmState *s = calloc(1, sizeof *s);
+    for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) { s->cap[y][x] = 14; s->snap[y][x] = w->food[y][x]; }
+    s->r0 = cm_cap(w, s);
+    l->ext = s;
+}
+void hl_cm_pre(Lab *l, World *w) {
+    CmState *s = l->ext;
+    for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) {
+        uint8_t *f = &w->food[y][x], *cp = &s->cap[y][x];
+        if (s->snap[y][x] > 0 && *f == 0) *cp = *cp > 4 ? (uint8_t)(*cp - 4) : 0;   /* surrécolte */
+        if (*f > *cp) *f = *cp;
+        if (*f == 0 && *cp > 0 && rng_double(w->rng) < 0.002) *f = 1;               /* recolonisation lente */
+        else if (*f > 0 && *f < *cp && rng_double(w->rng) < 0.06 * *f * (*cp - *f) / *cp) (*f)++;
+        s->snap[y][x] = *f;
+    }
+}
+double hl_cm_fit(Lab *l, World *w, int ticks) {
+    CmState *s = l->ext; long sp = 0; int h = l->npops / 2, dead = 0;
+    for (int i = ticks / 2; i < l->npops; i++) sp += l->pops[i];
+    (void)h;
+    double late = (double)sp / (ticks - ticks / 2);
+    for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) dead += s->cap[y][x] == 0;
+    double rf = (double)cm_cap(w, s) / s->r0;
+    double f = late / 100.0 * rf;                    /* effondrement : pop tardive → 0 et capacité perdue */
+    l->extra[0] = late; l->extra[1] = rf; l->extra[2] = dead;
+    if (!l->counterfactual) {                         /* baseline : fourrageur glouton, même graine */
+        PoolEntry g[4]; for (int i = 0; i < 4; i++) seed_entry(&g[i], "forager", 0);
+        l->extra[3] = replay_pool(l, ticks, g, 4, NULL); l->extra[4] = f - l->extra[3];
+    }
+    return f;
+}

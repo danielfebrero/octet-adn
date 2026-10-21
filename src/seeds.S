@@ -18,4 +18,5 @@
         SEED adn_walk,     "seeds/walk.adn"
         SEED adn_fold,     "seeds/fold.adn"
         SEED adn_antibiotic, "seeds/antibiotic.adn"
+        SEED adn_commons,  "seeds/commons.adn"
         .section .note.GNU-stack,"",@progbits

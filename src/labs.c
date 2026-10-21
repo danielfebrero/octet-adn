@@ -7,17 +7,17 @@
 /* ---------------- seeds embarquées ---------------- */
 #define EXT(s) extern const uint8_t s[], s##_end[];
 EXT(adn_forager) EXT(adn_neural) EXT(adn_echo) EXT(adn_dialog) EXT(adn_stock) EXT(adn_social) EXT(adn_predator) EXT(adn_walk)
-EXT(adn_fold) EXT(adn_antibiotic)
+EXT(adn_fold) EXT(adn_antibiotic) EXT(adn_commons)
 #define BLOB(n, s) { n, s, 0 }
 static SeedBlob seeds_tab[] = {
     BLOB("forager", adn_forager), BLOB("neural", adn_neural), BLOB("echo", adn_echo),
     BLOB("dialog", adn_dialog), BLOB("stock", adn_stock), BLOB("social", adn_social),
     BLOB("predator", adn_predator), BLOB("walk", adn_walk),
-    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic),
+    BLOB("fold", adn_fold), BLOB("antibiotic", adn_antibiotic), BLOB("commons", adn_commons),
 };
 static const uint8_t *seed_ends[] = { adn_forager_end, adn_neural_end, adn_echo_end, adn_dialog_end,
                                       adn_stock_end, adn_social_end, adn_predator_end, adn_walk_end,
-                                      adn_fold_end, adn_antibiotic_end };
+                                      adn_fold_end, adn_antibiotic_end, adn_commons_end };
 const int N_SEEDS = sizeof seeds_tab / sizeof seeds_tab[0];
 const SeedBlob *seed_at(int i) { return (i >= 0 && i < N_SEEDS) ? seed_get(seeds_tab[i].name) : NULL; }
 const SeedBlob *seed_get(const char *name) {
@@ -290,6 +290,7 @@ void hl_rank_score(const Creature *c, double k[2]);
 void hl_fold_cfg(WorldConfig *c); int hl_fold_seeds(PoolEntry *o); double hl_fold_fit(Lab *l, World *w, int t); void hl_fold_initp(Lab *l, World *w);
 void hl_ab_cfg(WorldConfig *c); int hl_ab_seeds(PoolEntry *o); void hl_ab_init(Lab *l, World *w); void hl_ab_pre(Lab *l, World *w);
 void hl_ab_post(Lab *l, World *w); double hl_ab_fit(Lab *l, World *w, int t); int hl_ab_sel(Lab *l, World *w, PoolEntry *out);
+void hl_cm_cfg(WorldConfig *c); int hl_cm_seeds(PoolEntry *o); void hl_cm_init(Lab *l, World *w); void hl_cm_pre(Lab *l, World *w); double hl_cm_fit(Lab *l, World *w, int t);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -324,6 +325,9 @@ const LabDef LABS[N_LABS] = {
     { "antibiotic", "Antibiotique contre pathogène co-évolutif",
       "ticks avant échappement (> 60 pathogènes) / ticks, ×1.25 si éradiqué, × hôtes vivants, × (1 − dégâts médicament) ; baseline = sans traitement",
       { "t_ctrl", "eradicated", "hosts_alive", "drug_damage", "baseline", "vs_baseline" }, hl_ab_cfg, hl_ab_seeds, hl_ab_pre, hl_ab_post, hl_ab_fit, rank_default, hl_ab_sel, hl_ab_init, 0 },
+    { "commons", "Biens communs : ressource à repousse lente",
+      "population moyenne (/100) sur la 2e moitié d'un horizon de 5 × ticks × fraction de capacité restante ; vider une case la dégrade pour toujours ; baseline = fourrageur glouton",
+      { "pop_late", "resource_frac", "dead_cells", "baseline", "vs_baseline" }, hl_cm_cfg, hl_cm_seeds, hl_cm_pre, NULL, hl_cm_fit, rank_default, NULL, hl_cm_init, 5 },
 };
 
 int lab_index(const char *name) {
