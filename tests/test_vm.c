@@ -545,33 +545,34 @@ TEST(test_core_state_hash_matches_main) {
     }
 }
 
-/* La seed ne contient pas la politique. Copier la marque est entre les deux.
- * Calculer (marque + 1) mod 8 tient, et s'effondre si on renverse le stimulus. */
+/* La seed ne contient pas la politique. Sur 200 ticks (mutation 5 %) :
+ * copier < incrémenter < ((marque + 1) XOR 4). Le calcul complet se sert
+ * du stimulus. Seuils mesurés, avec de la marge. */
 TEST(test_diagnose_reads_and_computes) {
-    PoolEntry seed[POOL_MAX], copy[4], sol[4];
+    PoolEntry seed[POOL_MAX], copy[4], step[4], full[4];
     int n = LABS[lab_index("diagnose")].seeds(seed);
     assert(n == 4 && lab_index("diagnose") == N_CORE_LABS + 6);
     for (int i = 0; i < n; i++)
         for (int k = 0; k < seed[i].len; k++)
             assert(seed[i].dna[k] != OP_SENSE_STIM && seed[i].dna[k] != OP_EMIT);
-    double ex[N_EXTRA];
-    double lo = ev4("diagnose", seed, n, ex);
-    assert(lo < 0.32);
+    double lo = ev4("diagnose", seed, n, NULL);
     for (int i = 0; i < 4; i++) {
         copy[i] = seed[0];
-        copy[i].dna[0] = OP_SENSE_STIM;
-        copy[i].dna[1] = OP_EMIT;
-        sol[i] = seed[0];
-        sol[i].dna[0] = OP_SENSE_STIM;
-        sol[i].dna[1] = OP_INC_A;
-        sol[i].dna[2] = OP_EMIT;
+        copy[i].dna[0] = OP_SENSE_STIM; copy[i].dna[1] = OP_EMIT;
+        step[i] = seed[0];
+        step[i].dna[0] = OP_SENSE_STIM; step[i].dna[1] = OP_INC_A; step[i].dna[2] = OP_EMIT;
+        full[i] = seed[0];
+        full[i].dna[0] = OP_SENSE_STIM; full[i].dna[1] = OP_INC_A; full[i].dna[2] = OP_MOV_BA;
+        full[i].dna[3] = OP_LOADI; full[i].dna[4] = 4; full[i].dna[5] = OP_XOR; full[i].dna[6] = OP_EMIT;
     }
     double mid = ev4("diagnose", copy, 4, NULL);
-    double hi = ev4("diagnose", sol, 4, ex);
-    assert(mid > lo + 0.05);
-    assert(hi > 0.65 && hi > mid + 0.25);
-    assert(ex[4] > 0.3);   /* vs_blind : il se sert du stimulus */
-    printf("    diagnose seed=%.3f copy=%.3f cipher=%.3f vs_blind=%+.3f\n", lo, mid, hi, ex[4]);
+    double hi = ev4("diagnose", step, 4, NULL);
+    double ex[N_EXTRA];
+    double top = ev4("diagnose", full, 4, ex);
+    assert(hi > mid + 0.10);
+    assert(top > 0.58 && top > hi + 0.12);
+    assert(ex[4] > 0.18);
+    printf("    diagnose seed=%.3f copy=%.3f step=%.3f full=%.3f vs_blind=%+.3f\n", lo, mid, hi, top, ex[4]);
 }
 
 int main(void) {

@@ -346,7 +346,7 @@ const LabDef LABS[N_LABS] = {
       "Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 50 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur",
       { "baseline", "vs_baseline", "mut_rate", "indel_rate", "crossover", "protected" }, hl_se_cfg, hl_se_seeds, hl_se_pre, hl_se_post, hl_se_fit, hl_rank_score, NULL, hl_se_init, 0 },
     { "diagnose", "Calculer un médicament que le stimulus ne donne pas",
-      "justesse des EMIT : le médicament est (marque + 1) mod 8, la marque est le stimulus ; baseline = même pool, stimulus renversé",
+      "justesse des EMIT : le médicament est ((marque + 1) XOR 4) mod 8, la marque est le stimulus ; baseline = même pool, stimulus renversé",
       { "accuracy", "emits", "best_rate", "blind", "vs_blind" }, hl_dg_cfg, hl_dg_seeds, hl_dg_pre, hl_dg_post, hl_dg_fit, hl_rank_score, hl_dg_sel, hl_dg_init, 0 },
 };
 

@@ -61,7 +61,7 @@ typedef struct Creature {
     int x, y, d;
     uint8_t a, b;
     int ip, e, age, id, species, parent;
-    int stores, useful_stores, eaten, steps, emitted;   /* emitted = -1 si rien */
+    int stores, useful_stores, eaten, steps, emitted, splits;   /* emitted = -1 si rien */
     int len;
     uint8_t dna[MAX_LEN];
     uint8_t dirty[MAX_LEN / 8];   /* codons réécrits par STORE, pas encore exécutés */

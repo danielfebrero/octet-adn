@@ -116,8 +116,10 @@ void world_split(World *w, Creature *c) {
     if (w->cfg.self_evo) m = mutate_evo(tmp, n, w->rng, &ep, child);
     else m = mutate(tmp, n, w->rng, w->cfg.mut_rate, w->cfg.dup_rate, child);
     int d = (c->d + 1) & 3, give = c->e / 3;
+    int born_before = w->nnb;
     add(w, creature_new((c->x + DX[d] + w->cfg.w) % w->cfg.w, (c->y + DY[d] + w->cfg.h) % w->cfg.h,
                         child, m, give, w->nid++, c->species, c->id));
+    if (w->nnb > born_before) c->splits++;
     c->e -= give + 8 + ep.prot / 4;                      /* self-evolve : la protection coûte (0 ailleurs) */
     w->st.born++;
 }

@@ -573,12 +573,18 @@ void hl_pd_rank(const Creature *c, double k[2]) { k[0] = c->lscore; k[1] = c->ag
 
 /* ======================= 7. diagnose : le médicament n'est pas dans le stimulus =======================
  * La marque m = (m0 + tick) mod 8 est posée dans le stimulus. Elle change à chaque tick : une
- * constante (LOADI) ne peut pas la suivre. Le médicament est (m + 1) mod 8, pas m. Copier la
- * marque vaut 0,4. La calculer vaut 1. Une autre émission vaut 0,05. Le silence vaut 0.
- * La baseline renverse le stimulus (m XOR 7) et note toujours contre le vrai médicament :
- * un génome qui lit s'effondre, un génome qui récite non.
- * La seed ne contient ni SENSE_STIM ni EMIT. On photographie le meilleur taux après 40 ticks
- * (une constante chanceuse ne tient pas sur une marque qui tourne), même si le corps meurt ensuite. */
+ * constante (LOADI) ne peut pas la suivre. Le médicament est ((m + 1) XOR 4) mod 8 : incrémenter,
+ * puis retourner le bit 2. Les deux ordres commutent sur 3 bits, donc (m XOR 4) + 1 est le même
+ * calcul. On note la distance de Hamming des 3 bits bas, pas la distance circulaire :
+ *   0 bit  → 1,00    l'incrément seul est toujours à 1 bit (0,55), plus un palier
+ *   1 bit  → 0,55    une constante tourne autour de 0,41 et ne dépasse pas ce palier
+ *   2 bits → 0,20    copier la marque reste en dessous (souvent 2 ou 3 bits)
+ *   3 bits → 0,05
+ * Le silence vaut 0. La baseline renverse le stimulus (m XOR 7) et note toujours contre le vrai
+ * médicament : un génome qui lit s'effondre, un génome qui récite non.
+ * La seed ne contient ni SENSE_STIM ni EMIT. On photographie le meilleur taux après 40 ticks,
+ * seulement si le corps s'est divisé : une constante chanceuse ne tient pas sur une marque qui
+ * tourne, et un calculateur stérile ne remplace pas la lignée. */
 typedef struct {
     int mark;
     double credit, emits, best_rate;
@@ -604,21 +610,25 @@ void hl_dg_pre(Lab *l, World *w) {
     DgState *s = l->ext;
     int m = dg_mark(s, w->t);
     w->stimulus = l->counterfactual ? (m ^ 7) : m;
+    /* ((m + 1) XOR 4) == (m - 3) mod 8. SENSE_HIST 2 relit cette marque et tombe juste
+     * sans rien calculer. L'historique est vidé : le seul capteur utile est le stimulus courant. */
+    w->hist_n = 0;
 }
 void hl_dg_post(Lab *l, World *w) {
     DgState *s = l->ext;
-    int drug = (dg_mark(s, w->t) + 1) & 7;
+    int drug = ((dg_mark(s, w->t) + 1) ^ 4) & 7;
     for (int i = 0; i < w->nem; i++) {
         Creature *a = w->em[i].c;
         if (!a || a->species != 0 || a->e < 0) continue;
         int got = w->em[i].v & 7;
-        int d = (got - drug) & 7;
-        double c = got == drug ? 1.0 : (d == 1 || d == 7) ? 0.4 : 0.05;
+        int bits = (got ^ drug) & 7;
+        bits = (bits & 1) + ((bits >> 1) & 1) + ((bits >> 2) & 1);
+        double c = bits == 0 ? 1.0 : bits == 1 ? 0.55 : bits == 2 ? 0.20 : 0.05;
         a->lscore += c;
         s->credit += c;
         s->emits += 1;
         double rate = a->age > 0 ? a->lscore / a->age : 0;
-        if (a->age >= 40 && rate > s->best_rate) {
+        if (a->age >= 40 && a->splits > 0 && rate > s->best_rate) {
             s->best_rate = rate;
             s->has_best = 1;
             s->best.species = 0;
@@ -642,13 +652,30 @@ double hl_dg_fit(Lab *l, World *w, int ticks) {
     return acc;
 }
 int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
-    int n = sel_species0(l, w, out);
+    /* Seuls les corps qui se sont divisés entrent dans le pool. Un émetteur stérile
+     * (plus de SPLIT) figeait la recherche : né à chaque cycle, jamais muté. */
+    Creature *v[CMAX]; int n = 0, k = 0;
+    (void)l;
+    for (int i = 0; i < w->ncs; i++)
+        if (w->cs[i]->species == 0 && w->cs[i]->splits > 0) v[n++] = w->cs[i];
+    for (int i = 1; i < n; i++) {
+        Creature *c = v[i]; int j = i - 1;
+        while (j >= 0 && (v[j]->lscore < c->lscore
+               || (v[j]->lscore == c->lscore && (v[j]->e < c->e || (v[j]->e == c->e && v[j]->age < c->age))))) {
+            v[j + 1] = v[j]; j--;
+        }
+        v[j + 1] = c;
+    }
+    for (int i = 0; i < n && k < POOL_SIZE; i++) {
+        out[k].species = 0; out[k].len = v[i]->len; memcpy(out[k].dna, v[i]->dna, (size_t)v[i]->len); k++;
+    }
+    n = k;
     DgState *s = l->ext;
     if (!s->has_best) return n;
     double top = -1;
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
-        if (c->species != 0 || c->age <= 0) continue;
+        if (c->species != 0 || c->age <= 0 || c->splits <= 0) continue;
         double rate = c->lscore / c->age;
         if (rate > top) top = rate;
     }
