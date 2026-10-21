@@ -157,11 +157,11 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
         accepted = g_eval_new >= g_eval_old;
     }
     if (accepted) { memcpy(ck.pool, res.newpool, sizeof(PoolEntry) * (size_t)res.nnew); ck.npool = res.nnew; }
+    if (LABS[id].show_extra) fit = lab.extra[LABS[id].show_extra - 1];   /* general : fitness ET best = jeu tenu à l'écart (la sélection a déjà utilisé l'entraînement) */
     if (fit > ck.best_fitness && res.nnew > 0) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
     ck.cycle = cycle; ck.engine = eng;
 
     MetricRec r; memset(&r, 0, sizeof r);
-    if (LABS[id].show_extra) fit = lab.extra[LABS[id].show_extra - 1];   /* general : affiche le jeu tenu à l'écart */
     time_t now = time(NULL); struct tm lt; localtime_r(&now, &lt);
     r.ts = now; r.tz_off = (int32_t)lt.tm_gmtoff;
     r.cycle = cycle; r.ticks = (uint32_t)o->ticks; r.survived = (uint32_t)res.survived;

@@ -575,18 +575,19 @@ TEST(test_diagnose_reads_and_computes) {
     printf("    diagnose seed=%.3f copy=%.3f step=%.3f full=%.3f vs_blind=%+.3f\n", lo, mid, hi, top, ex[4]);
 }
 
-double gn_eval(const PoolEntry *g, int n, int held, uint64_t seed, int ntask, int mode, int fam, double *curve);
+double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, int ntask, int mode, int fam, double *curve);
+double gn_train(const PoolEntry *g, int n, uint64_t seed);
 /* general : la seed APPREND (gelée ou sans récompense, elle retombe au hasard), le jeu tenu à l'écart
  * diffère de l'entraînement, une constante ne passe pas, et le runner affiche le held-out, pas le train. */
 TEST(test_general_learns_and_holds_out) {
     PoolEntry s[POOL_MAX]; int n = LABS[lab_index("general")].seeds(s);
     assert(n == 4 && lab_index("general") == N_CORE_LABS + 7 && LABS[lab_index("general")].show_extra == 1);
-    double cv[2], h = gn_eval(s, 1, 1, 0, 32, 0, -1, cv), fz = gn_eval(s, 1, 1, 0, 32, 1, -1, NULL);
-    double nr = gn_eval(s, 1, 1, 0, 32, 2, -1, NULL), tr = gn_eval(s, 1, 0, 7, 32, 0, -1, NULL), best_c = 0;
-    for (int v = 0; v < 4; v++) { double c = gn_eval(s, 1, 1, 0, 32, 4 + v, -1, NULL); if (c > best_c) best_c = c; }
-    double mem = gn_eval(s, 1, 1, 0, 32, 0, 3, NULL);
-    printf("    general seed held=%.3f train=%.3f gelé=%.3f sans_récompense=%.3f constante_max=%.3f mémoire=%.3f début/fin=%.3f/%.3f\n", h, tr, fz, nr, best_c, mem, cv[0], cv[1]);
-    assert(h > fz + 0.3 && h > best_c + 0.3 && nr < 0.3 && cv[1] > cv[0] + 0.1 && tr > 0.9);
+    double cv[2], h = gn_eval(s, 1, 1, 0, 0, 40, 0, -1, cv), fz = gn_eval(s, 1, 1, 0, 0, 40, 1, -1, NULL);
+    double nr = gn_eval(s, 1, 1, 0, 0, 40, 2, -1, NULL), tr = gn_eval(s, 1, 0, 0, 7, 32, 0, -1, NULL), best_c = 0;
+    for (int v = 0; v < 4; v++) { double c = gn_eval(s, 1, 1, 0, 0, 40, 4 + v, -1, NULL); if (c > best_c) best_c = c; }
+    double mem = gn_eval(s, 1, 1, 0, 0, 40, 0, 6, NULL), mix = gn_train(s, 1, 7);
+    printf("    general seed held=%.3f train=%.3f gelé=%.3f sans_récompense=%.3f constante_max=%.3f mémoire2=%.3f mix=%.3f début/fin=%.3f/%.3f\n", h, tr, fz, nr, best_c, mem, mix, cv[0], cv[1]);
+    assert(h > fz + 0.25 && h > best_c + 0.3 && nr < 0.3 && cv[1] > cv[0] + 0.1 && tr > 0.9 && mix < 0.8);   /* L0 saturé, mélange non */
     double ex[N_EXTRA]; double f = pool_eval_x(lab_index("general"), s, n, "gn-test", 100, NULL, 0, ex);
     assert(f == ex[1] && fabs(ex[3] - (ex[0] - ex[2])) < 1e-12);   /* sélection = train */
     RunOpts o = { .ticks = 60, .cycles = 1, .quiet = 1, .no_reload = 1, .dry_run = 1, .data_dir = "/tmp/unused-gn" };

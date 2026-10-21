@@ -33,7 +33,7 @@ int vm_run(Creature *c, World *w) {
     if (c->len <= 0 || c->e <= 0) return 0;
     c->age++;
     c->emitted = -1;
-    int budget = OPS_PER_TICK, skips = 0;
+    int budget = w->cfg.ops_per_tick > 0 ? w->cfg.ops_per_tick : OPS_PER_TICK, skips = 0;
     uint8_t *dna = c->dna;
     while (budget > 0 && c->e > 0) {
         int L = c->len, i = c->ip % L, k;
