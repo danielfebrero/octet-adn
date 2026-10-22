@@ -855,6 +855,27 @@ TEST(test_novelty_map_elites) {
     assert(nov_run(&r, NULL, &a) == 0 && a.cells == 1 && a.ncells == 1);
 }
 
+TEST(test_soup_detector_controls) {
+    /* experiments/soup-replicator : les deux réplicateurs faits main sont reconnus comme copieurs,
+     * l'ablation retrouve leur cœur (22 octets en adressage d'origine, 9 en adressage B),
+     * le bruit et le témoin sans STORE ne copient pas, et une soupe est déterministe. */
+    static const int ess_want[2] = { 22, 9 };
+    for (int m = 0; m < 2; m++) {
+        uint8_t p[SOUP_PROG], e[SOUP_PROG]; SoupCfg c = { m, 0, 0 }, ns = { m, 1, 0 };
+        soup_handmade(p, m);
+        assert(soup_copier(p, &c) != 0 && soup_copier(p, &ns) == 0);
+        assert(soup_ablate(p, &c, e) == ess_want[m] && e[2] && !e[40]);
+        Rng r; rng_seed(&r, 7); for (int i = 0; i < SOUP_PROG; i++) p[i] = (uint8_t)rng_next(&r);
+        assert(soup_copier(p, &c) == 0);
+    }
+    SoupRun r = { .nprog = 256, .epochs = 64, .report = 64, .inject = 8, .mut = 0.00024 };
+    SoupResult a, b;
+    assert(soup_run(&r, NULL, &a) == 0 && soup_run(&r, NULL, &b) == 0);
+    assert(a.hash == b.hash && a.births > 0 && a.copiers_final > 128 && a.t_first == 64);
+    r.vm.no_store = 1;
+    assert(soup_run(&r, NULL, &a) == 0 && a.births == 0 && a.copiers_final == 0 && a.t_first == -1);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -895,6 +916,7 @@ int main(void) {
     RUN(test_general_deepen_at_birth);
     RUN(test_general_regs_push_peek);
     RUN(test_novelty_map_elites);
-    printf("\n%d/%d tests OK\n", passed, 39);
+    RUN(test_soup_detector_controls);
+    printf("\n%d/%d tests OK\n", passed, 40);
     return 0;
 }

@@ -5,7 +5,7 @@ CFLAGS  += -Iinclude
 LDFLAGS ?=
 LDLIBS  := -lm
 
-CORE := src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o
+CORE := src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o
 SEEDS := $(wildcard seeds/*.adn)
 
 all: octet-adn
