@@ -1,0 +1,31 @@
+# universe_search2 origin N=16384 E=2048 graines=8 (neuves, sel 1)
+origine-8192  : -(b10) -(b9) -(b3) -(b16) -(b1) -(b4) -(b6) -(b9)   → 0/8
+S#0           : e@256(0.56,ess10) -cristal(b295883) e@64(0.58,ess11) e@128(0.73,ess12) e@128(0.64,ess10) e@192(0.73,ess12) -(b1341814) -(b221444)   → 5/8
+S#1           : e@192(0.95,ess11) -(b87298) -(b11037) -cristal(b247612) -cristal(b316807) -(b1608497) -(b517328) -(b616449)   → 1/8
+T#0           : e@64(0.94,ess6) e@64(0.92,ess7) e@64(0.89,ess6) e@384(0.89,ess8) e@64(0.81,ess11) e@2048(0.25,ess11) e@512(0.77,ess7) e@64(0.92,ess8)   → 8/8
+T#1           : e@128(0.86,ess13) e@192(0.83,ess9) e@128(0.84,ess10) e@640(0.86,ess6) e@128(0.84,ess13) e@832(0.84,ess9) e@128(0.89,ess6) e@64(0.88,ess9)   → 8/8
+Fisher S#0 > origine : p = 0.0128 ; origine > S#0 : p = 1
+Fisher S#1 > origine : p = 0.5 ; origine > S#1 : p = 1
+Fisher T#0 > origine : p = 7.77e-05 ; origine > T#0 : p = 1
+Fisher T#1 > origine : p = 7.77e-05 ; origine > T#1 : p = 1
+S#0 graine 0 L=16 kper=4 addr=abs rcost=4 wcost=2 steps=1024 mut=0.001  [hash abab716bd8d0af57]
+   table (entrées / 1024) : NOP:32 HALT:35 INC_A:26 DEC_A:44 INC_B:36 DEC_B:29 CLR_A:35 CLR_B:36 MOV_BA:43 MOV_AB:32 ADD:44 SUB:32 XOR:30 LOADI:25 AND:43 CLRI:35 LOAD:43 STORE:34 JMP:34 JZ:44 JNZ:32 LOOP:37 READ_H:34 WRITE_H:37 H0_INC:40 H0_DEC:42 H1_INC:45 H1_DEC:45
+   réplicateur dominant (6/64 de l'échantillon) : 10 octets essentiels sur 16
+     35000000003300333300330000000035
+     essentiels : 0:35=H1_DEC 1:00=READ_H 3:00=WRITE_H 4:00=H0_INC 8:33=H0_DEC 11:00=WRITE_H 12:00=H0_INC 13:00=READ_H 14:00=NOP 15:35=LOOP
+S#1 graine 0 L=16 kper=4 addr=abs rcost=1 wcost=4 steps=1024 mut=0  [hash 8a91eb6515d06406]
+   table (entrées / 1024) : NOP:33 HALT:34 INC_A:30 DEC_A:42 INC_B:39 DEC_B:34 CLR_A:29 CLR_B:38 MOV_BA:34 MOV_AB:44 ADD:35 SUB:28 XOR:29 LOADI:27 AND:42 CLRI:41 LOAD:28 STORE:35 JMP:42 JZ:44 JNZ:34 LOOP:37 READ_H:43 WRITE_H:44 H0_INC:33 H0_DEC:41 H1_INC:43 H1_DEC:41
+   réplicateur dominant (57/64 de l'échantillon) : 11 octets essentiels sur 16
+     34000000008a000000008a0000000034
+     essentiels : 0:34=H1_DEC 1:00=READ_H 3:00=WRITE_H 4:00=H0_INC 5:8a=LOOP 10:8a=JZ 11:00=WRITE_H 12:00=H0_INC 13:00=READ_H 14:00=NOP 15:34=ADD
+T#0 graine 0 L=64 kper=1 addr=b rcost=4 wcost=2 steps=2048 mut=0.004  [hash bc57b471af1793d4]
+   table (entrées / 256) : NOP:6 HALT:9 INC_A:16 DEC_A:7 INC_B:7 DEC_B:16 CLR_A:9 CLR_B:11 MOV_BA:7 MOV_AB:8 ADD:11 SUB:8 XOR:11 LOADI:8 AND:2 CLRI:12 LOAD:13 STORE:8 JMP:7 JZ:9 JNZ:12 LOOP:8 READ_H:6 WRITE_H:13 H0_INC:9 H0_DEC:9 H1_INC:5 H1_DEC:9
+   réplicateur dominant (1/64 de l'échantillon) : 6 octets essentiels sur 64
+     00c6fa035171c086463161c3897f6cf2417de316be66d7ebef72981d601da100320900110000000000000000c2000000d100ec0000b60000c4d9000000b20000
+     essentiels : 0:00=WRITE_H 2:fa=H1_DEC 3:03=DEC_B 5:71=LOAD 6:c0=H0_INC 7:86=LOOP
+T#1 graine 0 L=32 kper=2 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash a71e980af259a757]
+   table (entrées / 512) : NOP:22 HALT:19 INC_A:18 DEC_A:16 INC_B:16 DEC_B:15 CLR_A:14 CLR_B:22 MOV_BA:14 MOV_AB:19 ADD:21 SUB:13 XOR:19 LOADI:12 AND:24 CLRI:24 LOAD:27 STORE:23 JMP:13 JZ:15 JNZ:15 LOOP:16 READ_H:19 WRITE_H:13 H0_INC:28 H0_DEC:19 H1_INC:20 H1_DEC:16
+   réplicateur dominant (1/64 de l'échantillon) : 13 octets essentiels sur 32
+     e178f228c8975b3714e7f9c74491f499e178f228c8975b3714e7f9c74491f499
+     essentiels : 0:e1=AND 5:97=DEC_B 6:5b=XOR 7:37=LOAD 8:14=INC_B 9:e7=H0_INC 10:f9=H1_DEC 11:c7=STORE 12:44=H0_INC 15:99=LOAD 16:e1=AND 17:78=JMP 18:f2=MOV_BA
+temps 164s

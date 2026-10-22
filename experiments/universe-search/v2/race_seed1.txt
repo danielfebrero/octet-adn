@@ -1,0 +1,91 @@
+# universe_search2 race seed=1 pop=48 gens=12 N0=1024 N4=4096 E=1024 K1=48 K2=12 K3=6 V=12 threads=8
+
+## SÉLECTION — étape 0 : 48 × 12 générations, 2 graines par évaluation à N=1024, E=1024
+# gen  émergences/(2×48)  archive  univers_fertiles(≥1)  meilleur_score(nem/nev)  t
+   0    0    48    0  0/2  3s
+   1    0    84    0  0/2  6s
+   2    0   120    0  0/2  10s
+   3    0   156    0  0/2  13s
+   4    0   191    0  0/2  18s
+   5    0   227    0  0/2  23s
+   6    0   263    0  0/2  30s
+   7    0   299    0  0/2  36s
+   8    0   335    0  0/2  43s
+   9    0   371    0  0/2  50s
+  10    0   407    0  0/2  57s
+  11    0   443    0  0/2  65s
+étape 1 : top 48 de l'archive (443 univers), +4 graines à N=1024 → cumul 0/288 émergences chez ces 48  (81s)
+étape 2 : top 12, 4 graines à N=4096 → 0/48 émergences ; par univers : 0 0 0 0 0 0 0 0 0 0 0 0  (95s)
+budget : 1344 simulations à N0 (étape 0 : 1152), 48 à N=4096 hors revalidation ; cristaux rencontrés : 0
+
+## TÉMOIN aléatoire — étape 0 : 48 × 12 générations, 2 graines par évaluation à N=1024, E=1024
+# gen  émergences/(2×48)  archive  univers_fertiles(≥1)  meilleur_score(nem/nev)  t
+   0    0    48    0  0/2  119s
+   1    0    96    0  0/2  123s
+   2    0   144    0  0/2  126s
+   3    1   192    1  1/2  130s
+   4    0   240    1  1/2  134s
+   5    0   288    1  1/2  138s
+   6    0   336    1  1/2  142s
+   7    0   384    1  1/2  146s
+   8    0   432    1  1/2  150s
+   9    0   480    1  1/2  153s
+  10    0   528    1  1/2  156s
+  11    0   576    1  1/2  160s
+étape 1 : top 48 de l'archive (576 univers), +4 graines à N=1024 → cumul 5/288 émergences chez ces 48  (174s)
+étape 2 : top 12, 4 graines à N=4096 → 3/48 émergences ; par univers : 1 1 0 0 0 0 0 1 0 0 0 0  (189s)
+budget : 1344 simulations à N0 (étape 0 : 1152), 48 à N=4096 hors revalidation ; cristaux rencontrés : 0
+
+## Revalidation des finalistes : 12 graines JAMAIS VUES par univers, N=4096, E=1024
+sélection : par univers (reval/12 | étape2/4 | N0 nem/nev) :  0|0|0/2  0|0|0/2  0|0|0/2  0|0|0/2  0|0|0/2  0|0|0/2
+   total 0/72 = 0.0 %  [IC95 0.0–5.1 %]
+témoin    : par univers (reval/12 | étape2/4 | N0 nem/nev) :  1|1|1/6  0|1|1/6  0|1|0/2  1|0|1/6  1|0|1/6  0|0|1/6
+   total 3/72 = 4.2 %  [IC95 1.4–11.5 %]
+Fisher exact (essais poolés) : unilatéral p = 1, bilatéral p = 0.245 ; permutation par univers (moyenne des taux, unilatéral) p = 1
+origine (soupe b, 8192 pas) à N=4096 : 0/12  | Fisher sélection > origine p = 1 ; témoin > origine p = 0.626
+
+## Profil des finalistes
+S#0 (reval 0/12) L=32 kper=1 addr=ip rcost=4 wcost=1 steps=2048 mut=0.004  [hash 7ec0755a2a728c01]
+   table (entrées / 256) : NOP:13 HALT:15 INC_A:5 DEC_A:4 INC_B:6 DEC_B:7 CLR_A:5 CLR_B:5 MOV_BA:6 MOV_AB:10 ADD:9 SUB:12 XOR:15 LOADI:6 AND:14 CLRI:9 LOAD:8 STORE:13 JMP:2 JZ:13 JNZ:11 LOOP:7 READ_H:8 WRITE_H:14 H0_INC:5 H0_DEC:13 H1_INC:9 H1_DEC:12
+S#1 (reval 0/12) L=32 kper=2 addr=ip rcost=2 wcost=1 steps=2048 mut=0.004  [hash ac07b9e41d872c4d]
+   table (entrées / 512) : NOP:24 HALT:30 INC_A:8 DEC_A:8 INC_B:14 DEC_B:12 CLR_A:9 CLR_B:10 MOV_BA:12 MOV_AB:19 ADD:16 SUB:22 XOR:30 LOADI:14 AND:28 CLRI:18 LOAD:16 STORE:26 JMP:4 JZ:30 JNZ:22 LOOP:13 READ_H:17 WRITE_H:27 H0_INC:15 H0_DEC:26 H1_INC:18 H1_DEC:24
+S#2 (reval 0/12) L=32 kper=1 addr=ip rcost=2 wcost=1 steps=512 mut=0.004  [hash 31e2a853fa99e507]
+   table (entrées / 256) : NOP:12 HALT:13 INC_A:9 DEC_A:5 INC_B:5 DEC_B:2 CLR_A:4 CLR_B:8 MOV_BA:7 MOV_AB:13 ADD:19 SUB:12 XOR:6 LOADI:4 AND:14 CLRI:5 LOAD:10 STORE:11 JMP:7 JZ:19 JNZ:11 LOOP:6 READ_H:5 WRITE_H:15 H0_INC:7 H0_DEC:9 H1_INC:6 H1_DEC:12
+S#3 (reval 0/12) L=32 kper=1 addr=ip rcost=2 wcost=1 steps=2048 mut=0.004  [hash 37c46797c942271a]
+   table (entrées / 256) : NOP:12 HALT:12 INC_A:8 DEC_A:4 INC_B:6 DEC_B:4 CLR_A:4 CLR_B:9 MOV_BA:11 MOV_AB:12 ADD:15 SUB:11 XOR:9 LOADI:10 AND:13 CLRI:4 LOAD:8 STORE:15 JMP:4 JZ:15 JNZ:8 LOOP:7 READ_H:7 WRITE_H:18 H0_INC:7 H0_DEC:9 H1_INC:5 H1_DEC:9
+S#4 (reval 0/12) L=32 kper=1 addr=ip rcost=2 wcost=1 steps=512 mut=0.004  [hash 98bfa840721b6e7c]
+   table (entrées / 256) : NOP:13 HALT:11 INC_A:7 DEC_A:6 INC_B:10 DEC_B:4 CLR_A:3 CLR_B:8 MOV_BA:9 MOV_AB:8 ADD:12 SUB:10 XOR:9 LOADI:4 AND:13 CLRI:6 LOAD:13 STORE:12 JMP:11 JZ:15 JNZ:9 LOOP:9 READ_H:5 WRITE_H:15 H0_INC:10 H0_DEC:7 H1_INC:7 H1_DEC:10
+S#5 (reval 0/12) L=32 kper=2 addr=ip rcost=2 wcost=1 steps=2048 mut=0.004  [hash 5a22b73e9f182d52]
+   table (entrées / 512) : NOP:24 HALT:30 INC_A:8 DEC_A:8 INC_B:13 DEC_B:13 CLR_A:9 CLR_B:10 MOV_BA:12 MOV_AB:19 ADD:16 SUB:22 XOR:29 LOADI:14 AND:28 CLRI:18 LOAD:16 STORE:26 JMP:4 JZ:30 JNZ:22 LOOP:14 READ_H:18 WRITE_H:27 H0_INC:15 H0_DEC:26 H1_INC:18 H1_DEC:23
+T#0 (reval 1/12) L=64 kper=4 addr=b rcost=2 wcost=1 steps=512 mut=0.0001  [hash fc4ec55782bcde21]
+   table (entrées / 1024) : NOP:36 HALT:39 INC_A:35 DEC_A:36 INC_B:33 DEC_B:31 CLR_A:38 CLR_B:33 MOV_BA:48 MOV_AB:36 ADD:45 SUB:33 XOR:38 LOADI:38 AND:40 CLRI:37 LOAD:26 STORE:32 JMP:43 JZ:51 JNZ:36 LOOP:34 READ_H:32 WRITE_H:37 H0_INC:32 H0_DEC:35 H1_INC:41 H1_DEC:29
+   réplicateur dominant (15/64 de l'échantillon) : 8 octets essentiels sur 64
+     003fc300c3d13a390037363534003831302f382dd52bd529282726252423222120001e1d011b1a19181716150000121110000e0d0c0b0a09080706050434ff00
+     essentiels : 0:00=STORE 1:3f=STORE 2:c3=LOAD 3:00=LOOP 4:c3=H1_DEC 5:d1=NOP 6:3a=INC_B 7:39=LOOP
+T#1 (reval 0/12) L=64 kper=1 addr=b rcost=2 wcost=1 steps=512 mut=0  [hash b01762440217b623]
+   table (entrées / 256) : NOP:5 HALT:8 INC_A:10 DEC_A:9 INC_B:10 DEC_B:14 CLR_A:15 CLR_B:11 MOV_BA:8 MOV_AB:8 ADD:7 SUB:6 XOR:9 LOADI:9 AND:8 CLRI:5 LOAD:12 STORE:9 JMP:9 JZ:12 JNZ:9 LOOP:7 READ_H:8 WRITE_H:12 H0_INC:10 H0_DEC:6 H1_INC:13 H1_DEC:7
+   réplicateur dominant (3/64 de l'échantillon) : 11 octets essentiels sur 64
+     000000a0c1c9d3b7cf3aa400acd50000000000d5ac00a43acfb7d3c9c1a00000000000a0c1c9d3b7cf3aa400acd50000000000d5ac00a43acfb7d3c9c1a00000
+     essentiels : 1:00=STORE 2:00=STORE 3:a0=H1_INC 4:c1=WRITE_H 5:c9=LOAD 7:b7=INC_B 8:cf=H0_INC 9:3a=H1_DEC 10:a4=LOAD 11:00=STORE 12:ac=LOOP
+T#2 (reval 0/12) L=64 kper=2 addr=b rcost=2 wcost=2 steps=1024 mut=0.004  [hash a36592c1e10a4b53]
+   table (entrées / 512) : NOP:13 HALT:17 INC_A:19 DEC_A:13 INC_B:16 DEC_B:21 CLR_A:23 CLR_B:20 MOV_BA:18 MOV_AB:23 ADD:19 SUB:19 XOR:15 LOADI:20 AND:13 CLRI:21 LOAD:25 STORE:17 JMP:17 JZ:19 JNZ:11 LOOP:18 READ_H:22 WRITE_H:21 H0_INC:14 H0_DEC:21 H1_INC:12 H1_DEC:25
+   réplicateur dominant (2/64 de l'échantillon) : 7 octets essentiels sur 64
+     14ff14ffa8cac33f3e9312053ad26ddd9a3530333231b13124052c3e0829d29d00dcda00003ae5998661915244afff93d5b3412dff99d8d52cad44ffffff2400
+     essentiels : 0:14=STORE 2:14=STORE 4:a8=DEC_B 5:ca=READ_H 6:c3=LOAD 7:3f=H1_INC 8:3e=LOOP
+T#3 (reval 1/12) L=64 kper=4 addr=b rcost=2 wcost=2 steps=2048 mut=0.001  [hash 88ec3bdedeb837a3]
+   table (entrées / 1024) : NOP:36 HALT:42 INC_A:34 DEC_A:43 INC_B:47 DEC_B:32 CLR_A:38 CLR_B:32 MOV_BA:27 MOV_AB:40 ADD:32 SUB:37 XOR:23 LOADI:25 AND:33 CLRI:45 LOAD:38 STORE:30 JMP:44 JZ:30 JNZ:38 LOOP:42 READ_H:41 WRITE_H:39 H0_INC:42 H0_DEC:44 H1_INC:35 H1_DEC:35
+   réplicateur dominant (2/64 de l'échantillon) : 13 octets essentiels sur 64
+     0000a0ad3a451e3a0001f01d15e4c0013001eb01840605054b30055f0505a7eca51f08ff211e1f001d13010b0101f30101010101018b0176010101002501fe75
+     essentiels : 1:00=H1_DEC 3:ad=AND 7:3a=DEC_B 9:01=LOADI 11:1d=JZ 13:e4=LOAD 14:c0=CLR_B 15:01=H0_DEC 16:30=WRITE_H 17:01=LOADI 20:84=DEC_B 21:06=INC_B 22:05=LOOP
+T#4 (reval 1/12) L=32 kper=4 addr=b rcost=1 wcost=2 steps=2048 mut=0.001  [hash 47e6daeceadf40b2]
+   table (entrées / 1024) : NOP:40 HALT:36 INC_A:37 DEC_A:34 INC_B:41 DEC_B:40 CLR_A:27 CLR_B:37 MOV_BA:37 MOV_AB:31 ADD:33 SUB:38 XOR:29 LOADI:35 AND:44 CLRI:28 LOAD:35 STORE:42 JMP:42 JZ:35 JNZ:38 LOOP:44 READ_H:39 WRITE_H:29 H0_INC:48 H0_DEC:42 H1_INC:26 H1_DEC:37
+   réplicateur dominant (16/64 de l'échantillon) : 9 octets essentiels sur 32
+     226f00c25033000001c21800b6dfdc01226f00c25033000001c21800b6dfdc01
+     essentiels : 1:6f=LOAD 2:00=DEC_B 3:c2=STORE 4:50=AND 5:33=LOAD 9:c2=H0_DEC 12:b6=MOV_AB 13:df=INC_B 14:dc=LOOP
+T#5 (reval 0/12) L=32 kper=4 addr=b rcost=1 wcost=4 steps=1024 mut=0.0001  [hash c9938b1f8bb2f340]
+   table (entrées / 1024) : NOP:43 HALT:33 INC_A:44 DEC_A:39 INC_B:34 DEC_B:38 CLR_A:34 CLR_B:33 MOV_BA:34 MOV_AB:28 ADD:31 SUB:32 XOR:33 LOADI:34 AND:36 CLRI:38 LOAD:49 STORE:46 JMP:31 JZ:42 JNZ:32 LOOP:34 READ_H:36 WRITE_H:23 H0_INC:42 H0_DEC:35 H1_INC:43 H1_DEC:47
+   réplicateur dominant (38/64 de l'échantillon) : 9 octets essentiels sur 32
+     c3969ac13bbb00c4673a6d004e24000100d6d9dcdfe2e5e8ebeef1f4f7fafd00
+     essentiels : 0:c3=DEC_B 1:96=H1_DEC 2:9a=WRITE_H 8:67=NOP 10:6d=H0_INC 13:24=CLR_A 19:dc=LOAD 20:df=WRITE_H 21:e2=LOOP
+
+temps total 231s
