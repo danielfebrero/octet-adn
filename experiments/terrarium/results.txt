@@ -1,0 +1,234 @@
+Terrarium — démo du 22/10/2026 (commandes : section « Démo » de README.md, résumé : terrarium_run report)
+8 runs × 200 000 ticks, 4 îles 64×32, max_pop 1000/île, regrow 80, échantillon 200 ticks, migration 1000
+Durée totale : 5 min 26 s (8 runs en parallèle sur 8 cœurs, ~470 ticks/s par run ; ~1400 ticks/s seul)
+« nouv. normalisée » = nouveaux 5-grammes persistants / (naissances × octets codants) × 1e4, par quart
+
+== real1 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      3518      3396      3135      3037
+  n_geno                   3512      3395      3133      3034
+  H_geno                  11.78     11.73     11.61     11.57
+  n_comp                 146276    204623    251011    270041
+  comp_cum                27754     57831     96824    142825
+  comp_alive              13817     30249     51063     62415
+  persist_cum                 3         4         4         4
+  shadow_cum                  0         0         0         0
+  len_mean                335.0     373.5     393.9     413.2
+  coding_mean             255.4     291.7     310.4     326.7
+  stable_niches               3         3         3         4
+  H_behav                  1.51      1.23      1.37      1.54
+  comp_new/10k ticks       5573      6015      7799      9200
+  nouv. normalisée         0.72      0.96      1.45      1.98
+  social tout paires=  9767877 MI_réel=-0.0438 MI_nul=-0.0487 excès=+0.0050 bits/paire
+  social Q1   paires=  1683114 MI_réel=-0.1285 MI_nul=-0.1577 excès=+0.0292 bits/paire
+  social Q4   paires=  5111064 MI_réel=-0.0243 MI_nul=-0.0243 excès=-0.0000 bits/paire
+  excès par fenêtre (paires≥1000, n=781) : médiane +0.0001  p95 +0.0115  max +0.4423 ; fenêtres > 0.05 : 8 (t ∈ [200, 6800])
+        6800 social      exces=0.0984 bits/paire paires=19527 (3 fenetres > 0.050)
+  événements : niche_stable=7 social=1 niche_perdue=3
+    niches stables : 7 apparitions, première à t=2000, dernière à t=155400
+
+== real2 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      3120      3010      2906      2921
+  n_geno                   3108      2991      2896      2917
+  H_geno                  11.60     11.54     11.50     11.51
+  n_comp                 103459     98941    103231    108812
+  comp_cum                22089     27810     32801     36822
+  comp_alive              11352     14051     16514     17892
+  persist_cum                18        39        51        59
+  shadow_cum                  0         4         5        10
+  len_mean                274.6     269.8     269.5     269.5
+  coding_mean             180.2     181.2     183.8     185.5
+  stable_niches               4         4         4         5
+  H_behav                  2.10      1.93      1.88      1.90
+  comp_new/10k ticks       4436      1144       998       804
+  nouv. normalisée         1.48      1.15      1.19      1.02
+  social tout paires= 47380083 MI_réel=-0.0612 MI_nul=-0.0620 excès=+0.0009 bits/paire
+  social Q1   paires= 14628824 MI_réel=-0.0708 MI_nul=-0.0735 excès=+0.0027 bits/paire
+  social Q4   paires= 10313365 MI_réel=-0.0534 MI_nul=-0.0535 excès=+0.0002 bits/paire
+  excès par fenêtre (paires≥1000, n=1000) : médiane +0.0002  p95 +0.0030  max +0.6175 ; fenêtres > 0.05 : 2 (t ∈ [200, 400])
+  événements : niche_stable=12 niche_perdue=7
+    niches stables : 12 apparitions, première à t=2000, dernière à t=168200
+
+== real3 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      3216      3106      2971      2987
+  n_geno                   3211      3106      2970      2987
+  H_geno                  11.65     11.60     11.54     11.54
+  n_comp                 163148    208211    235629    275537
+  comp_cum                29983     56944     90369    129772
+  comp_alive              18968     32725     49746     63157
+  persist_cum                 6         9         9         9
+  shadow_cum                  0         0         0         0
+  len_mean                299.1     329.4     346.5     385.9
+  coding_mean             201.3     239.3     262.7     299.4
+  stable_niches               4         4         4         4
+  H_behav                  1.68      1.74      1.85      1.70
+  comp_new/10k ticks       6021      5392      6685      7881
+  nouv. normalisée         1.59      1.81      2.13      2.26
+  social tout paires= 47836808 MI_réel=-0.1143 MI_nul=-0.1154 excès=+0.0011 bits/paire
+  social Q1   paires=  7623706 MI_réel=-0.0685 MI_nul=-0.0744 excès=+0.0059 bits/paire
+  social Q4   paires= 12107182 MI_réel=-0.1241 MI_nul=-0.1242 excès=+0.0001 bits/paire
+  excès par fenêtre (paires≥1000, n=1000) : médiane +0.0003  p95 +0.0057  max +0.6037 ; fenêtres > 0.05 : 2 (t ∈ [200, 400])
+  événements : niche_stable=9 niche_perdue=5
+    niches stables : 9 apparitions, première à t=2000, dernière à t=11200
+
+== chanoff1 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      3126      2694      2702      2764
+  n_geno                   3122      2692      2700      2763
+  H_geno                  11.61     11.39     11.40     11.43
+  n_comp                 193600    200905    165172    145130
+  comp_cum                32921     69414     76118     77953
+  comp_alive              25057     44993     35625     29012
+  persist_cum                 2         2         3         3
+  shadow_cum                  0         0         0         1
+  len_mean                325.5     329.1     324.7     324.5
+  coding_mean             234.4     242.6     242.8     244.4
+  stable_niches               5         5         4         4
+  H_behav                  1.77      1.48      1.44      1.46
+  comp_new/10k ticks       6611      7299      1341       367
+  nouv. normalisée         1.71      3.25      2.06      0.77
+  social tout paires=  4831338 MI_réel=-0.1076 MI_nul=-0.1075 excès=-0.0001 bits/paire
+  social Q1   paires=  3032904 MI_réel=-0.1008 MI_nul=-0.1008 excès=-0.0000 bits/paire
+  social Q4   paires=   313130 MI_réel=-0.1009 MI_nul=-0.0994 excès=-0.0015 bits/paire
+  excès par fenêtre (paires≥1000, n=965) : médiane -0.0003  p95 +0.0191  max +0.0479 ; fenêtres > 0.05 : 0
+       73600 cycle       serie=niche18 periode=1200 ticks acf=0.42
+       79800 cycle       serie=pop periode=1200 ticks acf=0.40
+  événements : niche_stable=8 niche_perdue=4 cycle=2
+    niches stables : 8 apparitions, première à t=2200, dernière à t=16600
+
+== chanoff2 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      3037      2792      2713      2914
+  n_geno                   3033      2791      2711      2914
+  H_geno                  11.57     11.45     11.40     11.51
+  n_comp                 209058    253282    240804    256455
+  comp_cum                37511     90147    112088    131842
+  comp_alive              27946     55717     53182     51679
+  persist_cum                 0         0         0         0
+  shadow_cum                  0         0         0         0
+  len_mean                329.6     366.8     376.3     389.8
+  coding_mean             238.4     278.1     285.9     300.7
+  stable_niches               3         3         3         3
+  H_behav                  1.06      0.83      0.72      0.99
+  comp_new/10k ticks       7532     10527      4388      3951
+  nouv. normalisée         1.62      3.45      2.79      2.40
+  social tout paires=  1262371 MI_réel=-0.0889 MI_nul=-0.0887 excès=-0.0003 bits/paire
+  social Q1   paires=   947334 MI_réel=-0.0995 MI_nul=-0.0987 excès=-0.0008 bits/paire
+  social Q4   paires=    94196 MI_réel=-0.0565 MI_nul=-0.0577 excès=+0.0012 bits/paire
+  excès par fenêtre (paires≥1000, n=164) : médiane +0.0001  p95 +0.0156  max +0.0469 ; fenêtres > 0.05 : 0
+      102600 cycle       serie=pop periode=1800 ticks acf=0.41
+      104600 cycle       serie=niche22 periode=1800 ticks acf=0.41
+      105000 cycle       serie=niche18 periode=1800 ticks acf=0.42
+      112600 cycle       serie=niche21 periode=4000 ticks acf=0.40
+  événements : niche_stable=5 niche_perdue=2 cycle=4
+    niches stables : 5 apparitions, première à t=2000, dernière à t=4400
+
+== mut0 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      1313      1273      1239      1345
+  n_geno                      2         2         2         2
+  H_geno                   1.00      1.00      0.99      1.00
+  n_comp                     25        25        25        25
+  comp_cum                    0         0         0         0
+  comp_alive                 25        25        25        25
+  persist_cum                 0         0         0         0
+  shadow_cum                  1         1         1         1
+  len_mean                256.0     256.0     256.0     256.0
+  coding_mean              20.6      20.5      20.0      20.1
+  stable_niches               7         7         7         7
+  H_behav                  2.99      2.86      2.91      2.90
+  comp_new/10k ticks          0         0         0         0
+  nouv. normalisée         0.00      0.00      0.00      0.00
+  social tout paires=   485653 MI_réel=+0.1490 MI_nul=+0.0432 excès=+0.1057 bits/paire
+  social Q1   paires=   485653 MI_réel=+0.1490 MI_nul=+0.0432 excès=+0.1057 bits/paire
+  social Q4   paires=        0 MI_réel=+nan MI_nul=+nan excès=+nan bits/paire
+  excès par fenêtre (paires≥1000, n=11) : médiane +0.0314  p95 +0.2508  max +0.4899 ; fenêtres > 0.05 : 2 (t ∈ [200, 2200])
+  événements : niche_stable=7
+    niches stables : 7 apparitions, première à t=2000, dernière à t=9400
+
+== random1 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                       567       474       477       431
+  n_geno                    535       433       436       395
+  H_geno                   9.03      8.71      8.72      8.58
+  n_comp                   9492      5953      5713      5969
+  comp_cum                16824     27133     36709     46078
+  comp_alive               4790      2945      2906      3192
+  persist_cum               182       459       736       962
+  shadow_cum                  0         0         0         0
+  len_mean                137.7     121.0     120.5     120.9
+  coding_mean              65.0      62.9      67.7      70.7
+  stable_niches               3         2         2         2
+  H_behav                  1.80      2.05      2.01      2.01
+  comp_new/10k ticks       3378      2062      1915      1874
+  nouv. normalisée         5.84      6.97      6.91      6.81
+  social tout paires=  1052957 MI_réel=-0.0141 MI_nul=-0.1260 excès=+0.1119 bits/paire
+  social Q1   paires=   857056 MI_réel=+0.0062 MI_nul=-0.1262 excès=+0.1324 bits/paire
+  social Q4   paires=    50886 MI_réel=-0.0977 MI_nul=-0.0944 excès=-0.0034 bits/paire
+  excès par fenêtre (paires≥1000, n=125) : médiane +0.0063  p95 +0.2587  max +0.4709 ; fenêtres > 0.05 : 16 (t ∈ [200, 107000])
+         600 social      exces=0.4709 bits/paire paires=39550 (3 fenetres > 0.050)
+  événements : social=1 niche_stable=4 niche_perdue=2
+    niches stables : 4 apparitions, première à t=2000, dernière à t=4800
+
+== season1 : 200000 ticks, 1000 échantillons
+  quart                   50000    100000    150000    200000
+  pop                      2655      1828      2040      1399
+  n_geno                   2653      1827      2039      1399
+  H_geno                  11.37     10.84     10.99     10.45
+  n_comp                  88891     91293    115541     51060
+  comp_cum               142114    347346    578415    735349
+  comp_alive              15291     20940     25413     10951
+  persist_cum                 3         3         3         3
+  shadow_cum                  0         0         0         0
+  len_mean                335.7     435.8     477.4     407.3
+  coding_mean             259.3     343.9     379.9     323.4
+  stable_niches               4         4         4         3
+  H_behav                  2.57      2.16      1.74      1.62
+  comp_new/10k ticks      28537     41046     46214     31387
+  nouv. normalisée         6.98      7.26      6.67      9.74
+  social tout paires=  8099898 MI_réel=-0.1800 MI_nul=-0.1855 excès=+0.0055 bits/paire
+  social Q1   paires=  4094094 MI_réel=-0.2777 MI_nul=-0.2869 excès=+0.0092 bits/paire
+  social Q4   paires=   218597 MI_réel=-0.1152 MI_nul=-0.1356 excès=+0.0204 bits/paire
+  excès par fenêtre (paires≥1000, n=511) : médiane +0.0009  p95 +0.0201  max +0.3734 ; fenêtres > 0.05 : 7 (t ∈ [200, 157400])
+        3800 social      exces=0.1389 bits/paire paires=4969 (3 fenetres > 0.050)
+       12800 cycle       serie=pop periode=3600 ticks acf=0.51
+       12800 cycle       serie=niche23 periode=3200 ticks acf=0.43
+       21600 cycle       serie=niche104 periode=3800 ticks acf=0.41
+       34800 cycle       serie=niche22 periode=3800 ticks acf=0.41
+       39400 cycle       serie=niche104 periode=4000 ticks acf=0.42
+       44000 cycle       serie=niche14 periode=4000 ticks acf=0.40
+       63400 cycle       serie=niche5 periode=4000 ticks acf=0.42
+       64600 cycle       serie=niche14 periode=4200 ticks acf=0.40
+       75000 cycle       serie=niche5 periode=4000 ticks acf=0.42
+       83800 cycle       serie=niche5 periode=4000 ticks acf=0.40
+       91000 cycle       serie=niche23 periode=3800 ticks acf=0.41
+      135600 cycle       serie=niche5 periode=4000 ticks acf=0.40
+      139000 cycle       serie=niche95 periode=4000 ticks acf=0.42
+      145200 cycle       serie=niche14 periode=4000 ticks acf=0.40
+      185200 cycle       serie=niche5 periode=4000 ticks acf=0.42
+      188800 cycle       serie=niche14 periode=4000 ticks acf=0.40
+  événements : niche_stable=14 social=1 cycle=16 niche_perdue=11
+    niches stables : 14 apparitions, première à t=2000, dernière à t=141200
+
+Lecture (détails dans README.md)
+- Diversité : élevée et stable, pas croissante. ≈ 1 génotype par individu (H ≈ 11.5 bits ≈ log2(pop)) ;
+  pop plateau ≈ 3000 (3 réels), en légère baisse 3500 → 3000.
+- Nouveauté génotype (Bedau-Packard, ≥ 3 porteurs, 10 échantillons) : 4 / 59 / 9 génotypes en 200k ticks
+  (ombre neutre 0 / 10 / 0). Quasi nulle : le régime de mutation (2 %/octet, ~300 octets) rend les clones rares.
+- Nouveauté composants (5-grammes ≥ 1 % de la pop) : non bornée sur 200k ticks dans real1/real3
+  (5.6k → 9.2k et 6.0k → 7.9k / 10k ticks, aussi en hausse une fois normalisée) MAIS elle suit la croissance
+  des génomes (real1 335 → 413 octets, real3 299 → 386) ; dans real2, génome stable à 270 → décroît (4.4k → 0.8k).
+  Les témoins canal-off font pareil (chanoff2 en hausse, chanoff1 retombe à 0.4k) ; mut0 = 0 ;
+  random1 ≈ 1.9k/10k stable. Pas d'ombre au niveau composant : ce n'est pas distinguable d'une dérive.
+- MI sociale : excès poolé réel +0.0050 / +0.0009 / +0.0011 bits/paire vs canal-off −0.0001 / −0.0003 ;
+  Q4 : −0.0000 / +0.0002 / +0.0001. Le signal n'existe qu'au début (t ≤ 6800 : fondateurs echo/relais),
+  puis disparaît. Témoin positif mut0 (fondateurs figés) : +0.106 tant qu'il y a des paires.
+- Spécialisation : 3–5 niches stables coexistent dans chaque run, toutes installées avant t ≈ 17k (sauf
+  real1/real2 : un remplacement tardif à 155k / 168k). Pas d'accumulation de niches.
+- Cycles : aucun dans les 3 réels ; chanoff 1200–1800 ticks à acf 0.40–0.42 (au seuil, faible) ;
+  témoin positif saison (période 4000) : 16 cycles détectés à 3200–4200 ticks.
+VERDICT : plateau. Écosystème stable et divers, nouveauté de composants qui continue mais qui suit la longueur
+des génomes et apparaît aussi sans canal social ; pas de signal social soutenu, pas de nouvelle niche après
+la phase initiale, pas de cycle endogène net. Pas d'évidence d'ouverture (open-endedness) à 200k ticks.

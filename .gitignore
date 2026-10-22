@@ -8,6 +8,7 @@
 /experiments/general_transfer
 /experiments/general_regs
 /experiments/gene_transplant
+/experiments/terrarium_run
 # runner 24/7 : log et pid, où qu'ils soient
 runner.log
 runner.pid
