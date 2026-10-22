@@ -16,6 +16,8 @@ static void usage(void) {
          "        octet-adn seeds DOSSIER           exporte les seeds embarquées en .adn\n"
          "        octet-adn eval DATA_DIR [N] [TICKS] fitness des pools (checkpoints) sur N graines tenues à l'écart\n"
          "        octet-adn general FICHIER.adn|.ck  general : rejoue chaque génome seul (mémoire 2 et 3, gelé, sans récompense)\n"
+         "        octet-adn novelty [options]       MAP-Elites sur general (nouveauté de comportement, hors sélection historique)\n"
+         "            --grid none|agn|mem (défaut agn)  --iters N (défaut 20000)  --seed N  --report N (défaut 1000)  --init N (défaut 32)\n"
          "\noptions run :\n"
          "  --labs all|a,b,c        (défaut all)\n"
          "  --ticks-per-cycle N     (défaut 200)\n"
@@ -161,6 +163,30 @@ int main(int argc, char **argv) {
         }
         printf("émergence : %s\n", found ? "oui" : "non");
         return found ? 0 : 3;
+    }
+    if (!strcmp(cmd, "novelty")) {                      /* experiments/novelty-map-elites */
+        NovRun r = { .grid = 1, .iters = 20000, .report = 1000, .init_mut = 32 };
+        for (int i = 2; i < argc; i++) {
+            const char *a = argv[i], *nx = i + 1 < argc ? argv[i + 1] : NULL;
+#define ARGN(name) (!strcmp(a, name) && nx && (i++, 1))
+            if (ARGN("--iters")) r.iters = atoi(nx);
+            else if (ARGN("--seed")) r.seed = strtoull(nx, NULL, 10);
+            else if (ARGN("--report")) r.report = atoi(nx);
+            else if (ARGN("--init")) r.init_mut = atoi(nx);
+            else if (ARGN("--grid")) {
+                if (!strcmp(nx, "none")) r.grid = 0; else if (!strcmp(nx, "agn")) r.grid = 1;
+                else if (!strcmp(nx, "mem")) r.grid = 2; else { fprintf(stderr, "--grid : none|agn|mem\n"); return 2; }
+            }
+            else { fprintf(stderr, "option inconnue : %s\n", a); usage(); return 2; }
+#undef ARGN
+        }
+        if (r.iters < 0 || r.report <= 0 || r.init_mut < 0) { usage(); return 2; }
+        NovResult res;
+        if (nov_run(&r, stdout, &res)) return 2;
+        printf("verdict grid=%d seed=%llu : couverture %d/%d  qd=%.3f  best_q=%.4f  max_m2=%.3f  max_m3=%.3f  passeurs=%d  hash=%016llx\n",
+               r.grid, (unsigned long long)r.seed, res.cells, res.ncells, res.qd, res.best_q, res.max_m2, res.max_m3, res.passers,
+               (unsigned long long)res.hash);
+        return 0;
     }
     if (strcmp(cmd, "run")) { usage(); return 2; }
 

@@ -837,6 +837,24 @@ TEST(test_general_regs_push_peek) {
     assert(gc.regs == 1 && cfg_default().regs == 0);
 }
 
+TEST(test_novelty_map_elites) {
+    /* experiments/novelty-map-elites : descripteurs bornés et déterministes, cases dans la grille,
+     * archive reproductible, grille 1 case = hill-climbing élitiste (une seule élite). */
+    PoolEntry g; seed_entry(&g, "general", 0);
+    double d[GN_BEH_N], e[GN_BEH_N];
+    gn_behavior(&g, d); gn_behavior(&g, e);
+    assert(!memcmp(d, e, sizeof d));
+    assert(d[0] >= 0 && d[0] <= log2(5.0) + 1e-9 && d[1] >= 0 && d[1] <= 1);
+    for (int L = 0; L < 4; L++) assert(d[2 + L] >= -1e-9 && d[2 + L] <= 2 + 1e-9);
+    for (int gr = 0; gr < 3; gr++) { int c = nov_cell(gr, d); assert(c >= 0 && c < nov_ncells(gr)); }
+    NovRun r = { .grid = 1, .iters = 12, .report = 12, .init_mut = 4, .seed = 3 };
+    NovResult a, b;
+    assert(nov_run(&r, NULL, &a) == 0 && nov_run(&r, NULL, &b) == 0);
+    assert(a.hash == b.hash && a.cells >= 1 && a.inserts >= 1 && a.max_m2 > 0.3 && a.passers == 0);
+    r.grid = 0;
+    assert(nov_run(&r, NULL, &a) == 0 && a.cells == 1 && a.ncells == 1);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -876,6 +894,7 @@ int main(void) {
     RUN(test_general_unmix_at_birth);
     RUN(test_general_deepen_at_birth);
     RUN(test_general_regs_push_peek);
-    printf("\n%d/%d tests OK\n", passed, 38);
+    RUN(test_novelty_map_elites);
+    printf("\n%d/%d tests OK\n", passed, 39);
     return 0;
 }
