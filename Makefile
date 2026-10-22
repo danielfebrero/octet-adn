@@ -31,6 +31,10 @@ experiments/general_transfer: experiments/general_transfer.c $(CORE) include/oct
 experiments/general_regs: experiments/general_regs.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
+# Gene-calling par matrice de transplantation (branche feat/gene-transplant-matrix).
+experiments/gene_transplant: experiments/gene_transplant.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
 test: tests/test_vm octet-adn no-python
 	./tests/test_vm
 
@@ -62,6 +66,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer experiments/general_regs
+	rm -f experiments/general_transfer experiments/general_regs experiments/gene_transplant
 
 .PHONY: all static test no-python run clean sanitize
