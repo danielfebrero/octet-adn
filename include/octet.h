@@ -92,6 +92,7 @@ typedef struct {
     int germline;         /* general : 1 = SPLIT et la sélection copient germ, pas le soma */
     double delay_rate;    /* general : décaler une case à la naissance (0 = les autres labos, aucun tirage) */
     double unmix_rate;    /* general : la clé cesse d'ajouter l'indice courant à la case retardée (0 = aucun tirage) */
+    double deepen_rate;   /* general : second étage du décalage, longueur fixe (0 = aucun tirage) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -154,6 +155,9 @@ int stagger_cell(uint8_t *dna, int n);
 int retarget_prev(uint8_t *dna, int n);
 /* general : l'ADD qui suit ce LOAD devient un intron (la clé = la case retardée seule). 1 si réécrit. */
 int unmix_prev(uint8_t *dna, int n);
+/* general : la case retardée est recopiée dans un intron froid avant d'être écrasée.
+ * La clé lit cet intron (p3). Longueur inchangée. 1 si réécrit. */
+int deepen_prev(uint8_t *dna, int n);
 
 /* ---------------- Labos ---------------- */
 typedef struct Lab Lab;

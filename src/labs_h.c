@@ -906,6 +906,7 @@ void hl_gn_cfg(WorldConfig *c) {
     c->mut_rate = 0.005; c->dup_rate = 0.01; c->germline = 1;   /* génome long : mutation réduite ; lignée ≠ soma */
     c->delay_rate = 0.12;   /* décaler la case, puis relire la case d'avant. 0 chez les autres labos */
     c->unmix_rate = 0.12;   /* puis ne plus ajouter l'indice courant à la case relue */
+    c->deepen_rate = 0.12;  /* puis recopier cette case dans un intron froid : la clé lit p3 */
 }
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */

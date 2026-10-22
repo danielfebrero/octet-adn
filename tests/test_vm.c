@@ -791,6 +791,33 @@ TEST(test_general_unmix_at_birth) {
     printf("    démêlage : graine 2 + intron 0x79  m2=%.3f gelé=%.3f sans_récompense=%.3f\n", v[0], v[2], v[4]);
 }
 
+/* Second étage à la naissance. La case 0x10 (intron, hors des adresses 0..7 que
+ * la vie réécrit) reçoit l'ancienne case 19 avant qu'elle soit écrasée. La clé
+ * la lit. Sans le motif, rien ne change. La graine 0 du pool a un AND 0 à la
+ * place du AND 3 : pas de capture de l'indice, donc pas de réécriture. */
+TEST(test_general_deepen_at_birth) {
+    PoolEntry s; seed_entry(&s, "general", 0);
+    PoolEntry plain = s;
+    assert(deepen_prev(plain.dna, plain.len) == 0 && !memcmp(plain.dna, s.dna, (size_t)s.len));
+    PoolEntry z; memset(&z, 0, sizeof z);
+    FILE *fz = fopen("experiments/general-transfer/seed0-pool12.adn", "rb");
+    assert(fz); z.len = (int)fread(z.dna, 1, MAX_LEN, fz); fclose(fz);
+    PoolEntry z0 = z;
+    assert(z.len == 172 && deepen_prev(z.dna, z.len) == 0 && !memcmp(z.dna, z0.dna, (size_t)z.len));
+    PoolEntry g; memset(&g, 0, sizeof g);
+    FILE *f = fopen("experiments/general-transfer/seed2-pool3.adn", "rb");
+    assert(f); g.len = (int)fread(g.dna, 1, MAX_LEN, f); fclose(f);
+    assert(g.len == 172 && g.dna[0x10] >= OP_COUNT && g.dna[0x78] == 19);
+    assert(deepen_prev(g.dna, g.len) == 1 && g.dna[0x78] == 0x10 && g.dna[0x79] == 0xcf);
+    assert(g.dna[0x6e] == OP_MOV_BA && g.dna[0x7c] == OP_INC_A && g.len == 172);
+    assert(deepen_prev(g.dna, g.len) == 0);
+    double v[GN_CHECK_N];
+    assert(gn_check(&g, v) == 3 && v[1] > 0.95 && v[3] < v[1] - 0.5 && v[5] < v[1] - 0.5);
+    WorldConfig gc = cfg_default(); assert(gc.deepen_rate == 0);
+    hl_gn_cfg(&gc); assert(gc.deepen_rate > 0 && gc.deepen_rate <= 0.2);
+    printf("    second étage : graine 2  m3=%.3f gelé=%.3f sans_récompense=%.3f\n", v[1], v[3], v[5]);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -828,6 +855,7 @@ int main(void) {
     RUN(test_general_memory_niche);
     RUN(test_general_second_rung_kept);
     RUN(test_general_unmix_at_birth);
-    printf("\n%d/%d tests OK\n", passed, 36);
+    RUN(test_general_deepen_at_birth);
+    printf("\n%d/%d tests OK\n", passed, 37);
     return 0;
 }

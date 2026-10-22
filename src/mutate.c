@@ -153,3 +153,61 @@ int unmix_prev(uint8_t *dna, int n) {
     }
     return 0;
 }
+
+/* Troisième barreau, même longueur. Le décalage d'un étage tient en 13 octets
+ * (SENSE ; AND 3 ; MOV_BA ; copie). Le second étage en demande 13 aussi, sans
+ * reprendre le stimulus : B doit déjà être l'indice courant. On le capture au
+ * SENSE d'avant la clé, et l'index 4 + masque se fait par quatre INC_A pour ne
+ * plus écraser B. La copie va dans l'intron 0x10 (hors des cases 0..7 que les
+ * immediates auto-modifiés reçoivent). 0x10 occupé, ou motif absent : rien. */
+int deepen_prev(uint8_t *dna, int n) {
+    if (n < 0x11) return 0;
+    int win = -1; uint8_t cell = 0, prev = 0;
+    for (int i = 3; i + 10 <= n; i++) {
+        cell = dna[i + 2]; prev = dna[i + 4];
+        if (dna[i] != OP_MOV_BA || dna[i + 1] != OP_LOAD || dna[i + 3] != OP_STORE
+            || dna[i + 5] != OP_LOADI || dna[i + 6] != 32 || dna[i + 7] != OP_ADD
+            || dna[i + 8] != OP_STORE || dna[i + 9] != cell
+            || prev != (uint8_t)(cell - 1) || cell < 2)
+            continue;
+        if (dna[i - 3] != OP_SENSE_STIM || dna[i - 2] != OP_AND || dna[i - 1] != 3)
+            continue;
+        win = i - 3; break;
+    }
+    if (win < 0) return 0;
+    int key = -1;
+    for (int j = 0; j + 2 < win; j++) {
+        if (dna[j] == OP_LOAD && dna[j + 1] == prev && (dna[j + 2] == OP_ADD || dna[j + 2] == 0xcf)) {
+            key = j; break;
+        }
+    }
+    if (key < 0) return 0;
+    int cap = -1;
+    for (int s = key - 3; s >= 0; s--) {
+        if (dna[s] == OP_SENSE_STIM && dna[s + 1] == OP_AND && dna[s + 2] == 3 && s + 3 < key) {
+            cap = s; break;
+        }
+    }
+    if (cap < 0) return 0;
+    uint8_t slot = dna[cap + 3];
+    if (!(slot >= OP_COUNT || slot == OP_NOP || slot == OP_MOV_BA)) return 0;
+    int idx = -1;
+    for (int j = key + 2; j + 3 < win; j++)
+        if (dna[j] == OP_MOV_BA && dna[j + 1] == OP_LOADI && dna[j + 2] == 4 && dna[j + 3] == OP_ADD)
+            idx = j;
+    if (idx < 0) return 0;
+    /* 0x10 doit rester un intron, pas l'immédiat de l'octet d'avant. */
+    if (dna[0x10] < OP_COUNT) return 0;
+    if (dna[0x0f] < OP_COUNT && op_has_imm(dna[0x0f])) return 0;
+    dna[cap + 3] = OP_MOV_BA;
+    dna[idx] = dna[idx + 1] = dna[idx + 2] = dna[idx + 3] = OP_INC_A;
+    dna[key + 1] = 0x10;
+    if (dna[key + 2] == OP_ADD) dna[key + 2] = 0xcf;
+    uint8_t seq[13] = {
+        OP_LOAD, prev, OP_STORE, 0x10,
+        OP_LOAD, cell, OP_STORE, prev,
+        OP_LOADI, 32, OP_ADD, OP_STORE, cell
+    };
+    memcpy(dna + win, seq, 13);
+    return 1;
+}

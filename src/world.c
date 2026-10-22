@@ -128,6 +128,7 @@ void world_split(World *w, Creature *c) {
         if (rng_double(w->rng) < w->cfg.delay_rate) retarget_prev(child, m);
     }
     if (w->cfg.unmix_rate > 0 && rng_double(w->rng) < w->cfg.unmix_rate) unmix_prev(child, m);   /* general seulement */
+    if (w->cfg.deepen_rate > 0 && rng_double(w->rng) < w->cfg.deepen_rate) deepen_prev(child, m); /* idem : 0 tirage si taux nul */
     int d = (c->d + 1) & 3, give = c->e / 3;
     int born_before = w->nnb;
     add(w, creature_new((c->x + DX[d] + w->cfg.w) % w->cfg.w, (c->y + DY[d] + w->cfg.h) % w->cfg.h,
