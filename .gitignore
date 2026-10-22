@@ -17,3 +17,4 @@ run.log
 !/labs_data/sample/
 TASK.md
 /experiments/metabolic_order
+/experiments/mi_detector

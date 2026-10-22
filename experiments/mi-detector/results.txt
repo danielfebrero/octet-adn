@@ -1,0 +1,341 @@
+# mi-detector : 828 sondes, T=400 ticks, 8 répliques, β=0.5, ELF=/bin/ls
+
+## score MI (bits/tick, débiaisé du témoin nul)
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (bits/tick)
+seeds               16    0.2617    0.0020    0.1574    0.6031    0.7257     68.8%
+évolués          212    0.2177    0.0098    0.1739    0.5953    0.6998     58.5%
+bruit              200    0.0253   -0.0000    0.0006    0.0902    0.2083      5.0%
+ELF                200    0.0088   -0.0000    0.0000    0.0303    0.1762      2.5%
+évolués-mélangés  200    0.0365   -0.0000    0.0084    0.1049    0.3444      7.0%
+AUC évolués >  seeds 0.495  bruit 0.880  ELF 0.935  évolués-mélangés 0.844   (seuil p95 bruit = 0.1240)
+
+## composante mémoire seule I_mem (passé du monde au-delà du présent)
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (bits/tick)
+seeds               16   -0.0281   -0.0531   -0.0098    0.0009    0.0020     18.8%
+évolués          212   -0.0627   -0.1378   -0.0650    0.0002    0.0123     17.0%
+bruit              200   -0.0160   -0.0495   -0.0035    0.0000    0.0025      5.0%
+ELF                200   -0.0208   -0.0744    0.0000    0.0000    0.0088      3.5%
+évolués-mélangés  200   -0.0272   -0.0725   -0.0173    0.0000    0.0008      4.0%
+AUC évolués >  seeds 0.303  bruit 0.266  ELF 0.280  évolués-mélangés 0.322   (seuil p95 bruit = 0.0000)
+
+## persistance : score MI (débiaisé) sur le dernier quart de l'horizon seul
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (bits/tick)
+seeds               16    0.3237    0.0000    0.1478    0.8608    0.9387     50.0%
+évolués          212    0.2585    0.0000    0.1927    0.8482    1.0025     58.0%
+bruit              200    0.0231    0.0000    0.0000    0.0919    0.2390      5.0%
+ELF                200    0.0095    0.0000    0.0000    0.0182    0.2383      1.0%
+évolués-mélangés  200    0.0450    0.0000    0.0000    0.1516    0.4427     10.0%
+AUC évolués >  seeds 0.499  bruit 0.856  ELF 0.887  évolués-mélangés 0.809   (seuil p95 bruit = 0.1528)
+
+## (pour lecture) fraction de l'horizon vécue par le fondateur
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (fraction)
+seeds               16    0.7105    0.1592    0.9492    1.0000    1.0000      0.0%
+évolués          212    0.8653    0.3201    1.0000    1.0000    1.0000      0.0%
+bruit              200    0.3854    0.1296    0.3916    0.9146    1.0000      0.0%
+ELF                200    0.3767    0.1935    0.3975    0.4912    1.0000      0.0%
+évolués-mélangés  200    0.5484    0.1068    0.4250    1.0000    1.0000      0.0%
+AUC évolués >  seeds 0.622  bruit 0.871  ELF 0.881  évolués-mélangés 0.749   (seuil p95 bruit = 1.0000)
+
+## à vie égale : seulement les sondes dont la lignée vit ≥ 95 % de l'horizon
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (bits/tick)
+seeds                8    0.4576    0.1569    0.5176    0.6700    0.7257     87.5%
+évolués          151    0.2380    0.0276    0.1939    0.5958    0.6998     55.0%
+bruit               16    0.0718    0.0292    0.0632    0.1408    0.2083      6.2%
+ELF                  3    0.0441   -0.0067   -0.0058    0.1148    0.1450      0.0%
+évolués-mélangés   58    0.0618    0.0018    0.0351    0.1637    0.3444      6.9%
+AUC évolués >  seeds 0.247  bruit 0.783  ELF 0.852  évolués-mélangés 0.810   (seuil p95 bruit = 0.1685)
+
+## détail seeds + évolués
+seed:forager                 len= 256 MI= 0.4757 react= 0.2240 mem=-0.0096 null=-0.2613 q4= 0.5501 vie=1.00
+seed:neural                  len= 256 MI= 0.3973 react= 0.0906 mem=-0.0448 null=-0.3515 q4= 0.4652 vie=1.00
+seed:echo                    len= 256 MI= 0.5600 react= 0.2016 mem=-0.0073 null=-0.3658 q4= 0.7564 vie=1.00
+seed:dialog                  len= 256 MI= 0.5595 react= 0.2055 mem=-0.0029 null=-0.3570 q4= 0.7969 vie=1.00
+seed:stock                   len= 256 MI= 0.7257 react= 0.3446 mem= 0.0020 null=-0.3792 q4= 0.9247 vie=1.00
+seed:social                  len= 256 MI= 0.1272 react=-0.1484 mem=-0.1356 null=-0.4112 q4= 0.1393 vie=1.00
+seed:predator                len= 256 MI= 0.0055 react=-0.0036 mem=-0.0044 null=-0.0134 q4= 0.0000 vie=0.21
+seed:walk                    len= 256 MI= 0.6461 react= 0.2628 mem= 0.0014 null=-0.3819 q4= 0.9387 vie=1.00
+seed:fold                    len=  64 MI= 0.1433 react=-0.0497 mem=-0.0435 null=-0.2365 q4= 0.1351 vie=0.90
+seed:antibiotic              len=  64 MI= 0.1696 react=-0.0583 mem=-0.0600 null=-0.2879 q4= 0.1564 vie=1.00
+seed:commons                 len=  64 MI= 0.0030 react= 0.0022 mem= 0.0005 null=-0.0003 q4= 0.0000 vie=0.12
+seed:pandemic                len=  64 MI= 0.2249 react=-0.0416 mem=-0.0450 null=-0.3116 q4= 0.3014 vie=0.80
+seed:repair                  len= 160 MI= 0.0015 react=-0.0075 mem=-0.0101 null=-0.0190 q4= 0.0000 vie=0.17
+seed:selfevo                 len=  64 MI= 0.1453 react=-0.0281 mem=-0.0439 null=-0.2173 q4= 0.0149 vie=0.78
+seed:diagnose                len=  39 MI= 0.0000 react= 0.0001 mem= 0.0000 null= 0.0001 q4= 0.0000 vie=0.25
+seed:general                 len= 172 MI= 0.0025 react=-0.0400 mem=-0.0462 null=-0.0887 q4= 0.0000 vie=0.15
+evo:antibiotic#0             len= 116 MI= 0.0216 react=-0.0095 mem=-0.0087 null=-0.0398 q4=-0.0019 vie=0.37
+evo:antibiotic#1             len= 116 MI= 0.0040 react=-0.1378 mem=-0.1123 null=-0.2541 q4= 0.0146 vie=1.00
+evo:antibiotic#2             len= 118 MI= 0.2327 react=-0.0699 mem=-0.0831 null=-0.3857 q4= 0.3244 vie=1.00
+evo:antibiotic#3             len= 117 MI= 0.2498 react= 0.0598 mem=-0.0423 null=-0.2323 q4= 0.3973 vie=1.00
+evo:antibiotic#4             len= 126 MI= 0.0667 react=-0.0179 mem=-0.0521 null=-0.1367 q4= 0.0000 vie=0.33
+evo:antibiotic#5             len= 117 MI= 0.1587 react=-0.0218 mem=-0.0758 null=-0.2562 q4= 0.0480 vie=1.00
+evo:antibiotic#6             len= 136 MI= 0.0369 react=-0.2419 mem=-0.1042 null=-0.3831 q4= 0.0363 vie=1.00
+evo:antibiotic#7             len= 126 MI= 0.0667 react=-0.0179 mem=-0.0521 null=-0.1367 q4= 0.0000 vie=0.33
+evo:antibiotic#8             len= 118 MI= 0.0774 react=-0.0830 mem=-0.0616 null=-0.2220 q4= 0.0719 vie=0.48
+evo:code-repair#0            len= 159 MI= 0.0000 react= 0.0000 mem= 0.0000 null= 0.0000 q4= 0.0000 vie=0.40
+evo:commons#0                len=1022 MI= 0.0054 react=-0.0013 mem=-0.0017 null=-0.0084 q4= 0.0000 vie=0.21
+evo:commons#1                len=1010 MI= 0.0279 react=-0.0056 mem=-0.0060 null=-0.0395 q4= 0.0000 vie=0.32
+evo:commons#2                len=1018 MI=-0.0003 react=-0.0018 mem=-0.0027 null=-0.0042 q4= 0.0000 vie=0.21
+evo:commons#3                len=1010 MI= 0.0147 react=-0.0012 mem=-0.0026 null=-0.0185 q4= 0.0000 vie=0.29
+evo:commons#4                len=1015 MI=-0.0001 react=-0.0010 mem=-0.0014 null=-0.0023 q4= 0.0000 vie=0.20
+evo:commons#5                len=1019 MI= 0.0103 react=-0.0058 mem=-0.0083 null=-0.0244 q4= 0.0000 vie=0.26
+evo:commons#6                len=1020 MI= 0.0046 react=-0.0004 mem=-0.0013 null=-0.0063 q4= 0.0000 vie=0.25
+evo:commons#7                len=1018 MI=-0.0003 react=-0.0018 mem=-0.0027 null=-0.0042 q4= 0.0000 vie=0.21
+evo:commons#8                len=1023 MI= 0.0040 react= 0.0002 mem=-0.0004 null=-0.0042 q4= 0.0000 vie=0.23
+evo:commons#9                len=1020 MI= 0.0046 react=-0.0004 mem=-0.0013 null=-0.0063 q4= 0.0000 vie=0.25
+evo:commons#10               len=1024 MI= 0.0026 react=-0.0005 mem=-0.0005 null=-0.0035 q4= 0.0000 vie=0.21
+evo:commons#11               len=1021 MI= 0.0098 react=-0.0206 mem=-0.0212 null=-0.0515 q4= 0.0080 vie=0.34
+evo:commons#12               len=1019 MI= 0.0221 react=-0.0092 mem=-0.0154 null=-0.0466 q4= 0.0527 vie=0.30
+evo:commons#13               len=1011 MI=-0.0002 react=-0.0013 mem=-0.0014 null=-0.0025 q4= 0.0000 vie=0.19
+evo:commons#14               len=1014 MI= 0.0001 react=-0.0007 mem=-0.0005 null=-0.0013 q4= 0.0000 vie=0.20
+evo:commons#15               len=1019 MI= 0.0280 react=-0.0092 mem=-0.0156 null=-0.0528 q4= 0.0260 vie=0.30
+evo:diagnose#0               len=  33 MI= 0.4257 react= 0.1515 mem= 0.0080 null=-0.2661 q4= 0.1784 vie=0.68
+evo:diagnose#11              len=  30 MI= 0.2665 react= 0.0947 mem=-0.0149 null=-0.1867 q4= 0.2627 vie=1.00
+evo:diagnose#12              len=  29 MI= 0.4866 react= 0.1567 mem=-0.0344 null=-0.3644 q4= 0.6819 vie=1.00
+evo:diagnose#13              len=  29 MI= 0.5398 react= 0.2939 mem=-0.0188 null=-0.2646 q4= 0.5256 vie=1.00
+evo:emit-dialog#0            len= 257 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#1            len= 262 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#2            len= 253 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#3            len= 255 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#4            len= 254 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#5            len= 253 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#6            len= 257 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#7            len= 255 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#8            len= 253 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-dialog#9            len= 256 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-dialog#10           len= 255 MI= 0.5953 react= 0.2509 mem= 0.0002 null=-0.3442 q4= 0.8482 vie=1.00
+evo:emit-dialog#11           len= 254 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-dialog#12           len= 255 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-dialog#13           len= 256 MI= 0.4121 react= 0.0964 mem=-0.0238 null=-0.3395 q4= 0.3026 vie=0.72
+evo:emit-dialog#14           len= 256 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-dialog#15           len= 253 MI= 0.4689 react= 0.1241 mem= 0.0030 null=-0.3419 q4= 0.2774 vie=0.73
+evo:emit-echo#0              len= 254 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#1              len= 263 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#2              len= 259 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#3              len= 258 MI= 0.4139 react= 0.1298 mem= 0.0030 null=-0.2810 q4= 0.1709 vie=0.67
+evo:emit-echo#4              len= 256 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#5              len= 254 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#6              len= 255 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#7              len= 254 MI= 0.4977 react= 0.1450 mem=-0.0384 null=-0.3910 q4= 0.5593 vie=1.00
+evo:emit-echo#8              len= 254 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#9              len= 255 MI= 0.6425 react= 0.2993 mem= 0.0123 null=-0.3309 q4= 0.8837 vie=1.00
+evo:emit-echo#10             len= 258 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#11             len= 255 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#12             len= 255 MI= 0.6425 react= 0.2993 mem= 0.0123 null=-0.3309 q4= 0.8837 vie=1.00
+evo:emit-echo#13             len= 257 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#14             len= 256 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:emit-echo#15             len= 256 MI= 0.2621 react= 0.0423 mem=-0.0048 null=-0.2247 q4= 0.0000 vie=0.49
+evo:energy-eff#0             len= 255 MI= 0.6439 react= 0.3494 mem= 0.0039 null=-0.2907 q4= 0.7484 vie=1.00
+evo:energy-eff#3             len= 255 MI= 0.6439 react= 0.3494 mem= 0.0039 null=-0.2907 q4= 0.7484 vie=1.00
+evo:fold#0                   len=1020 MI= 0.1627 react=-0.1631 mem=-0.1036 null=-0.4293 q4= 0.1317 vie=1.00
+evo:fold#1                   len= 988 MI= 0.0576 react=-0.0011 mem=-0.0074 null=-0.0661 q4= 0.0000 vie=0.21
+evo:fold#2                   len=1020 MI= 0.0620 react=-0.0025 mem=-0.0074 null=-0.0720 q4= 0.0000 vie=0.21
+evo:fold#3                   len=1016 MI= 0.1312 react=-0.1666 mem=-0.1009 null=-0.3986 q4= 0.1414 vie=1.00
+evo:fold#4                   len= 986 MI= 0.1293 react=-0.1432 mem=-0.1039 null=-0.3764 q4= 0.1286 vie=1.00
+evo:fold#5                   len=1008 MI= 0.1332 react=-0.1199 mem=-0.0758 null=-0.3289 q4= 0.1183 vie=1.00
+evo:fold#6                   len=1020 MI= 0.0620 react=-0.0025 mem=-0.0074 null=-0.0720 q4= 0.0000 vie=0.21
+evo:fold#7                   len=1011 MI= 0.1365 react=-0.1415 mem=-0.1086 null=-0.3866 q4= 0.1884 vie=1.00
+evo:fold#8                   len= 996 MI= 0.1505 react=-0.1279 mem=-0.0892 null=-0.3675 q4= 0.1427 vie=1.00
+evo:fold#9                   len= 991 MI= 0.0570 react= 0.0019 mem=-0.0065 null=-0.0616 q4= 0.0000 vie=0.20
+evo:fold#10                  len=1002 MI= 0.0529 react=-0.0014 mem=-0.0086 null=-0.0629 q4= 0.0000 vie=0.20
+evo:fold#11                  len= 996 MI= 0.1051 react=-0.1671 mem=-0.1141 null=-0.3863 q4= 0.1277 vie=1.00
+evo:fold#12                  len=1016 MI= 0.1777 react=-0.1337 mem=-0.1053 null=-0.4167 q4= 0.2975 vie=1.00
+evo:fold#13                  len= 986 MI= 0.0537 react=-0.0031 mem=-0.0100 null=-0.0668 q4= 0.0000 vie=0.20
+evo:fold#14                  len=1016 MI= 0.1658 react=-0.1674 mem=-0.0874 null=-0.4205 q4= 0.2016 vie=1.00
+evo:fold#15                  len=1013 MI= 0.1102 react=-0.1412 mem=-0.1042 null=-0.3555 q4= 0.0521 vie=1.00
+evo:general#0                len= 200 MI= 0.0559 react=-0.1502 mem=-0.0654 null=-0.2715 q4= 0.0260 vie=1.00
+evo:general#1                len= 200 MI= 0.0943 react=-0.1900 mem=-0.0851 null=-0.3693 q4= 0.1643 vie=1.00
+evo:general#2                len= 200 MI= 0.0919 react=-0.1598 mem=-0.0781 null=-0.3298 q4= 0.1318 vie=1.00
+evo:general#3                len= 201 MI= 0.1437 react=-0.1363 mem=-0.0913 null=-0.3713 q4= 0.2117 vie=0.90
+evo:general#4                len= 201 MI= 0.1461 react=-0.1355 mem=-0.0886 null=-0.3702 q4= 0.2359 vie=0.90
+evo:general#5                len= 200 MI= 0.0570 react=-0.1470 mem=-0.0810 null=-0.2850 q4= 0.0912 vie=1.00
+evo:general#6                len= 200 MI= 0.0994 react=-0.0649 mem=-0.0553 null=-0.2195 q4= 0.1733 vie=0.41
+evo:general#7                len= 200 MI= 0.0631 react=-0.1917 mem=-0.0796 null=-0.3345 q4= 0.0309 vie=1.00
+evo:general#8                len= 201 MI= 0.0992 react=-0.1178 mem=-0.0688 null=-0.2859 q4= 0.1321 vie=0.81
+evo:general#9                len= 204 MI= 0.1901 react=-0.1073 mem=-0.0555 null=-0.3529 q4= 0.2957 vie=0.60
+evo:general#10               len= 200 MI= 0.1428 react=-0.1535 mem=-0.0794 null=-0.3757 q4= 0.1746 vie=0.80
+evo:general#11               len= 200 MI= 0.0695 react=-0.1715 mem=-0.0876 null=-0.3286 q4= 0.1275 vie=1.00
+evo:general#12               len= 200 MI= 0.0805 react=-0.0658 mem=-0.0492 null=-0.1955 q4= 0.0435 vie=0.37
+evo:general#13               len= 200 MI= 0.1503 react=-0.1426 mem=-0.0853 null=-0.3782 q4= 0.1941 vie=0.89
+evo:general#14               len= 200 MI= 0.0822 react=-0.1594 mem=-0.0646 null=-0.3062 q4= 0.1102 vie=1.00
+evo:general#15               len= 200 MI= 0.0881 react=-0.1269 mem=-0.0854 null=-0.3004 q4= 0.0491 vie=1.00
+evo:max-pop#0                len= 999 MI= 0.0976 react=-0.2030 mem=-0.1376 null=-0.4382 q4= 0.0483 vie=1.00
+evo:max-pop#1                len=1000 MI= 0.2591 react=-0.0944 mem=-0.0910 null=-0.4446 q4= 0.3945 vie=1.00
+evo:max-pop#2                len= 996 MI= 0.2247 react=-0.0832 mem=-0.0916 null=-0.3995 q4= 0.2828 vie=1.00
+evo:max-pop#3                len=1015 MI= 0.1933 react=-0.1286 mem=-0.0864 null=-0.4083 q4= 0.2892 vie=1.00
+evo:max-pop#4                len=1002 MI= 0.2289 react=-0.1473 mem=-0.0954 null=-0.4716 q4= 0.2542 vie=1.00
+evo:max-pop#5                len= 994 MI= 0.2271 react=-0.1119 mem=-0.0830 null=-0.4221 q4= 0.4435 vie=1.00
+evo:max-pop#6                len=1008 MI= 0.2611 react=-0.0671 mem=-0.0699 null=-0.3981 q4= 0.3720 vie=1.00
+evo:max-pop#7                len=1004 MI= 0.2593 react=-0.0766 mem=-0.0766 null=-0.4124 q4= 0.2211 vie=1.00
+evo:max-pop#8                len= 999 MI= 0.1073 react=-0.2258 mem=-0.1490 null=-0.4821 q4= 0.1063 vie=1.00
+evo:max-pop#9                len=1015 MI= 0.2674 react=-0.1005 mem=-0.0795 null=-0.4474 q4= 0.4120 vie=1.00
+evo:max-pop#10               len=1007 MI= 0.2301 react=-0.0840 mem=-0.0737 null=-0.3878 q4= 0.4036 vie=1.00
+evo:max-pop#11               len= 979 MI= 0.2265 react=-0.0121 mem=-0.0640 null=-0.3027 q4= 0.2286 vie=1.00
+evo:max-pop#12               len=1012 MI= 0.2446 react=-0.0613 mem=-0.0675 null=-0.3734 q4= 0.2955 vie=1.00
+evo:max-pop#13               len= 998 MI= 0.1512 react=-0.1697 mem=-0.1075 null=-0.4284 q4= 0.2416 vie=1.00
+evo:max-pop#14               len=1002 MI= 0.2092 react=-0.1421 mem=-0.0925 null=-0.4438 q4= 0.3369 vie=1.00
+evo:max-pop#15               len= 997 MI= 0.0764 react=-0.1666 mem=-0.1015 null=-0.3445 q4=-0.0161 vie=1.00
+evo:org-seeds#0              len= 264 MI= 0.0162 react=-0.2398 mem=-0.1363 null=-0.3923 q4= 0.0644 vie=1.00
+evo:org-seeds#1              len= 988 MI= 0.0349 react=-0.2308 mem=-0.1378 null=-0.4036 q4= 0.0599 vie=1.00
+evo:org-seeds#2              len= 257 MI= 0.0093 react=-0.1912 mem=-0.1205 null=-0.3210 q4= 0.1117 vie=1.00
+evo:org-seeds#3              len= 257 MI= 0.0247 react=-0.2697 mem=-0.1341 null=-0.4285 q4= 0.0023 vie=1.00
+evo:org-seeds#4              len=1008 MI=-0.0364 react=-0.2867 mem=-0.1672 null=-0.4175 q4=-0.0024 vie=1.00
+evo:org-seeds#5              len= 255 MI= 0.0147 react=-0.2516 mem=-0.1353 null=-0.4016 q4= 0.0307 vie=1.00
+evo:org-seeds#6              len= 255 MI= 0.0805 react=-0.2489 mem=-0.1518 null=-0.4812 q4= 0.0611 vie=1.00
+evo:org-seeds#7              len= 992 MI=-0.0273 react=-0.2552 mem=-0.1484 null=-0.3763 q4=-0.0374 vie=1.00
+evo:org-seeds#8              len= 255 MI= 0.0542 react=-0.2509 mem=-0.1574 null=-0.4625 q4= 0.1544 vie=1.00
+evo:org-seeds#9              len= 255 MI= 0.0002 react=-0.2594 mem=-0.1293 null=-0.3889 q4=-0.0085 vie=1.00
+evo:org-seeds#10             len=1019 MI= 0.0010 react=-0.2693 mem=-0.1387 null=-0.4090 q4= 0.0582 vie=1.00
+evo:org-seeds#11             len= 459 MI= 0.0362 react=-0.2489 mem=-0.1554 null=-0.4405 q4= 0.2222 vie=1.00
+evo:org-seeds#12             len= 997 MI= 0.0553 react=-0.2045 mem=-0.1201 null=-0.3798 q4= 0.0995 vie=1.00
+evo:org-seeds#13             len= 254 MI= 0.0505 react=-0.2754 mem=-0.1455 null=-0.4713 q4= 0.0804 vie=1.00
+evo:org-seeds#14             len= 461 MI= 0.0090 react=-0.1947 mem=-0.0643 null=-0.2680 q4= 0.0749 vie=1.00
+evo:org-seeds#15             len= 254 MI= 0.5958 react= 0.2509 mem= 0.0002 null=-0.3447 q4= 0.8482 vie=1.00
+evo:pandemic#0               len= 690 MI= 0.3295 react= 0.1235 mem=-0.0465 null=-0.2526 q4= 0.2914 vie=0.90
+evo:pandemic#1               len= 682 MI= 0.2647 react= 0.0816 mem=-0.0357 null=-0.2188 q4= 0.2574 vie=0.76
+evo:pandemic#2               len= 686 MI= 0.2310 react= 0.0793 mem=-0.0244 null=-0.1761 q4= 0.2216 vie=0.68
+evo:pandemic#3               len= 693 MI= 0.3244 react= 0.1199 mem=-0.0565 null=-0.2610 q4= 0.3107 vie=1.00
+evo:pandemic#4               len= 688 MI= 0.3502 react= 0.1161 mem=-0.0633 null=-0.2975 q4= 0.4204 vie=1.00
+evo:pandemic#5               len= 690 MI= 0.3156 react= 0.1133 mem=-0.0420 null=-0.2444 q4= 0.3276 vie=0.90
+evo:pandemic#6               len= 683 MI= 0.3805 react= 0.1372 mem=-0.0483 null=-0.2916 q4= 0.5152 vie=1.00
+evo:pandemic#7               len= 689 MI= 0.3563 react= 0.1328 mem=-0.0416 null=-0.2652 q4= 0.3991 vie=0.93
+evo:pandemic#8               len= 689 MI= 0.3338 react= 0.1064 mem=-0.0507 null=-0.2782 q4= 0.3550 vie=0.93
+evo:pandemic#9               len= 687 MI= 0.3339 react= 0.1300 mem=-0.0448 null=-0.2487 q4= 0.2597 vie=0.90
+evo:pandemic#10              len= 683 MI= 0.2274 react= 0.0620 mem=-0.0376 null=-0.2030 q4= 0.1954 vie=0.73
+evo:pandemic#11              len= 683 MI= 0.2239 react= 0.0743 mem=-0.0295 null=-0.1792 q4= 0.2220 vie=0.68
+evo:pandemic#12              len= 681 MI= 0.2674 react= 0.0794 mem=-0.0305 null=-0.2185 q4= 0.2156 vie=0.76
+evo:pandemic#13              len= 690 MI= 0.1939 react=-0.0822 mem=-0.1191 null=-0.3952 q4= 0.3055 vie=1.00
+evo:pandemic#14              len= 689 MI= 0.3534 react= 0.1367 mem=-0.0466 null=-0.2634 q4= 0.3856 vie=0.93
+evo:pandemic#15              len= 691 MI= 0.3597 react= 0.1375 mem=-0.0455 null=-0.2677 q4= 0.4786 vie=0.94
+evo:predator-prey#0          len= 273 MI= 0.0789 react=-0.1966 mem=-0.1184 null=-0.3939 q4= 0.1756 vie=1.00
+evo:predator-prey#1          len= 282 MI= 0.0276 react=-0.0698 mem=-0.0427 null=-0.1401 q4= 0.0307 vie=1.00
+evo:predator-prey#2          len= 273 MI= 0.0727 react=-0.2140 mem=-0.1434 null=-0.4302 q4= 0.0598 vie=1.00
+evo:predator-prey#3          len= 287 MI= 0.1213 react=-0.0980 mem=-0.0800 null=-0.2994 q4= 0.1948 vie=0.91
+evo:predator-prey#4          len= 285 MI= 0.1471 react=-0.1856 mem=-0.1331 null=-0.4658 q4= 0.1691 vie=1.00
+evo:predator-prey#5          len= 290 MI= 0.3091 react= 0.0131 mem=-0.0373 null=-0.3333 q4= 0.4589 vie=1.00
+evo:predator-prey#6          len= 273 MI= 0.1035 react=-0.2050 mem=-0.1357 null=-0.4442 q4= 0.1285 vie=1.00
+evo:predator-prey#7          len= 272 MI= 0.1179 react=-0.1804 mem=-0.1424 null=-0.4407 q4= 0.1123 vie=1.00
+evo:predator-prey#8          len= 276 MI= 0.1034 react=-0.2155 mem=-0.1491 null=-0.4681 q4= 0.0952 vie=1.00
+evo:predator-prey#9          len= 284 MI= 0.1199 react=-0.2091 mem=-0.1444 null=-0.4733 q4= 0.1912 vie=1.00
+evo:predator-prey#10         len= 289 MI= 0.1822 react=-0.1076 mem=-0.1088 null=-0.3986 q4= 0.2423 vie=1.00
+evo:predator-prey#11         len= 284 MI= 0.0961 react=-0.1982 mem=-0.1316 null=-0.4259 q4= 0.1213 vie=1.00
+evo:predator-prey#12         len= 272 MI= 0.1035 react=-0.2615 mem=-0.1539 null=-0.5189 q4= 0.1446 vie=1.00
+evo:predator-prey#13         len= 274 MI= 0.1106 react=-0.1953 mem=-0.1204 null=-0.4264 q4= 0.1280 vie=1.00
+evo:predator-prey#14         len= 279 MI= 0.0861 react=-0.1986 mem=-0.1397 null=-0.4244 q4= 0.1747 vie=1.00
+evo:predator-prey#15         len= 284 MI= 0.1124 react=-0.2086 mem=-0.1256 null=-0.4466 q4= 0.1647 vie=1.00
+evo:predator-prey#16         len= 256 MI= 0.0055 react=-0.0036 mem=-0.0044 null=-0.0134 q4= 0.0000 vie=0.21
+evo:predict-stock#0          len= 232 MI= 0.0538 react=-0.2036 mem=-0.1335 null=-0.3909 q4= 0.0293 vie=1.00
+evo:predict-stock#1          len= 234 MI= 0.0465 react=-0.2749 mem=-0.1546 null=-0.4761 q4= 0.0588 vie=1.00
+evo:predict-stock#2          len= 238 MI= 0.0403 react=-0.1152 mem=-0.0573 null=-0.2128 q4= 0.0928 vie=1.00
+evo:predict-stock#3          len= 234 MI= 0.1136 react=-0.2227 mem=-0.1306 null=-0.4669 q4= 0.1044 vie=1.00
+evo:predict-stock#4          len= 235 MI= 0.0371 react=-0.2663 mem=-0.1580 null=-0.4614 q4= 0.0175 vie=1.00
+evo:predict-stock#5          len= 235 MI= 0.1487 react=-0.0902 mem=-0.0534 null=-0.2924 q4= 0.0936 vie=1.00
+evo:predict-stock#6          len= 234 MI= 0.0772 react=-0.2212 mem=-0.1306 null=-0.4290 q4= 0.1511 vie=1.00
+evo:predict-stock#7          len= 233 MI= 0.0344 react=-0.1957 mem=-0.1216 null=-0.3517 q4= 0.0189 vie=1.00
+evo:predict-stock#8          len= 233 MI= 0.1013 react=-0.2222 mem=-0.1608 null=-0.4843 q4= 0.1114 vie=1.00
+evo:predict-stock#9          len= 235 MI= 0.1297 react=-0.2214 mem=-0.1396 null=-0.4907 q4= 0.1694 vie=1.00
+evo:predict-stock#10         len= 232 MI= 0.0466 react=-0.1801 mem=-0.1093 null=-0.3361 q4= 0.1091 vie=1.00
+evo:predict-stock#11         len= 231 MI= 0.0117 react=-0.1767 mem=-0.1388 null=-0.3272 q4=-0.0312 vie=1.00
+evo:predict-stock#12         len= 236 MI= 0.0072 react=-0.1557 mem=-0.0543 null=-0.2172 q4= 0.0321 vie=1.00
+evo:predict-stock#13         len= 235 MI= 0.0225 react=-0.2504 mem=-0.1493 null=-0.4223 q4= 0.0733 vie=1.00
+evo:predict-stock#14         len= 235 MI=-0.0179 react=-0.2616 mem=-0.1595 null=-0.4032 q4=-0.0176 vie=1.00
+evo:predict-stock#15         len= 237 MI= 0.0139 react=-0.0201 mem=-0.0237 null=-0.0577 q4= 0.0293 vie=1.00
+evo:predict-walk#0           len= 256 MI= 0.6998 react= 0.3065 mem= 0.0020 null=-0.3913 q4= 1.0025 vie=1.00
+evo:predict-walk#1           len= 256 MI= 0.6998 react= 0.3065 mem= 0.0020 null=-0.3913 q4= 1.0025 vie=1.00
+evo:self-evolve#0            len= 251 MI= 0.2598 react= 0.0327 mem=-0.0639 null=-0.2910 q4= 0.2857 vie=0.91
+evo:self-evolve#1            len= 255 MI= 0.2280 react=-0.0044 mem=-0.0768 null=-0.3092 q4= 0.2672 vie=1.00
+evo:self-evolve#2            len= 238 MI= 0.2518 react= 0.0186 mem=-0.0598 null=-0.2930 q4= 0.1768 vie=0.98
+evo:self-evolve#3            len= 254 MI= 0.3244 react= 0.0399 mem=-0.0617 null=-0.3462 q4= 0.3625 vie=1.00
+evo:self-evolve#4            len= 256 MI= 0.2680 react= 0.0344 mem=-0.0755 null=-0.3090 q4= 0.2808 vie=1.00
+evo:self-evolve#5            len= 234 MI= 0.2632 react= 0.0312 mem=-0.0700 null=-0.3020 q4= 0.3311 vie=1.00
+evo:self-evolve#6            len= 255 MI= 0.2139 react=-0.0197 mem=-0.0816 null=-0.3152 q4= 0.2628 vie=1.00
+evo:self-evolve#7            len= 253 MI= 0.1761 react=-0.0284 mem=-0.0810 null=-0.2854 q4= 0.2473 vie=1.00
+evo:self-evolve#8            len= 259 MI= 0.2328 react=-0.0244 mem=-0.0935 null=-0.3507 q4= 0.2358 vie=1.00
+evo:self-evolve#9            len= 252 MI= 0.2532 react= 0.0221 mem=-0.0694 null=-0.3005 q4= 0.2982 vie=1.00
+evo:self-evolve#10           len= 250 MI= 0.2509 react= 0.0101 mem=-0.0725 null=-0.3134 q4= 0.3261 vie=1.00
+evo:self-evolve#11           len= 251 MI= 0.1475 react=-0.0046 mem=-0.0407 null=-0.1928 q4= 0.1649 vie=0.72
+evo:self-evolve#12           len= 254 MI= 0.3112 react= 0.0430 mem=-0.0612 null=-0.3293 q4= 0.3359 vie=1.00
+evo:self-evolve#13           len= 252 MI= 0.1718 react=-0.0339 mem=-0.0813 null=-0.2870 q4= 0.1434 vie=0.97
+evo:self-evolve#14           len= 254 MI= 0.2733 react= 0.0370 mem=-0.0767 null=-0.3130 q4= 0.2246 vie=1.00
+evo:self-evolve#15           len= 255 MI= 0.2469 react= 0.0189 mem=-0.0758 null=-0.3038 q4= 0.3376 vie=1.00
+evo:self-rewrite#0           len=1023 MI= 0.2350 react= 0.0322 mem=-0.0755 null=-0.2783 q4= 0.2393 vie=1.00
+evo:self-rewrite#1           len=1009 MI= 0.2031 react= 0.0180 mem=-0.0657 null=-0.2508 q4= 0.1853 vie=1.00
+evo:self-rewrite#2           len=1016 MI= 0.2130 react= 0.0435 mem=-0.0694 null=-0.2388 q4= 0.2419 vie=1.00
+evo:self-rewrite#3           len=1015 MI= 0.2193 react= 0.0132 mem=-0.0689 null=-0.2750 q4= 0.2128 vie=1.00
+evo:self-rewrite#4           len=1024 MI= 0.2296 react= 0.0382 mem=-0.0761 null=-0.2675 q4= 0.2932 vie=1.00
+evo:self-rewrite#5           len=1024 MI= 0.2096 react= 0.0476 mem=-0.0791 null=-0.2411 q4= 0.1560 vie=1.00
+evo:self-rewrite#6           len=1020 MI= 0.2012 react= 0.0031 mem=-0.0675 null=-0.2656 q4= 0.2074 vie=1.00
+evo:self-rewrite#7           len=1023 MI= 0.2022 react= 0.0225 mem=-0.0775 null=-0.2571 q4= 0.2316 vie=1.00
+evo:self-rewrite#8           len=1024 MI= 0.2296 react= 0.0492 mem=-0.0720 null=-0.2524 q4= 0.2379 vie=1.00
+evo:self-rewrite#9           len=1019 MI= 0.2303 react= 0.0500 mem=-0.0512 null=-0.2315 q4= 0.2235 vie=1.00
+evo:self-rewrite#10          len=1018 MI= 0.1977 react= 0.0298 mem=-0.0736 null=-0.2414 q4= 0.2137 vie=1.00
+evo:self-rewrite#11          len=1023 MI= 0.2035 react= 0.0346 mem=-0.0681 null=-0.2371 q4= 0.2866 vie=1.00
+evo:self-rewrite#12          len=1024 MI= 0.2343 react= 0.0464 mem=-0.0733 null=-0.2612 q4= 0.2210 vie=1.00
+evo:self-rewrite#13          len=1024 MI= 0.1916 react= 0.0219 mem=-0.0630 null=-0.2328 q4= 0.2286 vie=1.00
+evo:self-rewrite#14          len=1013 MI= 0.1872 react= 0.0147 mem=-0.0745 null=-0.2470 q4= 0.1522 vie=1.00
+evo:self-rewrite#15          len=1016 MI= 0.2072 react= 0.0341 mem=-0.0630 null=-0.2361 q4= 0.2297 vie=1.00
+evo:survival#0               len= 255 MI= 0.6439 react= 0.3494 mem= 0.0039 null=-0.2907 q4= 0.7484 vie=1.00
+
+## top-10 hors seeds/évolués (faux positifs potentiels)
+shuf:predator-prey#15        len= 284 MI= 0.3444 react= 0.1354 mem=-0.0176 vie=0.99
+shuf:diagnose#11             len=  30 MI= 0.2246 react= 0.0090 mem=-0.0341 vie=0.68
+shuf:predator-prey#13        len= 274 MI= 0.2206 react= 0.0314 mem=-0.0256 vie=0.60
+shuf:max-pop#10              len=1007 MI= 0.2126 react= 0.0602 mem=-0.0205 vie=1.00
+noise#139                    len= 255 MI= 0.2083 react=-0.0834 mem=-0.0823 vie=1.00
+shuf:emit-echo#1             len= 263 MI= 0.1988 react= 0.0280 mem=-0.0110 vie=0.40
+noise#46                     len= 996 MI= 0.1921 react=-0.0400 mem=-0.0218 vie=0.46
+noise#43                     len= 117 MI= 0.1895 react= 0.0107 mem=-0.0447 vie=0.68
+shuf:predator-prey#0         len= 273 MI= 0.1854 react= 0.0317 mem=-0.0206 vie=1.00
+elf@0x3b5                    len=1019 MI= 0.1762 react=-0.0871 mem=-0.0954 vie=0.61
+
+## gene-calling par ablation (octet -> 0xFF intron), ./experiments/mi_detector genes ...
+# gènes MI de seed:echo (256 octets) : MI=0.5600 react=0.2016 mem=-0.0073 vie=1.00
+  octets dont l'ablation coûte > 0.01 bit/tick : 19 / 256
+  0x009  08 JMP        ΔMI = -0.5112
+  0x004  0c STEP       ΔMI = -0.4474
+  0x002  09 JZ         ΔMI = -0.4000
+  0x00d  0c STEP       ΔMI = -0.2717
+  0x012  0d EAT        ΔMI = -0.2661
+  0x00c  0b TURN       ΔMI = -0.2314
+  0x00b  01 INC_A      ΔMI = -0.2098
+  0x00a  07 LOAD       ΔMI = -0.1854
+  0x016  0f YIELD      ΔMI = -0.1835
+  0x003  07 LOAD       ΔMI = -0.1689
+  0x005  07 LOAD       ΔMI = -0.1647
+  0x014  14 EMIT       ΔMI = -0.1499
+# gènes MI de seed:forager (256 octets) : MI=0.4757 react=0.2240 mem=-0.0096 vie=1.00
+  octets dont l'ablation coûte > 0.01 bit/tick : 13 / 256
+  0x002  09 JZ         ΔMI = -0.4579
+  0x00d  0c STEP       ΔMI = -0.4562
+  0x012  0d EAT        ΔMI = -0.4313
+  0x004  0c STEP       ΔMI = -0.4013
+  0x007  06 STORE      ΔMI = -0.3944
+  0x009  08 JMP        ΔMI = -0.3944
+  0x014  0f YIELD      ΔMI = -0.3003
+  0x00c  0b TURN       ΔMI = -0.2606
+  0x00b  01 INC_A      ΔMI = -0.2404
+  0x003  07 LOAD       ΔMI = -0.1910
+  0x015  1e LOOP       ΔMI = -0.1085
+  0x011  13 NEURAL     ΔMI = -0.0454
+# gènes MI de experiments/controls/evolved/predict-walk.ck (256 octets) : MI=0.6998 react=0.3065 mem=0.0020 vie=1.00
+  octets dont l'ablation coûte > 0.01 bit/tick : 18 / 256
+  0x00c  06 STORE      ΔMI = -0.5766
+  0x00e  08 JMP        ΔMI = -0.5766
+  0x00f  07 LOAD       ΔMI = -0.5047
+  0x017  0d EAT        ΔMI = -0.4433
+  0x007  09 JZ         ΔMI = -0.4028
+  0x009  0c STEP       ΔMI = -0.3666
+  0x015  06 STORE      ΔMI = -0.3205
+  0x01d  1e LOOP       ΔMI = -0.3080
+  0x00a  07 LOAD       ΔMI = -0.2908
+  0x008  07 LOAD       ΔMI = -0.2260
+  0x010  01 INC_A      ΔMI = -0.2260
+  0x011  0b TURN       ΔMI = -0.2260
+# gènes MI de experiments/controls/evolved/diagnose.ck (33 octets) : MI=0.4257 react=0.1515 mem=0.0080 vie=0.68
+  octets dont l'ablation coûte > 0.01 bit/tick : 7 / 33
+  0x019  0d EAT        ΔMI = -0.3766
+  0x01d  02 DEC_A      ΔMI = -0.3576
+  0x020  0f YIELD      ΔMI = -0.2415
+  0x018  0c STEP       ΔMI = -0.1520
+  0x005  12 SENSE_STIM ΔMI = -0.0922
+  0x017  14 EMIT       ΔMI = -0.0922
+  0x01b  10 SENSE_NB   ΔMI = -0.0563
