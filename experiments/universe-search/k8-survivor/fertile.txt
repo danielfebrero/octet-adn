@@ -1,0 +1,42 @@
+# (e) fertilité de la physique finale de chaque dérive K=8 : soupe de bruit pur, N=1024, E=4096, 8 graines ; émergences/graines
+S#0 rép 0 :  0/8  (dérive mort, saut mort)
+S#0 rép 1 :  0/8  (dérive mort, saut mort)
+S#0 rép 2 :  0/8  (dérive mort, saut mort)
+S#0 rép 3 :  0/8  (dérive mort, saut mort)
+S#0 rép 4 :  0/8  (dérive mort, saut mort)
+S#0 rép 5 :  3/8  (dérive VIVANT, saut VIVANT)
+S#0 rép 6 :  0/8  (dérive mort, saut mort)
+S#0 rép 7 :  0/8  (dérive mort, saut mort)
+S#1 rép 0 :  0/8  (dérive mort, saut mort)
+S#1 rép 1 :  0/8  (dérive mort, saut mort)
+S#1 rép 2 :  0/8  (dérive mort, saut mort)
+S#1 rép 3 :  0/8  (dérive mort, saut mort)
+S#1 rép 4 :  0/8  (dérive mort, saut mort)
+S#1 rép 5 :  0/8  (dérive mort, saut mort)
+S#1 rép 6 :  0/8  (dérive mort, saut mort)
+S#1 rép 7 :  0/8  (dérive mort, saut mort)
+T#0 rép 0 :  0/8  (dérive mort, saut mort)
+T#0 rép 1 :  0/8  (dérive mort, saut mort)
+T#0 rép 2 :  0/8  (dérive mort, saut mort)
+T#0 rép 3 :  0/8  (dérive mort, saut mort)
+T#0 rép 4 :  3/8  (dérive mort, saut mort)
+T#0 rép 5 :  0/8  (dérive mort, saut mort)
+T#0 rép 6 :  3/8  (dérive mort, saut VIVANT)
+T#0 rép 7 :  1/8  (dérive mort, saut VIVANT)
+T#1 rép 0 :  6/8  (dérive mort, saut mort)
+T#1 rép 1 :  0/8  (dérive mort, saut mort)
+T#1 rép 2 :  0/8  (dérive mort, saut mort)
+T#1 rép 3 :  0/8  (dérive mort, saut mort)
+T#1 rép 4 :  1/8  (dérive mort, saut mort)
+T#1 rép 5 :  0/8  (dérive mort, saut mort)
+T#1 rép 6 :  1/8  (dérive mort, saut mort)
+T#1 rép 7 :  1/8  (dérive mort, saut mort)
+S#0 : fins mortes 0/56, fins survivantes 3/8
+S#1 : fins mortes 0/64, fins survivantes 0/0
+T#0 : fins mortes 3/48, fins survivantes 4/16
+T#1 : fins mortes 9/64, fins survivantes 0/0
+TOTAL : physiques finales sans survivant 12/232 = 0.052 ; avec survivant (dérive ou saut) 7/24 = 0.292
+
+real	2m4.841s
+user	13m10.365s
+sys	0m0.921s

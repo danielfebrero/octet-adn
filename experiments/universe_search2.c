@@ -463,6 +463,7 @@ static int selftest2(void) {
     return fail;
 }
 
+#ifndef US2_NO_MAIN   /* k8_survivor.c inclut ce fichier sans son main */
 int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "selftest")) return selftest2();
     if (argc >= 2 && !strcmp(argv[1], "race")) return cmd_race(argc, argv);
@@ -471,3 +472,4 @@ int main(int argc, char **argv) {
     fprintf(stderr, "usage : universe_search2 selftest | race [--seed S --pop 48 --gens 12 --K1 48 --K2 12 --K3 6 --V 12 --save f] | origin --load f [--N 16384 --epochs 1024 --seeds 8] | drift --load f [--K 512,128,32,8 --reps 4]\n");
     return 2;
 }
+#endif

@@ -1,0 +1,17 @@
+k8-survivor : autopsie du survivant de la dérive K=8 (v2). Finalistes régénérés : universe_search2 race --seed 2 (identique à v2).
+Rejeu : dérive 1/32 et saut 3/32 (S#0 1|1, S#1 0|0, T#0 0|2, T#1 0|0) ; dist_table 351.5/359.5/205.0/295.8 ; trace_run == drift_run (4 survivants).
+Survivant : S#0 (sélection) rép 5, graine mix(7,5) ; L=16 kper=4 abs rc4 w2 steps1024 mut0.001 ; injecté 350000ae00f100000000f100ae000035.
+Survivants du saut : S#0 rép 5, T#0 rép 6, T#0 rép 7.
+Trajectoire (copieurs vérifiés/1024) : 877@512 → 769@832 → 95@1408 → 0@1664-1728 → ≤67 → 0@2240, 0@2496-2816, 0@2944 → 294@3072 → 633@4608.
+Changements : 512 (53 de paramètres) ; 2 touchent un octet utilisé par le dominant ; 0 cassent le dominant du moment. Coup fatal pour l'injecté : tab[3][35] LOOP→STORE à dé 1584 (après la 1re extinction).
+(a) entrées essentielles de l'injecté réassignées en fin : 1/10 (autres rép. S#0 : 3,4,3,6,4,4,5 ; attendu ≈3.5 ; P(≤1)≈0.09).
+(b) robustesse à 352 entrées aléatoires (400 tables) : injecté S#0 0.060 (attendu sans tolérance 0.036), dominant final 0.135, S#1 0.107, T#0 0.000, T#1 0.013.
+(c) injecté copie sous base=1, sous finale=0 ; dominant final copie sous finale=1, sous base=1 ; 11/12 de ses lois essentielles existaient dans la base.
+(d) au creux : 0-5 génotypes copieurs, 16-70 génotypes au total ; en fin : 2-6 génotypes copieurs.
+(e) lignée rompue (0 copieur dans la pop entière à 9 points de contrôle ; dominant final à H=10 de l'injecté).
+    Soupe effacée en entier à l'ép. 1664 ou 2944 → vivante quand même (cf 0.97 / 0.91 ; 2/2).
+    Fertilité (bruit pur, 8 graines) sous la physique finale : S#0 rép5 3/8 contre 0/56 pour les autres rép. S#0 (Fisher p=0.0013) ; base S#0 13/16.
+    32 physiques finales : 8 fertiles → 4/16 runs vivants ; 24 stériles → 0/48 (p≈0.003).
+    Saut S#0 rép5 : mort à l'ép. 576, réémergence ~1344 (e2000000000000e2e2000000000000e2). Saut T#0 rép6 : mort 576→4096, renaît à 4160. Saut T#0 rép7 : renaît à 832 (H≈53/64, lois neuves).
+Dominant final de la dérive : 35000000f18652c6c63b86f100000035 (jumeau 35000000f1863bc6c65286f100000035), 14 essentiels.
+VERDICT : (e) résurrection dans une physique d'arrivée fertile, aidée par (a) la chance du trajet ; ni (b), ni (c), ni (d). Avec le critère de continuité de lignée, la dérive K=8 donne 0/32.
