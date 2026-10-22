@@ -149,6 +149,17 @@ vérifié sur graines 0,1,2 × 40 cycles). Code : `src/labs_h.c`.
 
 `octet-adn general FICHIER.adn|.ck` rejoue chaque génome seul. Il ne déclare une émergence que si la mémoire 2 ou 3 tient ≥ 0,95 seule, et retombe d'au moins 0,5 gelée ET sans récompense. Code retour 0 si oui, 3 sinon. Les lignes à retard des tests passent (0,995 et 0,979), la seed non.
 
+**Transfert minimal entre lignées (40 tâches).** Sur le génome du pool 3 de la graine 2,
+bloqué à mémoire-2 0,530 après 60 cycles, un seul octet du pool 3 de la graine 3 suffit :
+`0x79 : 17 → cf` (ADD remplacé par un intron existant). Mémoire-2 0,987, gelée 0,260,
+sans récompense 0,266 ; mémoire-3 0,354 ; known 0,798. `octet-adn general` retourne 0.
+Le génome fait toujours 172 octets, à 21 substitutions de la seed. Les 36 transferts
+d'un octet disponibles depuis un passant de la graine 0 et un de la graine 3 ont été
+mesurés : celui-ci seul passe. L'ensemble vide échoue, donc un octet est minimal sur
+cette base. Ce résultat combine les lignées 3 et 2 ; il ne mesure pas une nouvelle
+course évolutive. Arrêt à ce premier fait nouveau, sans opérateur supplémentaire ni
+modification de la seed. [Entrées, différences et protocole reproductible](experiments/general-transfer/README.md).
+
 **fold.** Le génome est rejoué dans un bac à sable : pour placer le résidu *i*, stimulus =
 H(i) | H(i+1)<<1 ; `EMIT v` → v%3 = tout droit / gauche / droite. Collision : les autres directions,
 sinon repliement tronqué. Score ≤ 1 par construction (optimum connu). Bien plier donne de l'énergie

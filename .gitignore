@@ -5,6 +5,7 @@
 /octet-adn-san
 /tests/test_vm
 /tests/test_vm_san
+/experiments/general_transfer
 # runner 24/7 : log et pid, où qu'ils soient
 runner.log
 runner.pid

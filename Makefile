@@ -23,6 +23,10 @@ src/%.o: src/%.c include/octet.h
 tests/test_vm: tests/test_vm.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ tests/test_vm.c $(CORE) $(LDLIBS)
 
+# Mesure reproductible du transfert minimal entre les lignées general (hors runner).
+experiments/general_transfer: experiments/general_transfer.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
 test: tests/test_vm octet-adn no-python
 	./tests/test_vm
 
@@ -54,5 +58,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
+	rm -f experiments/general_transfer
 
 .PHONY: all static test no-python run clean sanitize
