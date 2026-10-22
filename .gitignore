@@ -15,3 +15,4 @@ run.log
 /labs_data/*
 !/labs_data/sample/
 TASK.md
+/experiments/mi_detector
