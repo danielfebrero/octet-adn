@@ -21,6 +21,7 @@ static void usage(void) {
          "        octet-adn soup [options]          soupe d'octets sans SPLIT : un réplicateur émerge-t-il du bruit ?\n"
          "            --ticks|--epochs N (défaut 4096)  --seed N  --programs N (défaut 4096)  --mut P (défaut 0.00024)\n"
          "            --addr abs|b (défaut abs)  --steps N (défaut 8192)  --report N (défaut 256)  --inject K (témoin : K copies du réplicateur fait main)  --no-store\n"
+         "            --dump FICHIER (soupe finale, N × 64 octets bruts : fondateurs de terrarium_run --founders soup:FICHIER)\n"
          "\noptions run :\n"
          "  --labs all|a,b,c        (défaut all)\n"
          "  --ticks-per-cycle N     (défaut 200)\n"
@@ -207,6 +208,7 @@ int main(int argc, char **argv) {
                 else if (strcmp(nx, "abs")) { fprintf(stderr, "--addr : abs|b\n"); return 2; }
             }
             else if (ARGS("--inject")) r.inject = atoi(nx);
+            else if (ARGS("--dump")) r.dump = nx;
             else if (!strcmp(a, "--no-store")) r.vm.no_store = 1;
             else { fprintf(stderr, "option inconnue : %s\n", a); usage(); return 2; }
         }

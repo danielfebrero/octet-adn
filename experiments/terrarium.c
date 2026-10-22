@@ -50,12 +50,20 @@ void world_eat(World *w, Creature *c);
 #define ASYM    (17 * 8)    /* action : (EMIT&15 | rien) × (bougé, tourné, divisé) — sans « a mangé » */
 #define TBITS   19
 #define TMASK   ((1u << TBITS) - 1)
+static const int TDX[4] = { 0, 1, 0, -1 }, TDY[4] = { -1, 0, 1, 0 };   /* = world.c */
 
 typedef struct {               /* paramètres (sauvés dans le checkpoint) */
     int K, w, h, max_pop, regrow, sample, ck_every, migrate, channel, founders, pop0;
     double mut, dup, season_amp, soc_thr; int season_period;
     uint64_t seed;
+    /* experiments/soup-terrarium (tout à 0 = terrarium d'origine, mêmes tirages) */
+    int repro;                  /* 0 = SPLIT du cœur ; 1 = copie réelle (soup_exec sur parent‖bruit, SPLIT coupé) */
+    int rep_steps, rep_cost, rep_energy; double rep_p, rep_mut;
+    int pred, pred_dmg, pred_every;   /* prédateurs-environnement : le canal social peut payer */
+    int osmo;                   /* pont métabolique : absorbe ≤ osmo unités de nourriture de sa case par tick (sans EAT) */
+    char ffile[256];            /* --founders soup:FICHIER */
 } Params;
+enum { F_SEEDS, F_RANDOM, F_SOUP, F_HANDMADE };
 
 /* ---- codeur adaptatif hiérarchique (Dirichlet, comptes hachés) ---- */
 typedef struct { uint64_t key; uint32_t n; } Slot;
@@ -92,6 +100,11 @@ typedef struct {
     int em_n[GRID_H][GRID_W]; uint8_t em_v[GRID_H][GRID_W][4]; int em_id[GRID_H][GRID_W][4];
     int snap_id[CMAX]; uint64_t snap_fh[CMAX]; int nsnap;
     uint64_t *sh; int nsh; uint64_t sh_next;         /* ombre neutre : une étiquette par individu */
+    /* ombre neutre au niveau composant : un génome par individu, mêmes naissances/morts, même mutation, sans sélection */
+    struct SG { int species, len; uint8_t dna[MAX_LEN]; } *sg; int nsg; Rng sr;
+    Rng rr;                                           /* copie réelle + prédateurs (jamais tiré dans le mode d'origine) */
+    int npred, px[16], py[16];
+    long rep_try, rep_ok, pred_hits;
     const Params *P;
     long t_end;
 } Island;
@@ -126,6 +139,10 @@ static void genotype(Creature *c) {
 
 static void hook(World *w, Creature *c) {
     Island *I = cur;
+    if (I->P->osmo) {                                 /* osmotrophie : avant le relevé, donc « a mangé » = EAT exécuté */
+        int f = w->food[c->y][c->x], take = f < I->P->osmo ? f : I->P->osmo;
+        if (take) { w->food[c->y][c->x] = (uint8_t)(f - take); c->e = c->e + take * 5 > 220 ? 220 : c->e + take * 5; }
+    }
     c->ls[0] = c->steps; c->ls[1] = c->eaten; c->ls[2] = c->splits; c->ls[3] = c->d; c->ls[5] = (int)w->t;
     int cand_v[36], m = 0, W = w->cfg.w, H = w->cfg.h;
     for (int dy = -1; dy <= 1; dy++)
@@ -141,8 +158,62 @@ static void hook(World *w, Creature *c) {
         if (m >= 2) { int j = (int)rng_below(&I->tr, (uint32_t)(m - 1)); if (j >= i) j++; nsig = cand_v[j] + 1; }
     }
     c->win[0] = (uint8_t)sig; c->win[1] = (uint8_t)nsig;
-    int low = (I->P->channel && sig) ? sig - 1 : I->env;
-    w->stimulus = (I->env << 4) | low;
+    int low = (I->P->channel && sig) ? sig - 1 : I->env, high = I->env;
+    if (I->npred) {                                   /* zone de mort : Chebyshev ≤ 1 (tore) ; perçue directement (quartet haut = 15) */
+        for (int q = 0; q < I->npred; q++) {
+            int dx = abs(c->x - I->px[q]), dy = abs(c->y - I->py[q]);
+            if (dx > W - dx) dx = W - dx;
+            if (dy > H - dy) dy = H - dy;
+            if (dx <= 1 && dy <= 1) { high = 15; c->e -= I->P->pred_dmg; I->pred_hits++; }
+        }
+    }
+    w->stimulus = (high << 4) | low;
+}
+
+/* prédateur : un pas (4-voisinage) vers la case la plus peuplée (3×3) avec p = 0.7, sinon au hasard */
+static void pred_move(Island *I) {
+    World *w = I->w; int W = w->cfg.w, H = w->cfg.h;
+    for (int q = 0; q < I->npred; q++) {
+        int best = (int)rng_below(&I->rr, 4);
+        if (rng_double(&I->rr) < 0.7) {
+            int bv = -1;
+            for (int d = 0; d < 4; d++) {
+                int x = (I->px[q] + TDX[d] + W) % W, y = (I->py[q] + TDY[d] + H) % H, v = 0;
+                for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) v += w->occ[(y + dy + H) % H][(x + dx + W) % W];
+                if (v > bv) { bv = v; best = d; }
+            }
+        }
+        I->px[q] = (I->px[q] + TDX[best] + W) % W; I->py[q] = (I->py[q] + TDY[best] + H) % H;
+    }
+}
+
+/* copie réelle (option a) : la bande = soma du parent (64 o) ‖ 64 octets de bruit (matière première), dans un
+ * ordre tiré au hasard comme dans la soupe, exécutée par soup_exec (addr_b). Naissance = critère de la soupe :
+ * la moitié brute a ≥ 8 octets écrits ET changés, ≥ SOUP_FID octets identiques au parent, et n'en était pas une
+ * copie. Rien n'est offert : un génome qui ne sait pas se copier ne se reproduit pas. */
+static void copy_attempt(Island *I, Creature *c) {
+    World *w = I->w; const Params *P = I->P;
+    uint8_t tape[SOUP_TAPE], old[SOUP_TAPE], wrt[SOUP_TAPE] = { 0 };
+    int po = (int)rng_below(&I->rr, 2) * SOUP_PROG, ro = SOUP_PROG - po;
+    memcpy(tape + po, c->dna, SOUP_PROG);
+    for (int j = 0; j < SOUP_PROG; j++) tape[ro + j] = (uint8_t)rng_next(&I->rr);
+    memcpy(old, tape, SOUP_TAPE);
+    SoupCfg sc = { .addr_b = 1, .no_store = 0, .steps = P->rep_steps };
+    soup_exec(tape, &sc, wrt);
+    c->e -= P->rep_cost; I->rep_try++;
+    memcpy(c->dna, tape + po, SOUP_PROG);              /* le soma du parent a aussi tourné sur la bande */
+    int nw = 0, same = 0;
+    for (int j = 0; j < SOUP_PROG; j++) { nw += wrt[ro + j] && tape[ro + j] != old[ro + j]; same += tape[ro + j] == old[po + j]; }
+    if (nw < 8 || same < SOUP_FID || c->e <= 0) return;
+    uint8_t child[SOUP_PROG]; memcpy(child, tape + ro, SOUP_PROG);
+    for (int j = 0; j < SOUP_PROG; j++) if (rng_double(&I->rr) < P->rep_mut) child[j] = (uint8_t)rng_next(&I->rr);
+    int dist = 0; for (int j = 0; j < SOUP_PROG; j++) dist += child[j] != old[po + j];
+    int d = (c->d + 1) & 3, give = c->e / 3;
+    Creature *k = creature_new((c->x + TDX[d] + w->cfg.w) % w->cfg.w, (c->y + TDY[d] + w->cfg.h) % w->cfg.h,
+                               child, SOUP_PROG, give, w->nid++, c->species, c->id);
+    k->win[30] = (uint8_t)(dist > 255 ? 255 : dist);
+    int nb0 = w->nnb; world_spawn(w, k);
+    if (w->nnb > nb0) { c->splits++; c->e -= give + 8; I->rep_ok++; w->st.born++; }
 }
 
 static int find_parent(const Island *I, int id) {
@@ -153,7 +224,8 @@ static int find_parent(const Island *I, int id) {
 
 static void island_tick(Island *I) {
     World *w = I->w; const Params *P = I->P;
-    if (rng_below(&I->tr, 50) == 0) I->env = (int)rng_below(&I->tr, 16);
+    if (rng_below(&I->tr, 50) == 0) I->env = (int)rng_below(&I->tr, P->pred ? 15 : 16);   /* 15 = danger, réservé */
+    if (I->npred && w->t % P->pred_every == 0) pred_move(I);
     if (P->season_amp > 0) {
         double f = 1 + P->season_amp * sin(2 * M_PI * (double)w->t / P->season_period);
         w->cfg.food_regrow = (int)lround(P->regrow * f);
@@ -170,13 +242,22 @@ static void island_tick(Island *I) {
     }
     int n_before = w->ncs;
     world_step(w);
+    if (P->repro) {                                   /* copie réelle, avant le relevé (splits++ visible ce tick) */
+        int n = w->ncs;
+        for (int i = 0; i < n && w->ncs + w->nnb < w->cfg.max_pop; i++) {
+            Creature *c = w->cs[i];
+            if (c->e < P->rep_energy || c->len != SOUP_PROG) continue;
+            if (P->rep_p < 1 && rng_double(&I->rr) >= P->rep_p) continue;
+            copy_attempt(I, c);
+        }
+    }
     w->hist[(w->hist_pos + HIST_N - 1) % HIST_N] = (uint8_t)((I->env << 4) | I->env);   /* l'histoire = l'environnement */
     w->stimulus = (I->env << 4) | I->env;
-    int born = 0, novel = 0;
+    int born = 0, novel = 0; static __thread int bd[CMAX];
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
         if (!c->ls[4]) {                              /* nouveau-né */
-            genotype(c); born++;
+            genotype(c); bd[born] = P->repro ? c->win[30] : -1; born++;
             int p = find_parent(I, c->parent);
             if (p < 0 || I->snap_fh[p] != FH(c)) novel++;
             c->lscore = 0;
@@ -202,6 +283,22 @@ static void island_tick(Island *I) {
         if (b < novel || base == 0) lab = ((uint64_t)(I->idx + 1) << 48) | I->sh_next++;
         else lab = I->sh[rng_below(&I->tr, (uint32_t)base)];
         I->sh[I->nsh++] = lab;
+    }
+    /* ombre composant : morts au hasard ; naissance = parent d'ombre au hasard + même opérateur de mutation */
+    for (int d = 0; d < dead && I->nsg > 0; d++) { int j = (int)rng_below(&I->sr, (uint32_t)I->nsg); I->sg[j] = I->sg[--I->nsg]; }
+    int sbase = I->nsg;
+    for (int b = 0; b < born && I->nsg < 2 * CMAX; b++) {
+        if (sbase == 0) break;
+        const struct SG *pa = &I->sg[rng_below(&I->sr, (uint32_t)sbase)]; struct SG *ch = &I->sg[I->nsg++];
+        ch->species = pa->species;
+        if (bd[b] >= 0) {                             /* copie : autant de substitutions que l'écart réel enfant/parent */
+            ch->len = pa->len; memcpy(ch->dna, pa->dna, (size_t)pa->len);
+            for (int q = 0; q < bd[b] && ch->len > 0; q++) ch->dna[rng_below(&I->sr, (uint32_t)ch->len)] = (uint8_t)rng_next(&I->sr);
+        } else {
+            uint8_t out[MAX_LEN + 16]; int m = mutate(pa->dna, pa->len, &I->sr, P->mut, P->dup, out);
+            if (m > MAX_LEN) m = MAX_LEN;
+            ch->len = m; memcpy(ch->dna, out, (size_t)m);
+        }
     }
 }
 
@@ -258,7 +355,8 @@ static int acf_cycle(const double *ring, int n, long pos, double *peak) {   /* r
 typedef struct {
     Params P; Island I[KMAX]; Rng gr;
     long t; long sample_i;
-    Lins geno, shadow, comp; int founders_done;
+    Lins geno, shadow, comp, scomp; int founders_done;
+    Rng sgr; int last_ess;                            /* ombre composant (migration) ; dernier min_ess mesuré */
     Niche niche[NNICHE];
     double pop_ring[RING]; Cyc cyc_pop, cyc_niche[NNICHE];
     int soc_streak, soc_on; long soc_events;
@@ -273,6 +371,22 @@ static void event(Terra *T, const char *type, const char *fmt, ...) {
     char buf[512]; va_list ap; va_start(ap, fmt); vsnprintf(buf, sizeof buf, fmt, ap); va_end(ap);
     if (T->events) { fprintf(T->events, "%ld\t%s\t%s\n", T->t, type, buf); fflush(T->events); }
     T->n_events++;
+}
+
+/* composants d'un génome : COMPK-grammes d'opcodes valides (sans immédiats ni position), dédoublonnés, ajoutés à ck */
+static int comp_keys(int species, const uint8_t *g, int len, uint64_t **ck, long *nc, long *cap) {
+    uint8_t ops[MAX_LEN]; int no = 0;
+    for (int b = 0; b < len; b++) {
+        uint8_t op = g[b];
+        if (op == OP_NOP || !op_valid(op)) continue;
+        ops[no++] = op; if (op_has_imm(op)) b++;
+    }
+    if (*nc + no + 1 > *cap) { while (*nc + no + 1 > *cap) *cap *= 2; *ck = realloc(*ck, sizeof(uint64_t) * (size_t)*cap); }
+    long st = *nc; uint64_t *k = *ck;
+    for (int b = 0; b + COMPK - 1 < no; b++) { uint64_t x = (uint64_t)species; for (int q = 0; q < COMPK; q++) x = x << 8 | ops[b + q]; k[(*nc)++] = x; }
+    qsort(k + st, (size_t)(*nc - st), sizeof *k, cmp_u64);
+    long u = st; for (long b = st; b < *nc; b++) if (b == st || k[b] != k[b - 1]) k[u++] = k[b];
+    *nc = u; return (int)(u - st);
 }
 
 static int total_pop(const Terra *T) { int n = 0; for (int k = 0; k < T->P.K; k++) n += T->I[k].w->ncs; return n; }
@@ -319,25 +433,41 @@ static void sample(Terra *T) {
     long cap = 1024, nc = 0; uint64_t *ck = malloc(sizeof(uint64_t) * (size_t)cap); double comp_per = 0;
     for (int k = 0; k < P->K; k++) {
         World *w = T->I[k].w;
-        for (int i = 0; i < w->ncs; i++) {
-            Creature *c = w->cs[i]; uint8_t ops[MAX_LEN]; int no = 0;
-            for (int b = 0; b < c->germ_len; b++) {
-                uint8_t op = c->germ[b];
-                if (op == OP_NOP || !op_valid(op)) continue;
-                ops[no++] = op; if (op_has_imm(op)) b++;
-            }
-            if (nc + no + 1 > cap) { while (nc + no + 1 > cap) cap *= 2; ck = realloc(ck, sizeof(uint64_t) * (size_t)cap); }
-            long st = nc;
-            for (int b = 0; b + COMPK - 1 < no; b++) { uint64_t x = (uint64_t)c->species; for (int q = 0; q < COMPK; q++) x = x << 8 | ops[b + q]; ck[nc++] = x; }
-            qsort(ck + st, (size_t)(nc - st), sizeof *ck, cmp_u64);
-            long u = st; for (long b = st; b < nc; b++) if (b == st || ck[b] != ck[b - 1]) ck[u++] = ck[b];
-            nc = u; comp_per += (double)(u - st);
-        }
+        for (int i = 0; i < w->ncs; i++) comp_per += comp_keys(w->cs[i]->species, w->cs[i]->germ, w->cs[i]->germ_len, &ck, &nc, &cap);
     }
     qsort(ck, (size_t)nc, sizeof *ck, cmp_u64);
     int cap_alive = 0, nco = 0, minab = N / 100 > CLONES ? N / 100 : CLONES;
     int cfresh = lins_update(&T->comp, ck, (int)nc, !T->founders_done, minab, &cap_alive, NULL, &nco);
+    /* même mesure sur l'ombre composant (mêmes seuils, taille d'ombre = taille réelle) */
+    nc = 0; int NG = 0;
+    for (int k = 0; k < P->K; k++) for (int i = 0; i < T->I[k].nsg; i++, NG++) { struct SG *g = &T->I[k].sg[i]; comp_keys(g->species, g->dna, g->len, &ck, &nc, &cap); }
+    qsort(ck, (size_t)nc, sizeof *ck, cmp_u64);
+    int s_alive = 0, sminab = NG / 100 > CLONES ? NG / 100 : CLONES;
+    int sfresh = lins_update(&T->scomp, ck, (int)nc, !T->founders_done, sminab, &s_alive, NULL, NULL);
     free(ck);
+    /* réplicateurs (mode copie ou fondateurs de 64 o) : part de copieurs vérifiés (soup_copier, même budget) sur ≤ 64
+     * individus tirés par un Rng dérivé du tick (aucune influence sur la dynamique) ; toutes les 25 mesures,
+     * octets essentiels (ablation) du meilleur de 2 copieurs */
+    double cfrac = -1; int ness = -1;
+    if (P->repro || P->founders >= F_SOUP) {
+        Rng mr; rng_seed(&mr, P->seed * 0x9E3779B97F4A7C15ULL ^ (uint64_t)T->t);
+        SoupCfg sc = { .addr_b = 1, .no_store = 0, .steps = P->rep_steps };
+        int tried = 0, cop = 0; int want_ess = T->sample_i % 25 == 0; int nab = 0;
+        for (int q = 0; q < 64 && N > 0; q++) {
+            int r = (int)rng_below(&mr, (uint32_t)N), k = 0;
+            while (r >= T->I[k].w->ncs) r -= T->I[k++].w->ncs;
+            Creature *c = T->I[k].w->cs[r]; if (c->germ_len != SOUP_PROG) continue;
+            tried++;
+            if (soup_copier(c->germ, &sc)) {
+                cop++;
+                if (want_ess && nab < 2) { uint8_t e[SOUP_PROG]; int n = soup_ablate(c->germ, &sc, e); nab++; if (n >= 0 && (ness < 0 || n < ness)) ness = n; }
+            }
+        }
+        if (tried) cfrac = (double)cop / tried;
+        if (want_ess) T->last_ess = ness;
+    }
+    long rtry = 0, rok = 0, phits = 0;
+    for (int k = 0; k < P->K; k++) { rtry += T->I[k].rep_try; rok += T->I[k].rep_ok; phits += T->I[k].pred_hits; T->I[k].rep_try = T->I[k].rep_ok = T->I[k].pred_hits = 0; }
     T->founders_done = 1;
     free(keys); free(raw); free(sk);
     /* niches */
@@ -379,10 +509,12 @@ static void sample(Terra *T) {
     if (T->soc_streak >= 3 && !T->soc_on) { T->soc_on = 1; T->soc_events++; event(T, "social", "exces=%.4f bits/paire paires=%ld (3 fenetres > %.3f)", ex, pairs, P->soc_thr); }
     if (T->soc_streak == 0) T->soc_on = 0;
     if (N == 0) event(T, "extinction", "pop=0");
-    fprintf(T->series, "%ld\t%d\t%d\t%.4f\t%d\t%ld\t%ld\t%d\t%d\t%.2f\t%d\t%.2f\t%d\t%d\t%.4f\t%ld\t%.5f\t%.5f\t%.5f\t%ld\t%ld\t%ld\t%d\t%.1f\t%ld\t%d\t%d\n",
+    fprintf(T->series, "%ld\t%d\t%d\t%.4f\t%d\t%ld\t%ld\t%d\t%d\t%.2f\t%d\t%.2f\t%d\t%d\t%.4f\t%ld\t%.5f\t%.5f\t%.5f\t%ld\t%ld\t%ld\t%d\t%.1f\t%ld\t%d\t%d"
+                       "\t%ld\t%ld\t%.3f\t%d\t%ld\t%ld\t%d\t%d\n",
             T->t, N, ng, Hg, nraw, T->geno.cum, T->shadow.cum, fresh, ap, N ? len_sum / N : 0, len_max, N ? cod_sum / N : 0,
             occ, nstable, Hb, pairs, mi, mn, ex, births, deaths, emits - T->emits_prev,
-            nco, N ? comp_per / N : 0, T->comp.cum, cfresh, cap_alive);
+            nco, N ? comp_per / N : 0, T->comp.cum, cfresh, cap_alive,
+            rtry, rok, cfrac, T->last_ess, phits, T->scomp.cum, sfresh, s_alive);
     fflush(T->series);
     T->emits_prev = emits;
     T->sample_i++;
@@ -390,10 +522,11 @@ static void sample(Terra *T) {
 
 static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshadow_cum\tnew_persist\tpersist_alive\tlen_mean\tlen_max\tcoding_mean"
                             "\tniches_occ\tstable_niches\tH_behav\tsoc_pairs\tsoc_mi\tsoc_null\tsoc_excess\tbirths\tdeaths\temits"
-                            "\tn_comp\tcomp_per_ind\tcomp_cum\tcomp_new\tcomp_alive\n";
+                            "\tn_comp\tcomp_per_ind\tcomp_cum\tcomp_new\tcomp_alive"
+                            "\trep_try\trep_ok\tcopier_frac\tmin_ess\tpred_hits\tscomp_cum\tscomp_new\tscomp_alive\n";
 
 /* ---- checkpoint ---- */
-#define TMAGIC "OADNTER2"
+#define TMAGIC "OADNTER3"
 static int wr(FILE *f, const void *p, size_t n) { return fwrite(p, 1, n, f) == n; }
 static int rd(FILE *f, void *p, size_t n) { return fread(p, 1, n, f) == n; }
 static int save(Terra *T) {
@@ -403,13 +536,17 @@ static int save(Terra *T) {
              wr(f, &T->sample_i, sizeof T->sample_i) && wr(f, &T->founders_done, sizeof(int)) &&
              wr(f, T->niche, sizeof T->niche) && wr(f, T->pop_ring, sizeof T->pop_ring) && wr(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              wr(f, T->cyc_niche, sizeof T->cyc_niche) && wr(f, &T->soc_streak, sizeof(int)) && wr(f, &T->soc_on, sizeof(int)) &&
-             wr(f, &T->soc_events, sizeof(long)) && wr(f, &T->n_events, sizeof(long)) && wr(f, &T->emits_prev, sizeof(long));
-    Lins *ls[3] = { &T->geno, &T->shadow, &T->comp };
-    for (int i = 0; i < 3 && ok; i++) ok = wr(f, &ls[i]->n, sizeof(int)) && wr(f, &ls[i]->cum, sizeof(long)) && wr(f, ls[i]->v, sizeof(Lin) * (size_t)ls[i]->n);
+             wr(f, &T->soc_events, sizeof(long)) && wr(f, &T->n_events, sizeof(long)) && wr(f, &T->emits_prev, sizeof(long)) &&
+             wr(f, &T->sgr, sizeof(Rng)) && wr(f, &T->last_ess, sizeof(int));
+    Lins *ls[4] = { &T->geno, &T->shadow, &T->comp, &T->scomp };
+    for (int i = 0; i < 4 && ok; i++) ok = wr(f, &ls[i]->n, sizeof(int)) && wr(f, &ls[i]->cum, sizeof(long)) && wr(f, ls[i]->v, sizeof(Lin) * (size_t)ls[i]->n);
     for (int k = 0; k < T->P.K && ok; k++) {
         Island *I = &T->I[k];
         ok = wr(f, I->w, sizeof(World)) && wr(f, &I->wr, sizeof(Rng)) && wr(f, &I->tr, sizeof(Rng)) && wr(f, &I->env, sizeof(int)) &&
-             wr(f, &I->nsh, sizeof(int)) && wr(f, &I->sh_next, sizeof(uint64_t)) && wr(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh);
+             wr(f, &I->nsh, sizeof(int)) && wr(f, &I->sh_next, sizeof(uint64_t)) && wr(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh) &&
+             wr(f, &I->sr, sizeof(Rng)) && wr(f, &I->rr, sizeof(Rng)) && wr(f, &I->npred, sizeof(int)) && wr(f, I->px, sizeof I->px) &&
+             wr(f, I->py, sizeof I->py) && wr(f, &I->nsg, sizeof(int));
+        for (int i = 0; i < I->nsg && ok; i++) ok = wr(f, &I->sg[i].species, sizeof(int)) && wr(f, &I->sg[i].len, sizeof(int)) && wr(f, I->sg[i].dna, (size_t)I->sg[i].len);
         for (int i = 0; i < I->w->ncs && ok; i++) ok = wr(f, I->w->cs[i], sizeof(Creature));
     }
     ok = fclose(f) == 0 && ok;
@@ -418,6 +555,7 @@ static int save(Terra *T) {
 static void island_alloc(Island *I) {
     I->tab.t = calloc(TMASK + 1, sizeof(Slot)); I->tab.used = malloc(sizeof(uint32_t) * (TMASK + 1));
     I->sh = malloc(sizeof(uint64_t) * 2 * CMAX);
+    I->sg = malloc(sizeof(struct SG) * 2 * CMAX);
 }
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
@@ -425,9 +563,10 @@ static int load(Terra *T, const char *path) {
              rd(f, &T->sample_i, sizeof T->sample_i) && rd(f, &T->founders_done, sizeof(int)) &&
              rd(f, T->niche, sizeof T->niche) && rd(f, T->pop_ring, sizeof T->pop_ring) && rd(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              rd(f, T->cyc_niche, sizeof T->cyc_niche) && rd(f, &T->soc_streak, sizeof(int)) && rd(f, &T->soc_on, sizeof(int)) &&
-             rd(f, &T->soc_events, sizeof(long)) && rd(f, &T->n_events, sizeof(long)) && rd(f, &T->emits_prev, sizeof(long));
-    Lins *ls[3] = { &T->geno, &T->shadow, &T->comp };
-    for (int i = 0; i < 3 && ok; i++) {
+             rd(f, &T->soc_events, sizeof(long)) && rd(f, &T->n_events, sizeof(long)) && rd(f, &T->emits_prev, sizeof(long)) &&
+             rd(f, &T->sgr, sizeof(Rng)) && rd(f, &T->last_ess, sizeof(int));
+    Lins *ls[4] = { &T->geno, &T->shadow, &T->comp, &T->scomp };
+    for (int i = 0; i < 4 && ok; i++) {
         ok = rd(f, &ls[i]->n, sizeof(int)) && rd(f, &ls[i]->cum, sizeof(long));
         ls[i]->v = malloc(sizeof(Lin) * (size_t)(ls[i]->n + 1));
         ok = ok && rd(f, ls[i]->v, sizeof(Lin) * (size_t)ls[i]->n);
@@ -437,7 +576,11 @@ static int load(Terra *T, const char *path) {
         I->w = malloc(sizeof(World));
         ok = rd(f, I->w, sizeof(World)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
              rd(f, &I->nsh, sizeof(int)) && rd(f, &I->sh_next, sizeof(uint64_t)) && I->nsh <= 2 * CMAX &&
-             rd(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh);
+             rd(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh) &&
+             rd(f, &I->sr, sizeof(Rng)) && rd(f, &I->rr, sizeof(Rng)) && rd(f, &I->npred, sizeof(int)) && rd(f, I->px, sizeof I->px) &&
+             rd(f, I->py, sizeof I->py) && rd(f, &I->nsg, sizeof(int)) && I->nsg <= 2 * CMAX && I->npred <= 16;
+        for (int i = 0; i < I->nsg && ok; i++) ok = rd(f, &I->sg[i].species, sizeof(int)) && rd(f, &I->sg[i].len, sizeof(int)) &&
+                                                   I->sg[i].len >= 0 && I->sg[i].len <= MAX_LEN && rd(f, I->sg[i].dna, (size_t)I->sg[i].len);
         World *w = I->w; w->rng = &I->wr; w->lab = NULL; w->before_vm = hook; w->nnb = 0; w->nem = 0;
         for (int i = 0; i < w->ncs && ok; i++) { w->cs[i] = malloc(sizeof(Creature)); ok = rd(f, w->cs[i], sizeof(Creature)); }
     }
@@ -446,42 +589,63 @@ static int load(Terra *T, const char *path) {
 }
 
 /* ---- création ---- */
+static uint8_t *soup_buf; static int soup_n;
+static int load_soup(const char *path) {
+    FILE *f = fopen(path, "rb"); if (!f) return 0;
+    fseek(f, 0, SEEK_END); long n = ftell(f); rewind(f);
+    if (n < SOUP_PROG || n % SOUP_PROG) { fclose(f); return 0; }
+    soup_buf = malloc((size_t)n); int ok = fread(soup_buf, 1, (size_t)n, f) == (size_t)n; fclose(f);
+    soup_n = (int)(n / SOUP_PROG); return ok;
+}
 static void make_genome(Terra *T, PoolEntry *e, int i) {
     if (T->P.founders == 0) {                 /* seeds du dépôt, en rotation ; predator = espèce 1 */
         const SeedBlob *s = seed_at(i % N_SEEDS);
         seed_entry(e, s->name, strcmp(s->name, "predator") == 0);
-    } else {                                  /* génomes aléatoires (témoin) */
-        e->species = 0; e->len = rng_int(&T->gr, 32, 256);
+    } else if (T->P.founders == F_RANDOM) {   /* génomes aléatoires (témoin) ; 64 o en mode copie */
+        e->species = 0; e->len = T->P.repro ? SOUP_PROG : rng_int(&T->gr, 32, 256);
         for (int j = 0; j < e->len; j++) e->dna[j] = (uint8_t)rng_next(&T->gr);
+    } else if (T->P.founders == F_HANDMADE) { /* réplicateur conçu (soup_handmade, addr_b) */
+        e->species = 0; e->len = SOUP_PROG; soup_handmade(e->dna, 1);
+    } else {                                  /* soupe : un programme tiré uniformément dans la soupe finale (dominants + entourage) */
+        e->species = 0; e->len = SOUP_PROG;
+        memcpy(e->dna, soup_buf + (size_t)rng_below(&T->gr, (uint32_t)soup_n) * SOUP_PROG, SOUP_PROG);
     }
 }
 static void terra_new(Terra *T, const Params *P) {
     memset(T, 0, sizeof *T); T->P = *P;
     rng_seed(&T->gr, P->seed);
+    rng_seed(&T->sgr, P->seed ^ 0x5C0A905EULL); T->last_ess = -1;
     for (int n = 0; n < NNICHE; n++) T->niche[n].first_stable = -1;
     static PoolEntry pool[CMAX];
     for (int k = 0; k < P->K; k++) {
         Island *I = &T->I[k]; island_alloc(I); I->idx = k; I->P = &T->P;
         rng_seed(&I->wr, P->seed * 1000003ULL + (uint64_t)k * 7919 + 1);
         rng_seed(&I->tr, P->seed * 1000033ULL + (uint64_t)k * 104729 + 2);
+        rng_seed(&I->sr, P->seed * 1000037ULL + (uint64_t)k * 130363 + 3);
+        rng_seed(&I->rr, P->seed * 1000039ULL + (uint64_t)k * 155921 + 4);
         I->env = (int)rng_below(&I->tr, 16);
+        if (P->pred && I->env == 15) I->env = 14;
+        I->npred = P->pred;
+        for (int q = 0; q < P->pred; q++) { I->px[q] = (int)rng_below(&I->rr, (uint32_t)P->w); I->py[q] = (int)rng_below(&I->rr, (uint32_t)P->h); }
         int n = P->pop0;
         for (int i = 0; i < n; i++) make_genome(T, &pool[i], i + k);
         WorldConfig cfg = cfg_default();
         cfg.w = P->w; cfg.h = P->h; cfg.max_pop = P->max_pop; cfg.food_regrow = P->regrow;
         cfg.mut_rate = P->mut; cfg.dup_rate = P->dup;
+        if (P->repro) cfg.split_energy = 1 << 29;    /* SPLIT du cœur sans effet : seule la copie réelle reproduit */
         I->w = world_new(pool, n, &I->wr, &cfg, NULL);
         I->w->before_vm = hook;
         I->w->stimulus = (I->env << 4) | I->env;
         for (int i = 0; i < I->w->ncs; i++) {
             Creature *c = I->w->cs[i]; c->d = (int)rng_below(&I->tr, 4); genotype(c);
             I->sh[I->nsh++] = FH(c);              /* ombre : départ = mêmes génotypes que le réel */
+            struct SG *g = &I->sg[I->nsg++]; g->species = c->species; g->len = c->germ_len; memcpy(g->dna, c->germ, (size_t)c->germ_len);
         }
     }
 }
 static void terra_free(Terra *T) {
-    for (int k = 0; k < T->P.K; k++) { world_free(T->I[k].w); free(T->I[k].tab.t); free(T->I[k].tab.used); free(T->I[k].sh); }
-    free(T->geno.v); free(T->shadow.v); free(T->comp.v);
+    for (int k = 0; k < T->P.K; k++) { world_free(T->I[k].w); free(T->I[k].tab.t); free(T->I[k].tab.used); free(T->I[k].sh); free(T->I[k].sg); }
+    free(T->geno.v); free(T->shadow.v); free(T->comp.v); free(T->scomp.v);
 }
 
 /* migration en anneau : ~1 % de chaque île part chez la voisine (et autant d'étiquettes d'ombre) */
@@ -509,6 +673,20 @@ static void migrate(Terra *T) {
             w->occ[c->y][c->x]++; w->cs[w->ncs++] = c;
         }
         for (int q = 0; q < nms[k] && D->nsh < 2 * CMAX; q++) D->sh[D->nsh++] = ms[k][q];
+    }
+    /* ombre composant : même nombre de migrants, Rng à part (le mode d'origine garde ses tirages) */
+    static struct SG mg[KMAX][CMAX / 50 + 8]; int nmg[KMAX];
+    for (int k = 0; k < K; k++) {
+        Island *I = &T->I[k]; nmg[k] = 0;
+        for (int q = 0; q < nmv[k] && I->nsg > 0 && nmg[k] < CMAX / 50 + 8; q++) {
+            int s = (int)rng_below(&T->sgr, (uint32_t)I->nsg); mg[k][nmg[k]++] = I->sg[s]; I->sg[s] = I->sg[--I->nsg];
+        }
+    }
+    for (int k = 0; k < K; k++) { Island *D = &T->I[(k + 1) % K]; for (int q = 0; q < nmg[k] && D->nsg < 2 * CMAX; q++) D->sg[D->nsg++] = mg[k][q]; }
+    for (int k = 0; k < K; k++) {
+        Island *I = &T->I[k];
+        while (I->nsg > I->w->ncs) { int s = (int)rng_below(&T->sgr, (uint32_t)I->nsg); I->sg[s] = I->sg[--I->nsg]; }
+        while (I->nsg < I->w->ncs && I->nsg > 0) { I->sg[I->nsg] = I->sg[rng_below(&T->sgr, (uint32_t)I->nsg)]; I->nsg++; }
     }
     /* l'ombre doit garder la taille du réel */
     for (int k = 0; k < K; k++) {
@@ -582,14 +760,18 @@ static int open_outputs(Terra *T, int resumed) {
 
 static Params defaults(void) {
     Params P = { .K = 4, .w = 64, .h = 32, .max_pop = 1000, .regrow = 80, .sample = 200, .ck_every = 2000, .migrate = 1000,
-                 .channel = 1, .founders = 0, .pop0 = 64, .mut = 0.02, .dup = 0.05, .season_amp = 0, .season_period = 4000, .soc_thr = 0.05, .seed = 1 };
+                 .channel = 1, .founders = 0, .pop0 = 64, .mut = 0.02, .dup = 0.05, .season_amp = 0, .season_period = 4000, .soc_thr = 0.05, .seed = 1,
+                 .repro = 0, .rep_steps = 8192, .rep_cost = 2, .rep_energy = 70, .rep_p = 1, .rep_mut = 0.005,
+                 .pred = 0, .pred_dmg = 25, .pred_every = 2, .osmo = 0 };
     return P;
 }
 
 static int usage(void) {
     fprintf(stderr, "usage : terrarium_run run --dir D [--islands K] [--w W --h H] [--max-pop N] [--regrow R] [--pop0 N]\n"
                     "                       [--ticks T (0 = sans fin)] [--sample S] [--ck-every C] [--migrate M (0 = îles isolées)]\n"
-                    "                       [--seed N] [--mut x --dup x] [--channel on|off] [--founders seeds|random]\n"
+                    "                       [--seed N] [--mut x --dup x] [--channel on|off] [--founders seeds|random|handmade|soup:FICHIER]\n"
+                    "                       [--repro split|copy] [--rep-steps N] [--rep-cost E] [--rep-energy E] [--rep-p p] [--rep-mut x]\n"
+                    "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
@@ -616,7 +798,23 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--mut")) P.mut = atof(v);
         else if (!strcmp(a, "--dup")) P.dup = atof(v);
         else if (!strcmp(a, "--channel")) P.channel = strcmp(v, "off") != 0;
-        else if (!strcmp(a, "--founders")) P.founders = !strcmp(v, "random");
+        else if (!strcmp(a, "--founders")) {
+            if (!strcmp(v, "seeds")) P.founders = F_SEEDS;
+            else if (!strcmp(v, "random")) P.founders = F_RANDOM;
+            else if (!strcmp(v, "handmade")) P.founders = F_HANDMADE;
+            else if (!strncmp(v, "soup:", 5) && strlen(v + 5) < sizeof P.ffile) { P.founders = F_SOUP; snprintf(P.ffile, sizeof P.ffile, "%s", v + 5); }
+            else return usage();
+        }
+        else if (!strcmp(a, "--repro")) { if (!strcmp(v, "copy")) P.repro = 1; else if (!strcmp(v, "split")) P.repro = 0; else return usage(); }
+        else if (!strcmp(a, "--rep-steps")) P.rep_steps = atoi(v);
+        else if (!strcmp(a, "--rep-cost")) P.rep_cost = atoi(v);
+        else if (!strcmp(a, "--rep-energy")) P.rep_energy = atoi(v);
+        else if (!strcmp(a, "--rep-p")) P.rep_p = atof(v);
+        else if (!strcmp(a, "--rep-mut")) P.rep_mut = atof(v);
+        else if (!strcmp(a, "--pred")) P.pred = atoi(v);
+        else if (!strcmp(a, "--pred-dmg")) P.pred_dmg = atoi(v);
+        else if (!strcmp(a, "--pred-every")) P.pred_every = atoi(v);
+        else if (!strcmp(a, "--osmo")) P.osmo = atoi(v);
         else if (!strcmp(a, "--season-amp")) P.season_amp = atof(v);
         else if (!strcmp(a, "--season-period")) P.season_period = atoi(v);
         else if (!strcmp(a, "--soc-thr")) P.soc_thr = atof(v);
@@ -624,7 +822,9 @@ static int cmd_run(int argc, char **argv) {
         i++;
     }
     if (!dir || P.K < 1 || P.K > KMAX || P.sample < 1 || P.ck_every % P.sample || P.w < 4 || P.h < 4 || P.w > GRID_W || P.h > GRID_H ||
-        P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1) return usage();
+        P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
+        (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1) return usage();
+    if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
     static Terra T; char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
     int resumed = 0;
@@ -632,7 +832,14 @@ static int cmd_run(int argc, char **argv) {
         if (!load(&T, ck)) { fprintf(stderr, "%s illisible\n", ck); return 1; }
         resumed = 1;
         fprintf(stderr, "reprise de %s au tick %ld (paramètres du checkpoint ; seuls --ticks comptent)\n", ck, T.t);
-    } else terra_new(&T, &P);
+    } else {
+        terra_new(&T, &P);
+        if (P.repro || P.founders >= F_SOUP) {           /* part de copieurs vérifiés parmi les fondateurs */
+            SoupCfg sc = { .addr_b = 1, .no_store = 0, .steps = P.rep_steps }; int n = 0, cop = 0;
+            for (int k = 0; k < P.K; k++) for (int i = 0; i < T.I[k].w->ncs; i++, n++) cop += soup_copier(T.I[k].w->cs[i]->germ, &sc) > 0;
+            fprintf(stderr, "fondateurs : %d, copieurs vérifiés (budget %d pas) : %d (%.1f %%)\n", n, P.rep_steps, cop, n ? 100.0 * cop / n : 0);
+        }
+    }
     snprintf(T.dir, sizeof T.dir, "%s", dir);
     if (!open_outputs(&T, resumed)) { fprintf(stderr, "sorties impossibles dans %s\n", dir); return 1; }
     signal(SIGINT, on_sig); signal(SIGTERM, on_sig);
@@ -652,6 +859,7 @@ static char *slurp(const char *p) {
     FILE *f = fopen(p, "rb"); if (!f) return NULL; fseek(f, 0, SEEK_END); long n = ftell(f); rewind(f);
     char *s = malloc((size_t)n + 1); if (fread(s, 1, (size_t)n, f) != (size_t)n) n = 0; s[n] = 0; fclose(f); return s;
 }
+static int resume_check(const Params *P, long t1, long t2, const char *label, int *pop_end, long *births);
 static int selftest(void) {
     int ok = 1;
     /* 1. codeur social : flux dépendant → excès net ; flux indépendant → excès ~ 0 */
@@ -670,27 +878,15 @@ static int selftest(void) {
         ok &= good; tab_clear(&tb);
     }
     free(tb.t); free(tb.used);
-    /* 2. déterminisme + reprise depuis checkpoint = run d'un seul tenant */
+    /* 2. déterminisme + reprise depuis checkpoint = run d'un seul tenant (mode d'origine) */
     Params P = defaults(); P.K = 2; P.w = 32; P.h = 16; P.max_pop = 300; P.regrow = 12; P.sample = 100; P.ck_every = 500; P.migrate = 300; P.seed = 7;
-    const char *da = "/tmp/terrarium-selftest-a", *db = "/tmp/terrarium-selftest-b";
-    char cmd[256]; snprintf(cmd, sizeof cmd, "rm -rf %s %s", da, db); if (system(cmd)) {}
-    mkdir(da, 0755); mkdir(db, 0755);
-    static Terra A, B;
-    terra_new(&A, &P); snprintf(A.dir, sizeof A.dir, "%s", da); open_outputs(&A, 0); terra_run(&A, 3000, 1);
-    uint64_t ha = terra_hash(&A); fclose(A.series); fclose(A.events); terra_free(&A);
-    terra_new(&B, &P); snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 0); terra_run(&B, 1500, 1);
-    fclose(B.series); fclose(B.events); terra_free(&B);
-    { char p[600]; snprintf(p, sizeof p, "%s/state.ck", db); memset(&B, 0, sizeof B);
-      if (!load(&B, p)) { printf("selftest : checkpoint illisible\n"); return 1; } }
-    snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 1); terra_run(&B, 3000, 1);
-    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); terra_free(&B);
-    char pa[600], pb[600]; snprintf(pa, sizeof pa, "%s/series.tsv", da); snprintf(pb, sizeof pb, "%s/series.tsv", db);
-    char *sa = slurp(pa), *sb = slurp(pb);
-    int same = ha == hb && sa && sb && !strcmp(sa, sb) && strlen(sa) > 100;
-    printf("selftest reprise : hash %016llx vs %016llx, series.tsv %s → %s\n", (unsigned long long)ha, (unsigned long long)hb,
-           sa && sb && !strcmp(sa, sb) ? "identiques" : "DIFFÉRENTES", same ? "OK" : "ÉCHEC");
-    ok &= same; free(sa); free(sb);
-    if (system(cmd)) {}
+    int pe; long nb;
+    ok &= resume_check(&P, 1500, 3000, "", &pe, &nb);
+    /* 3. soup-terrarium : copie réelle (réplicateur conçu), osmotrophie, prédateurs, ombre composant — même exigence */
+    P.repro = 1; P.founders = F_HANDMADE; P.osmo = 1; P.pred = 2; P.ck_every = 100; P.migrate = 100; P.rep_steps = 2048;
+    int g = resume_check(&P, 100, 300, " (copie+prédateurs)", &pe, &nb) && nb > 0;
+    printf("selftest copie réelle : %ld naissances par copie (soup_exec), pop finale %d → %s\n", nb, pe, g ? "OK" : "ÉCHEC");
+    ok &= g;
     return ok ? 0 : 1;
 }
 
@@ -725,11 +921,13 @@ static int report_one(const char *dir) {
     printf("== %s : %.0f ticks, %d échantillons\n  quart              ", nm, V(&S, n - 1, "tick"), n);
     for (int q = 0; q < 4; q++) printf("%10.0f", V(&S, qrow(n, qs[q]), "tick"));
     printf("\n");
-    const char *ks[] = { "pop", "n_geno", "H_geno", "n_comp", "comp_cum", "comp_alive", "persist_cum", "shadow_cum",
-                         "len_mean", "coding_mean", "stable_niches", "H_behav" };
-    for (int k = 0; k < 12; k++) {
+    const char *ks[] = { "pop", "n_geno", "H_geno", "n_comp", "comp_cum", "comp_alive", "scomp_cum", "scomp_alive", "persist_cum", "shadow_cum",
+                         "len_mean", "coding_mean", "stable_niches", "H_behav", "copier_frac", "min_ess" };
+    int nks = 16;
+    if (tsv_col(&S, "scomp_cum") < 0) { ks[6] = ks[8]; ks[7] = ks[9]; ks[8] = ks[10]; ks[9] = ks[11]; ks[10] = ks[12]; ks[11] = ks[13]; nks = 12; }
+    for (int k = 0; k < nks; k++) {
         printf("  %-19s", ks[k]);
-        int dec = !strcmp(ks[k], "H_geno") || !strcmp(ks[k], "H_behav") ? 2 : !strcmp(ks[k], "len_mean") || !strcmp(ks[k], "coding_mean") ? 1 : 0;
+        int dec = !strcmp(ks[k], "H_geno") || !strcmp(ks[k], "H_behav") || !strcmp(ks[k], "copier_frac") ? 2 : !strcmp(ks[k], "len_mean") || !strcmp(ks[k], "coding_mean") ? 1 : 0;
         for (int q = 0; q < 4; q++) printf("%10.*f", dec, V(&S, qrow(n, qs[q]), ks[k]));
         printf("\n");
     }
@@ -737,6 +935,15 @@ static int report_one(const char *dir) {
     int pr = 0;
     for (int q = 0; q < 4; q++) { int r = qrow(n, qs[q]); double dt = V(&S, r, "tick") - V(&S, pr, "tick");
         printf("%10.0f", dt > 0 ? (V(&S, r, "comp_cum") - V(&S, pr, "comp_cum")) / dt * 1e4 : NAN); pr = r; }
+    if (tsv_col(&S, "scomp_cum") >= 0) {
+        printf("\n  ombre_new/10k      "); pr = 0;
+        for (int q = 0; q < 4; q++) { int r = qrow(n, qs[q]); double dt = V(&S, r, "tick") - V(&S, pr, "tick");
+            printf("%10.0f", dt > 0 ? (V(&S, r, "scomp_cum") - V(&S, pr, "scomp_cum")) / dt * 1e4 : NAN); pr = r; }
+        printf("\n  naissances/10k     "); 
+        for (int q = 0; q < 4; q++) { double b = 0, t0 = V(&S, q * n / 4, "tick"), t1 = V(&S, (q + 1) * n / 4 - 1, "tick");
+            for (int r = q * n / 4; r < (q + 1) * n / 4; r++) b += V(&S, r, "births");
+            printf("%10.0f", t1 > t0 ? b / (t1 - t0 + V(&S, 0, "tick")) * 1e4 : NAN); }
+    }
     printf("\n  nouv. normalisée   ");          /* nouveaux composants / (naissances × octets codants) × 1e4, par quart */
     for (int q = 0; q < 4; q++) { double a = 0, d = 0;
         for (int r = q * n / 4; r < (q + 1) * n / 4; r++) { a += V(&S, r, "comp_new"); d += V(&S, r, "births") * V(&S, r, "coding_mean"); }
@@ -782,6 +989,32 @@ static int cmd_report(int argc, char **argv) {
     int rc = 0; if (argc < 3) return usage();
     for (int i = 2; i < argc; i++) rc |= report_one(argv[i]);
     return rc;
+}
+
+/* déterminisme + reprise depuis checkpoint = run d'un seul tenant ; renvoie 1 si OK (*pop_end, *births_end : fin du run A) */
+static int resume_check(const Params *P, long t1, long t2, const char *label, int *pop_end, long *births) {
+    const char *da = "/tmp/terrarium-selftest-a", *db = "/tmp/terrarium-selftest-b";
+    char cmd[256]; snprintf(cmd, sizeof cmd, "rm -rf %s %s", da, db); if (system(cmd)) {}
+    mkdir(da, 0755); mkdir(db, 0755);
+    static Terra A, B;
+    terra_new(&A, P); snprintf(A.dir, sizeof A.dir, "%s", da); open_outputs(&A, 0); terra_run(&A, t2, 1);
+    uint64_t ha = terra_hash(&A); *pop_end = total_pop(&A); fclose(A.series); fclose(A.events); terra_free(&A);
+    terra_new(&B, P); snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 0); terra_run(&B, t1, 1);
+    fclose(B.series); fclose(B.events); terra_free(&B);
+    { char p[600]; snprintf(p, sizeof p, "%s/state.ck", db); memset(&B, 0, sizeof B);
+      if (!load(&B, p)) { printf("selftest : checkpoint illisible\n"); return 0; } }
+    snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 1); terra_run(&B, t2, 1);
+    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); terra_free(&B);
+    char pa[600], pb[600]; snprintf(pa, sizeof pa, "%s/series.tsv", da); snprintf(pb, sizeof pb, "%s/series.tsv", db);
+    char *sa = slurp(pa), *sb = slurp(pb);
+    int same = ha == hb && sa && sb && !strcmp(sa, sb) && strlen(sa) > 100;
+    *births = 0;
+    if (sa) { Tsv S; if (tsv_load(&S, pa)) { for (int r = 0; r < S.n; r++) *births += (long)V(&S, r, "births"); free(S.v); } }
+    printf("selftest reprise%s : hash %016llx vs %016llx, series.tsv %s → %s\n", label, (unsigned long long)ha, (unsigned long long)hb,
+           sa && sb && !strcmp(sa, sb) ? "identiques" : "DIFFÉRENTES", same ? "OK" : "ÉCHEC");
+    free(sa); free(sb);
+    if (system(cmd)) {}
+    return same;
 }
 
 int main(int argc, char **argv) {
