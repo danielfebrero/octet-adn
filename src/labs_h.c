@@ -886,6 +886,61 @@ double gn_mem(const PoolEntry *g, int n, uint64_t seed) {
     }
     return s / n;
 }
+/* Descripteurs de comportement (experiments/novelty-map-elites, hors sélection historique).
+ * 8 vies sur des tâches d'entraînement fixes (4 tirages du niveau 1 + mémoire 2 et 3 ×2), mode normal.
+ * d[0] entropie de la réponse (5 symboles : 0..3, silence ; bits)   d[1] fraction d'essais émis
+ * d[2..5] information mutuelle I(réponse ; indice il y a L essais), L = 0..3 (bits, essais 3..63)
+ * d[6] STORE effectifs / essai   d[7] octets du soma ≠ génome en fin de vie (moyenne)
+ * d[8] codons réécrits puis exécutés / essai. Aucune note de tâche n'entre ici. */
+static double gn_mi(const int (*j)[4], int n) {
+    if (!n) return 0;
+    double pr[5] = { 0 }, pc[4] = { 0 }, mi = 0;
+    for (int r = 0; r < 5; r++) for (int c = 0; c < 4; c++) { pr[r] += j[r][c]; pc[c] += j[r][c]; }
+    for (int r = 0; r < 5; r++) for (int c = 0; c < 4; c++)
+        if (j[r][c]) mi += (double)j[r][c] / n * log2((double)j[r][c] * n / (pr[r] * pc[c]));
+    return mi;
+}
+void gn_behavior(const PoolEntry *g, double *d) {
+    GnState *s = gn_state_new();
+    Creature *c = &s->tc; World *w = s->sb;
+    int hist[5] = { 0 }, joint[4][5][4], nj = 0, nt = 0;
+    long stores = 0, useful = 0, drift = 0;
+    memset(joint, 0, sizeof joint);
+    for (int j = 0; j < 8; j++) {
+        Rng tr; rng_seed(&tr, 0xBE4A0000ULL + (uint64_t)j);
+        GnTask t = gn_draw(&tr, 0, 1, j < 4 ? -1 : (j & 1) ? 7 : 6);
+        Rng cues = tr;
+        memset(c, 0, sizeof *c);
+        c->len = g->len; memcpy(c->dna, g->dna, (size_t)g->len); c->x = c->y = 2; c->emitted = -1;
+        int p[3]; p[0] = (int)rng_below(&cues, 4); p[1] = (int)rng_below(&cues, 4); p[2] = (p[0] + 2 * p[1]) & 3;
+        int r = 0;
+        for (int i = 0; i < GN_TRIALS; i++) {
+            int cue = (int)rng_below(&cues, 4), tgt = gn_target(&t, i, cue, p[0], p[1], p[2]);
+            int flip = t.noise && (int)rng_below(&cues, 1000) < t.noise;
+            w->stimulus = cue | r << 2 | (i == 0) << 3;
+            w->hist_n = 0; w->nem = 0; c->e = 1000;
+            vm_run(c, w);
+            int resp = c->emitted, sym = resp >= 0 ? (resp & 3) : 4;
+            hist[sym]++; nt++;
+            if (i >= 3) {
+                int lag[4] = { cue, p[0], p[1], p[2] };
+                for (int L = 0; L < 4; L++) joint[L][sym][lag[L]]++;
+                nj++;
+            }
+            int good = resp >= 0 && (resp & 3) == tgt;
+            r = good ^ flip;
+            p[2] = p[1]; p[1] = p[0]; p[0] = cue;
+        }
+        stores += c->stores; useful += c->useful_stores;
+        for (int k = 0; k < g->len; k++) drift += c->dna[k] != g->dna[k];
+    }
+    gn_state_free(s);
+    double h = 0;
+    for (int k = 0; k < 5; k++) if (hist[k]) { double q = (double)hist[k] / nt; h -= q * log2(q); }
+    d[0] = h; d[1] = 1.0 - (double)hist[4] / nt;
+    for (int L = 0; L < 4; L++) d[2 + L] = gn_mi((const int (*)[4])joint[L], nj);
+    d[6] = (double)stores / nt; d[7] = drift / 8.0; d[8] = (double)useful / nt;
+}
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
  * curriculum ; un essai juste rapporte de l'énergie. lscore = justesse des essais 32..63, rétrécie.
  * ls[0] = graine de la tâche, ls[1] = essai, ls[2] = c | p1<<2 | p2<<4, ls[3]/ls[4] = justes/essais tardifs,

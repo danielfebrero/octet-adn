@@ -282,4 +282,16 @@ double pool_eval_x(int lab_id, const PoolEntry *pool, int n, const char *key, in
 /* champions des 9 autres labos (checkpoints de dir), pour org-seeds ; retourne leur nombre */
 int collect_foreign(const char *dir, PoolEntry *out);
 int write_status(const char *data_dir, const int *labs, int nlabs);
+#include <stdio.h>
+/* ---- experiments/novelty-map-elites : pression de nouveauté (sous-commande novelty) ---- */
+#define GN_BEH_N 9
+double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, int ntask, int mode, int fam, double *curve);
+double gn_train(const PoolEntry *g, int n, uint64_t seed);
+void   gn_behavior(const PoolEntry *g, double *d);      /* d : GN_BEH_N descripteurs, voir labs_h.c */
+typedef struct { int grid, iters, report, init_mut; uint64_t seed; } NovRun;   /* grid : 0 = 1 case, 1 = agn, 2 = mem */
+typedef struct { int cells, ncells, passers; double qd, best_q, max_m2, max_m3; long inserts; uint64_t hash; } NovResult;
+int nov_cell(int grid, const double *d);                 /* -1 hors grille */
+int nov_ncells(int grid);
+int nov_run(const NovRun *r, FILE *out, NovResult *res);
+
 #endif
