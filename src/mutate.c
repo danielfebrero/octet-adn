@@ -134,3 +134,22 @@ int retarget_prev(uint8_t *dna, int n) {
     }
     return 0;
 }
+
+/* Après retarget_prev : le LOAD de la case précédente est suivi d'un ADD qui ajoute l'indice
+ * courant (registre B) à l'indice retardé. La clé mélange alors p2 et c. On remplace cet ADD par
+ * un intron (0xcf, l'allèle de la lignée 3) : la clé ne lit plus que la case retardée. */
+int unmix_prev(uint8_t *dna, int n) {
+    if (n < 10) return 0;
+    for (int i = 0; i + 10 <= n; i++) {
+        uint8_t cell = dna[i + 2], prev = dna[i + 4];
+        if (dna[i] != 0x15 || dna[i + 1] != 0x07 || dna[i + 3] != 0x06 || dna[i + 5] != 0x1c
+            || dna[i + 6] != 32 || dna[i + 7] != 0x17 || dna[i + 8] != 0x06 || dna[i + 9] != cell
+            || prev != (uint8_t)(cell - 1) || cell == 0)
+            continue;
+        for (int j = 0; j + 2 < i; j++) {
+            if (dna[j] == 0x07 && dna[j + 1] == prev && dna[j + 2] == 0x17) { dna[j + 2] = 0xcf; return 1; }
+        }
+        return 0;
+    }
+    return 0;
+}

@@ -91,6 +91,7 @@ typedef struct {
     int ops_per_tick;     /* general : budget d'instructions par tick (0 = OPS_PER_TICK) */
     int germline;         /* general : 1 = SPLIT et la sélection copient germ, pas le soma */
     double delay_rate;    /* general : décaler une case à la naissance (0 = les autres labos, aucun tirage) */
+    double unmix_rate;    /* general : la clé cesse d'ajouter l'indice courant à la case retardée (0 = aucun tirage) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -151,6 +152,8 @@ int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *ou
 int stagger_cell(uint8_t *dna, int n);
 /* general : un LOAD de cette case, plus haut dans le génome, lit désormais la case précédente. */
 int retarget_prev(uint8_t *dna, int n);
+/* general : l'ADD qui suit ce LOAD devient un intron (la clé = la case retardée seule). 1 si réécrit. */
+int unmix_prev(uint8_t *dna, int n);
 
 /* ---------------- Labos ---------------- */
 typedef struct Lab Lab;

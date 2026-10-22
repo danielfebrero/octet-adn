@@ -770,6 +770,27 @@ TEST(test_general_second_rung_kept) {
     w->ncs = 0; free(a); free(b); world_free(w);
 }
 
+/* L'ADD qui suit le LOAD de la case retardée mélange l'indice courant à p2. À la naissance,
+ * unmix_prev en fait un intron (0xcf). Sur la lignée graine 2 (mémoire-2 0,530, code 3),
+ * ce seul geste donne le critère. Sans décalage, rien à réécrire ; taux 0 hors general. */
+TEST(test_general_unmix_at_birth) {
+    PoolEntry s; seed_entry(&s, "general", 0);
+    PoolEntry plain = s;
+    assert(unmix_prev(plain.dna, plain.len) == 0 && !memcmp(plain.dna, s.dna, (size_t)s.len));
+    PoolEntry g; memset(&g, 0, sizeof g);
+    FILE *f = fopen("experiments/general-transfer/seed2-pool3.adn", "rb");
+    assert(f); g.len = (int)fread(g.dna, 1, MAX_LEN, f); fclose(f);
+    assert(g.len == 172 && g.dna[0x78] == 19 && g.dna[0x79] == OP_ADD);
+    double v[GN_CHECK_N];
+    assert(gn_check(&g, v) == 0);
+    assert(unmix_prev(g.dna, g.len) == 1 && g.dna[0x79] == 0xcf);
+    assert(unmix_prev(g.dna, g.len) == 0);                  /* déjà démêlé */
+    assert(gn_check(&g, v) == 2 && v[0] > 0.95 && v[2] < v[0] - 0.5 && v[4] < v[0] - 0.5);
+    WorldConfig gc = cfg_default(); assert(gc.unmix_rate == 0);
+    hl_gn_cfg(&gc); assert(gc.unmix_rate > 0 && gc.unmix_rate <= 0.2);
+    printf("    démêlage : graine 2 + intron 0x79  m2=%.3f gelé=%.3f sans_récompense=%.3f\n", v[0], v[2], v[4]);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -806,6 +827,7 @@ int main(void) {
     RUN(test_general_check_needs_learning);
     RUN(test_general_memory_niche);
     RUN(test_general_second_rung_kept);
-    printf("\n%d/%d tests OK\n", passed, 35);
+    RUN(test_general_unmix_at_birth);
+    printf("\n%d/%d tests OK\n", passed, 36);
     return 0;
 }
