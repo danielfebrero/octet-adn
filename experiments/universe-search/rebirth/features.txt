@@ -1,0 +1,32 @@
+# Q3 132 physiques (4 départs, 32 fins de dérive, 96 milieux de dérive) ; fertile = ≥1 émergence depuis le bruit (8–48 graines aux bases/fins, 3 aux milieux) ; 40 fertiles
+# AUC de chaque caractéristique (1 = plus grande chez les fertiles, 0 = plus petite) ; triées par |AUC−0.5|
+  taux de mutation                             AUC 0.644   moyenne fertiles 0.0011 / stériles 0.0007
+  LOAD+STORE                                   AUC 0.363   moyenne fertiles 0.0742 / stériles 0.0802
+  steps                                        AUC 0.627   moyenne fertiles 1036.8000 / stériles 857.0435
+  STORE                                        AUC 0.401   moyenne fertiles 0.0367 / stériles 0.0396
+  CLRI                                         AUC 0.593   moyenne fertiles 0.0398 / stériles 0.0375
+  LOAD                                         AUC 0.408   moyenne fertiles 0.0375 / stériles 0.0406
+  INC_B                                        AUC 0.585   moyenne fertiles 0.0356 / stériles 0.0331
+  LOOP                                         AUC 0.581   moyenne fertiles 0.0373 / stériles 0.0356
+  octet 00 = NOP (part des q)                  AUC 0.565   moyenne fertiles 0.1375 / stériles 0.0842
+  NOP                                          AUC 0.437   moyenne fertiles 0.0321 / stériles 0.0343
+  ADD                                          AUC 0.563   moyenne fertiles 0.0398 / stériles 0.0382
+  XOR                                          AUC 0.444   moyenne fertiles 0.0340 / stériles 0.0355
+p familial (max sur 41 caractéristiques, 2000 permutations) = 0.2179
+  test S#0 : règle « steps ≥ 1024.0000 » (apprise sur les 3 autres) → fertiles reconnues 6/11, stériles 8/22
+  test S#1 : règle « taux de mutation ≥ 0.0010 » (apprise sur les 3 autres) → fertiles reconnues 4/12, stériles 19/21
+  test T#0 : règle « taux de mutation ≥ 0.0002 » (apprise sur les 3 autres) → fertiles reconnues 6/9, stériles 10/24
+  test T#1 : règle « LOAD+STORE ≤ 0.0771 » (apprise sur les 3 autres) → fertiles reconnues 1/8, stériles 25/25
+validation croisée par source : sensibilité 17/40, spécificité 62/92, exactitude équilibrée 0.549
+  S#0 : 11/33 physiques fertiles (L=16 kper=4 addr=abs)
+  S#1 : 12/33 physiques fertiles (L=16 kper=4 addr=abs)
+  T#0 : 9/33 physiques fertiles (L=64 kper=1 addr=b)
+  T#1 : 8/33 physiques fertiles (L=32 kper=2 addr=b)
+
+# fertilité selon l'âge de dérive : de0 4/4  de1024 11/32  de2048 7/32  de3072 8/32  de4096 10/32  
+« le réplicateur injecté de la source copie encore sous cette physique » : fertiles 10/40, stériles 4/92 (Fisher bilatéral p=0.0010)
+« part des réplicateurs nés ailleurs (même L, autres physiques) qui copient sous cette physique » : AUC 0.713, moyenne fertiles 0.164 / stériles 0.034
+
+real	0m1.058s
+user	0m1.058s
+sys	0m0.000s

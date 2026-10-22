@@ -371,6 +371,7 @@ static int selftest3(void) {
     return fail;
 }
 
+#ifndef K8_NO_MAIN   /* rebirth.c inclut ce fichier sans son main */
 int main(int argc, char **argv) {
     const char *load = NULL; int src = 0, rep = 5, mode = 0, at = 0, h = 2, ns = 16, nref = -1;
     (void)selftest2; (void)cmd_drift; (void)cmd_origin; (void)cmd_race; /* fonctions de universe_search2.c non utilisées ici */
@@ -396,3 +397,4 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "knockout")) return cmd_knock(src, rep, mode, at, h, nref);
     return 2;
 }
+#endif

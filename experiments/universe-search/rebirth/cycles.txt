@@ -1,0 +1,75 @@
+# Q2 univers S#0 rép5 (graine mix(7,5)) sous dérive K=8 continue : 512 ép. d'établissement + 32768 ép. de dérive (4096 changements de loi)
+#  run 0 = trajectoire d'origine prolongée (identique à la dérive k8 jusqu'à de=4096 : physique à de=4096 == fin reconstruite : OUI) ;
+#  runs 1..7 = même histoire jusqu'à de=4096, puis graine de dérive bifurquée. Mort = 0 copieur vérifié dans la pop entière ; naissance = ≥51 copieurs (5%).
+#  « effacement » : même suite de physiques (le générateur de dérive est indépendant de la soupe), mais la soupe est remplacée par du bruit à chaque mort.
+
+## SANS effacement (la soupe garde ses restes)
+run 0 : 3 générations, 3 morts. [0→1664][1920→2240][3072→5888]  vivant 14% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+run 1 : 3 générations, 3 morts. [0→1664][1920→2240][3072→4800]  vivant 11% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+run 2 : 3 générations, 3 morts. [0→1664][1920→2240][3072→5056]  vivant 12% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+run 3 : 3 générations, 3 morts. [0→1664][1920→2240][3072→4736]  vivant 11% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+run 4 : 10 générations, 10 morts. [0→1664][1920→2240][3072→6208][6400→6656][6912→7168][7232→7744][8320→9088][10560→11072][11456→11520][11584→11648]  vivant 23% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+    renaissance 3 @6400 : attente 192, H(→dernier dominant précédent)=7, reliques (H≤2) à la mort précédente=0, dominant 3500e400f1864cc6c64c86f100e4f535
+    renaissance 4 @6912 : attente 256, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant 35004000f18603c6c60386f100400035
+    renaissance 5 @7232 : attente 64, H(→dernier dominant précédent)=12, reliques (H≤2) à la mort précédente=0, dominant 40000000003540404040350000000040
+run 5 : 4 générations, 4 morts. [0→1664][1920→2240][3072→5504][5824→5888]  vivant 13% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+    renaissance 3 @5824 : attente 320, H(→dernier dominant précédent)=6, reliques (H≤2) à la mort précédente=243, dominant 6c000000f1008282828200f10000006c
+run 6 : 4 générations, 4 morts. [0→1664][1920→2240][3072→5376][6976→7296]  vivant 14% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+    renaissance 3 @6976 : attente 1600, H(→dernier dominant précédent)=10, reliques (H≤2) à la mort précédente=465, dominant 40000000004040404000400000000040
+run 7 : 3 générations, 3 morts. [0→1664][1920→2240][3072→4928]  vivant 12% du temps
+    renaissance 1 @1920 : attente 256, H(→dernier dominant précédent)=4, reliques (H≤2) à la mort précédente=0, dominant 35000000008b043535048b0000000035
+    renaissance 2 @3072 : attente 832, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant e2000000f12df1c6c6f12df1000000e2
+durées de vie des générations achevées : n=33, moyenne 1109 ép. ; tendance vs rang de génération (Kendall stratifié par run) τ=-0.236, P(hausse)=0.9240, P(baisse)=0.1012 ; Spearman moyen intra-run 0.103 (8 runs ≥3 gén.)
+vie de la 1re génération (injectée) 1664 vs renaissances 932 (p=0.0485)
+héritage : H(renaissant → dernier dominant de la vie précédente) moyenne 6.56 / 16 ; ≤4 dans 10/25 ; attente moyenne mort→renaissance 545 ép.
+
+## AVEC effacement de la soupe à chaque mort
+run 0 : 2 générations, 2 morts. [0→1664][3072→4224]  vivant 8% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+run 1 : 2 générations, 2 morts. [0→1664][3072→4224]  vivant 8% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+run 2 : 2 générations, 2 morts. [0→1664][3072→4224]  vivant 8% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+run 3 : 2 générations, 2 morts. [0→1664][3072→4224]  vivant 8% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+run 4 : 3 générations, 3 morts. [0→1664][3072→4224][11456→11520]  vivant 9% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+    renaissance 2 @11456 : attente 7232, H(→dernier dominant précédent)=16, reliques (H≤2) à la mort précédente=0, dominant d9d9d9d9d9d9d9d9d9d9d9d9d9d9d9d9
+run 5 : 3 générations, 3 morts. [0→1664][3072→4224][11328→14272]  vivant 17% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+    renaissance 2 @11328 : attente 7104, H(→dernier dominant précédent)=16, reliques (H≤2) à la mort précédente=0, dominant 50505050505050505050505050505050
+run 6 : 3 générations, 3 morts. [0→1664][3072→4224][6848→7296]  vivant 10% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+    renaissance 2 @6848 : attente 2624, H(→dernier dominant précédent)=6, reliques (H≤2) à la mort précédente=0, dominant 40000000000000404000000000000040
+run 7 : 5 générations, 5 morts. [0→1664][3072→4224][6464→6912][7232→8256][11200→13120]  vivant 19% du temps
+    renaissance 1 @3072 : attente 1408, H(→dernier dominant précédent)=9, reliques (H≤2) à la mort précédente=0, dominant 400100000000eb0000eb000000000140
+    renaissance 2 @6464 : attente 2240, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant d9000000000000d9d9000000000000d9
+    renaissance 3 @7232 : attente 320, H(→dernier dominant précédent)=8, reliques (H≤2) à la mort précédente=0, dominant 40000000004040404040400000000040
+    renaissance 4 @11200 : attente 2944, H(→dernier dominant précédent)=16, reliques (H≤2) à la mort précédente=494, dominant 5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d
+durées de vie des générations achevées : n=22, moyenne 1335 ép. ; tendance vs rang de génération (Kendall stratifié par run) τ=-0.391, P(hausse)=0.9638, P(baisse)=0.0769 ; Spearman moyen intra-run -0.350 (4 runs ≥3 gén.)
+vie de la 1re génération (injectée) 1664 vs renaissances 1147 (p=0.0514)
+héritage : H(renaissant → dernier dominant de la vie précédente) moyenne 10.14 / 16 ; ≤4 dans 0/14 ; attente moyenne mort→renaissance 2409 ép.
+
+## comparaison appariée (même suite de physiques) : renaissances par run sans/avec effacement : 2/1 2/1 2/1 2/1 9/2 3/2 3/2 2/4 
+   part du temps vivant : sans 0.138, avec 0.110 (p=0.2140) ; H moyen renaissant→précédent : sans 6.56 (n=25), avec 10.14 (n=14), p=0.0060 ; attente : sans 545, avec 2409, p=0.0001
+
+## fertilité (émergence depuis le bruit, 4 graines) de la physique du run 0 tous les 2048 ép. de dérive :
+   de2048:4/4 de4096:1/4 de6144:1/4 de8192:0/4 de10240:0/4 de12288:0/4 de14336:0/4 de16384:0/4 de18432:0/4 de20480:0/4 de22528:0/4 de24576:0/4 de26624:0/4 de28672:0/4 de30720:0/4 de32768:0/4 
+
+real	1m19.129s
+user	7m23.580s
+sys	0m1.235s
