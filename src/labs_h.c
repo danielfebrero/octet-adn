@@ -94,7 +94,7 @@ static void fold_before(World *w, Creature *c) {
     FoldState *s = w->lab->ext;
     c->ls[0] = 1;
     c->lscore = fold_score(s, c);
-    c->e += (int)(60 * c->lscore); cap_e(c);       /* bien plier nourrit : pression de sélection */
+    c->e += (int)(200 * c->lscore); cap_e(c);      /* bien plier nourrit : pression de sélection (60 → 200 : sinon le meilleur plieur se perd) */
 }
 void hl_fold_free(Lab *l);
 static void fold_init(Lab *l, World *w) {
@@ -106,7 +106,22 @@ static void fold_init(Lab *l, World *w) {
 }
 void hl_fold_free(Lab *l) { FoldState *s = l->ext; if (s) { free(s->sb->rng); world_free(s->sb); } }
 void hl_fold_cfg(WorldConfig *c) { c->food_density = 0.25; c->food_regrow = 3; }
-int hl_fold_seeds(PoolEntry *o) { seed_entry(o, "fold", 0); return 1; }
+/* Pop initiale diverse : la graine seule (LOADI 1 ; EMIT) émet une constante, donc toute la pop
+ * plie pareil (variance de fitness nulle, labo figé à 0.2935). On ajoute des variantes du seul
+ * préfixe : constante 2 (spirale droite, 0.39) et une réactive au stimulus (PP → gauche, sinon
+ * droite, 0.468 = optimum des politiques sans mémoire), corps inchangé. */
+int hl_fold_seeds(PoolEntry *o) {
+    static const uint8_t pre[2][6] = { { OP_LOADI, 2 }, { OP_SENSE_STIM, OP_JZ, 2, OP_LOADI, 1, OP_INC_A } };
+    static const int pn[2] = { 2, 6 };
+    seed_entry(&o[0], "fold", 0);                  /* graine d'origine, préfixe LOADI 1 (2 octets) */
+    int rest = o[0].len - 2;
+    for (int i = 0; i < 2; i++) {
+        o[i + 1].species = 0; o[i + 1].len = pn[i] + rest;
+        memcpy(o[i + 1].dna, pre[i], (size_t)pn[i]);
+        memcpy(o[i + 1].dna + pn[i], o[0].dna + 2, (size_t)rest);
+    }
+    return 3;
+}
 double hl_fold_fit(Lab *l, World *w, int t) {
     (void)t; double s = 0, mx = 0;
     for (int i = 0; i < w->ncs; i++) { s += w->cs[i]->lscore; if (w->cs[i]->lscore > mx) mx = w->cs[i]->lscore; }
