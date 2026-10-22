@@ -1,0 +1,18 @@
+# (b) robustesse : n entrées de table re-tirées au hasard (même loi que drift_step), 400 tables par n ; u_copier du génome inchangé
+#     colonne « +1mut » : part des 40 premières tables où le génome OU un de ses 15×255 mutants ponctuels copie (réparation en un pas)
+# génome                    ess  entrées_ess | n=1    n=2    n=4    n=8    n=16   n=32   n=64   n=128  n=256  n=352 
+S#0                         14   10/1024 | 0.990 0.985 0.978 0.953 0.865 0.787 0.595 0.343 0.165 0.060
+                                         +1mut|  0.97  1.00  1.00  0.97  0.93  0.78  0.78  0.38  0.17  0.12
+                                         attendu| 0.991 0.981 0.963 0.927 0.860 0.740 0.547 0.299 0.090 0.036   (attendu = aucune entrée essentielle réellement changée)
+S#1                          9    6/1024 | 0.995 0.983 0.968 0.968 0.895 0.772 0.652 0.403 0.223 0.107
+                                         +1mut|  1.00  1.00  0.93  0.93  0.95  0.72  0.65  0.38  0.25  0.17
+                                         attendu| 0.994 0.989 0.978 0.956 0.914 0.835 0.696 0.485 0.235 0.137   (attendu = aucune entrée essentielle réellement changée)
+T#0                         13    9/256  | 0.960 0.935 0.855 0.745 0.552 0.318 0.090 0.007 0.000 0.000
+                                         +1mut|  1.00  1.00  1.00  0.95  0.85  0.70  0.42  0.05  0.00  0.00
+                                         attendu| 0.967 0.934 0.873 0.762 0.581 0.337 0.114 0.013 0.000 0.000   (attendu = aucune entrée essentielle réellement changée)
+T#1                          6    6/512  | 0.985 0.963 0.940 0.880 0.815 0.693 0.405 0.205 0.065 0.013
+                                         +1mut|  1.00  1.00  1.00  1.00  1.00  0.90  0.93  0.65  0.38  0.12
+                                         attendu| 0.989 0.978 0.956 0.913 0.834 0.696 0.485 0.235 0.055 0.019   (attendu = aucune entrée essentielle réellement changée)
+survivant S#0 rép5 dériv  14   12/1024 | 0.988 0.990 0.965 0.960 0.890 0.825 0.680 0.430 0.237 0.135
+                                         +1mut|  1.00  0.97  0.97  0.93  0.88  0.80  0.68  0.45  0.23  0.17
+                                         attendu| 0.989 0.978 0.956 0.914 0.835 0.696 0.485 0.235 0.055 0.019   (attendu = aucune entrée essentielle réellement changée)

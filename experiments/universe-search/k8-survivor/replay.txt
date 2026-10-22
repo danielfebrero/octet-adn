@@ -1,0 +1,49 @@
+# replay K=8 : 4 sources × 8 répliques, N=1024, établissement 512, dérive 4096 (graine maîtresse 7, comme v2)
+# src rép | DÉRIVE vivant cf_fin cf_min t_mort | SAUT vivant cf_fin cf_min t_mort | dist_table | essentiels_init: entrées distinctes / réassignées en fin / coups en route (q,octet exacts)
+S#0 0 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 353 | 10 /  3 /  3
+S#0 1 | mort   0.00 0.00   768 | mort   0.00 0.00    64 | 338 | 10 /  4 /  9
+S#0 2 | mort   0.00 0.00   640 | mort   0.00 0.00    64 | 341 | 10 /  3 /  9
+S#0 3 | mort   0.00 0.00   128 | mort   0.00 0.00    64 | 375 | 10 /  6 /  6
+S#0 4 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 361 | 10 /  4 /  7
+S#0 5 | VIVANT 0.77 0.00   896 | VIVANT 0.95 0.00    64 | 345 | 10 /  1 /  4   <==
+S#0 6 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 342 | 10 /  4 / 11
+S#0 7 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 357 | 10 /  5 /  8
+S#1 0 | mort   0.00 0.00   320 | mort   0.00 0.00    64 | 365 |  6 /  2 /  2
+S#1 1 | mort   0.00 0.00   256 | mort   0.00 0.00    64 | 355 |  6 /  2 /  3
+S#1 2 | mort   0.00 0.00  1280 | mort   0.00 0.00    64 | 371 |  6 /  1 /  2
+S#1 3 | mort   0.00 0.00   320 | mort   0.00 0.00    64 | 371 |  6 /  3 /  4
+S#1 4 | mort   0.00 0.00  1216 | mort   0.00 0.00    64 | 351 |  6 /  2 /  2
+S#1 5 | mort   0.00 0.00  1600 | mort   0.00 0.00    64 | 358 |  6 /  1 /  1
+S#1 6 | mort   0.00 0.00   896 | mort   0.00 0.00    64 | 363 |  6 /  3 /  3
+S#1 7 | mort   0.00 0.00  1408 | mort   0.00 0.00    64 | 342 |  6 /  2 /  4
+T#0 0 | mort   0.00 0.00   512 | mort   0.00 0.00    64 | 205 |  9 /  9 / 21
+T#0 1 | mort   0.00 0.00   512 | mort   0.00 0.00    64 | 207 |  9 /  8 / 21
+T#0 2 | mort   0.00 0.00    64 | mort   0.00 0.00    64 | 201 |  9 /  8 / 18
+T#0 3 | mort   0.00 0.00  1152 | mort   0.00 0.00    64 | 211 |  9 /  6 / 16
+T#0 4 | mort   0.00 0.00    64 | mort   0.00 0.00    64 | 212 |  9 /  8 / 21
+T#0 5 | mort   0.00 0.00    64 | mort   0.00 0.00    64 | 196 |  9 /  7 / 16
+T#0 6 | mort   0.00 0.00  1152 | VIVANT 0.84 0.00    64 | 203 |  9 /  6 / 14   <==
+T#0 7 | mort   0.00 0.00   448 | VIVANT 0.98 0.00    64 | 205 |  9 /  6 / 13   <==
+T#1 0 | mort   0.00 0.00   320 | mort   0.00 0.00    64 | 298 |  6 /  3 /  8
+T#1 1 | mort   0.00 0.00   896 | mort   0.00 0.00    64 | 294 |  6 /  4 /  7
+T#1 2 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 310 |  6 /  5 / 11
+T#1 3 | mort   0.00 0.00   256 | mort   0.00 0.00    64 | 299 |  6 /  3 /  7
+T#1 4 | mort   0.00 0.00  1472 | mort   0.00 0.00    64 | 290 |  6 /  3 / 11
+T#1 5 | mort   0.00 0.00   448 | mort   0.00 0.00    64 | 294 |  6 /  4 /  9
+T#1 6 | mort   0.00 0.00   832 | mort   0.00 0.00    64 | 291 |  6 /  4 / 12
+T#1 7 | mort   0.00 0.00  1536 | mort   0.00 0.00    64 | 290 |  6 /  2 /  4
+S#0 : dérive 1/8, saut 1/8, dist_table moyenne 351.5
+S#1 : dérive 0/8, saut 0/8, dist_table moyenne 359.5
+T#0 : dérive 0/8, saut 2/8, dist_table moyenne 205.0
+T#1 : dérive 0/8, saut 0/8, dist_table moyenne 295.8
+TOTAL K=8 : dérive 1/32, saut 3/32  (v2 publié : 1/32 et 3/32 ; S#0 1/8|1/8, S#1 0|0, T#0 0|2, T#1 0|0 ; dist 351.5 / 359.5 / 205.0 / 295.8)
+déterminisme S#0 rép 5 dérive : trace_run == drift_run OUI (vivant 1, cf_fin 0.77, dominant 35000000f18652c6c63b86f100000035)
+déterminisme S#0 rép 5 saut   : trace_run == drift_run OUI (vivant 1, cf_fin 0.95, dominant e2000000000000e2e20000f1000000e2)
+déterminisme T#0 rép 6 dérive : trace_run == drift_run OUI (vivant 0, cf_fin 0.00, dominant 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+déterminisme T#0 rép 6 saut   : trace_run == drift_run OUI (vivant 1, cf_fin 0.84, dominant 1bea7d34224094ed40e430af20d30cfd2401ac0b406d984e00000007d7b200b41b147a9417fefefefefefefefefefe09fefefefefefefefefefefefefefefefe)
+déterminisme T#0 rép 7 dérive : trace_run == drift_run OUI (vivant 0, cf_fin 0.00, dominant 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+déterminisme T#0 rép 7 saut   : trace_run == drift_run OUI (vivant 1, cf_fin 0.98, dominant d0ab053d00a5b0068c171ec783b96f3dfaaa8049fa307875c0f9004d336532f000f1693e473e38c53c3e0d00bc6b8e2c06eb0101ff1c58bd5b01de4f8877aaab)
+
+real	1m4.843s
+user	3m40.106s
+sys	0m0.125s

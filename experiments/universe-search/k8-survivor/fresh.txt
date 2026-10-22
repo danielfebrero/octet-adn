@@ -1,0 +1,15 @@
+# (e) soupe de bruit pur (aucune injection), N=1024, E=4096, 16 graines neuves par univers ; émergence = copieurs ≥0,25 (cristaux exclus)
+S#0 base                                 : e@1856 e@1536 e@64 e@1024 e@192 e@896 e@448 e@384 e@1280 e@3264 e@64 e@2432 e@640  → 13/16 (cristaux 1)
+     ex. dominant graine 0 : e20000000000f20000f20000000000e2 H(→dominant final du survivant)=10
+S#0 rép5 finale (dérive, survivant)    : e@1216 e@128  → 2/16 (cristaux 2)
+     ex. dominant graine 2 : 4000000000000040400f000000000040 H(→dominant final du survivant)=10
+S#0 rép5 finale (saut, survivant)       : e@1216 e@128  → 2/16 (cristaux 2)
+     ex. dominant graine 2 : 4000000000000040400f000000000040 H(→dominant final du survivant)=10
+T#0 rép6 finale (saut, survivant)       : e@64 e@704 e@1024 e@1024 e@2688  → 5/16 (cristaux 0)
+     ex. dominant graine 1 : 850f7c61cda8ca0cc5379b89465fdc22850f7c61cda8ca0cc5379b89465fdc22850f7c61cda8ca0cc5379b89465fdc22850f7c61cda8ca0cc5379b89465fdc22 H(→dominant final du survivant)=64
+T#0 rép7 finale (saut, survivant)       : e@2688  → 1/16 (cristaux 0)
+     ex. dominant graine 8 : 0d0000058005070d02c1d00107040d040204030401040004f704080404648004020404000101040004040401ec00050504ed0405ed010102000d01010d020001 H(→dominant final du survivant)=56
+
+real	0m54.022s
+user	5m23.248s
+sys	0m0.150s
