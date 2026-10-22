@@ -1,0 +1,43 @@
+pool : 132 physiques, 632 soupes de bruit
+# réservoir : émergence depuis le bruit pur (N=1024, E=4096, émergence = copieurs ≥ 0.25, cristaux exclus, dominant vérifié)
+S#0  départ        rép -1 de    0 :  7/12 émergences  ex. d7000000000000e8e8000000000000d7 (t=320)
+S#1  départ        rép -1 de    0 :  2/12 émergences  ex. 350000000000d60000d6000000000035 (t=320)
+T#0  départ        rép -1 de    0 :  7/12 émergences  ex. 9f316b0199402c0073012000ebde15170052de72390fff2d27bd3401000018009f316b0199402c0073012000ebde15170052de72390fff2d27bd340100001800 (t=3712)
+T#1  départ        rép -1 de    0 :  6/12 émergences  ex. 29aa3ee2ff00de84de2f2300730f96f1bf2d00480000849ca9e79900998301ff (t=1088)
+S#0  fin de dérive rép  0 de 4096 :  0/8  émergences
+S#0  fin de dérive rép  1 de 4096 :  0/8  émergences
+S#0  fin de dérive rép  2 de 4096 :  0/8  émergences
+S#0  fin de dérive rép  3 de 4096 :  1/8  émergences  ex. 06006500761816adad16187600650006 (t=1216)
+S#0  fin de dérive rép  4 de 4096 :  0/8  émergences
+S#0  fin de dérive rép  5 de 4096 : 12/48 émergences  ex. 6c0000000000d04040d000000000006c (t=256)
+S#0  fin de dérive rép  6 de 4096 :  1/8  émergences  ex. 400000ff00c100000000c100ff000040 (t=3904)
+S#0  fin de dérive rép  7 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  0 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  1 de 4096 :  1/8  émergences  ex. 54005f000000f20000f20000005f0054 (t=1600)
+S#1  fin de dérive rép  2 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  3 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  4 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  5 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  6 de 4096 :  0/8  émergences
+S#1  fin de dérive rép  7 de 4096 :  0/8  émergences
+T#0  fin de dérive rép  0 de 4096 :  0/8  émergences
+T#0  fin de dérive rép  1 de 4096 :  1/8  émergences  ex. 0000040000010100ff0000000034010042a1c0001100c6000071000000000007000078004a0000000000000000000000000000f3f4f5f6f70000fafbfcfd0000 (t=1280)
+T#0  fin de dérive rép  2 de 4096 :  0/8  émergences
+T#0  fin de dérive rép  3 de 4096 :  1/8  émergences  ex. a5affaad40899387966cb8c09316cd09fe1d630495a2cb57ce71ee7398ae0f7700af84004fdd7800e228f13a3693ed048b9a249df800000018977ed4d0d017a5 (t=128)
+T#0  fin de dérive rép  4 de 4096 :  3/8  émergences  ex. 97feff0144dd62c22c6c53937442020143ec01be1c01a879ce00db01a45e6d5220018150d636f5010237d179abefe500017d3401738a5a1b2c5fb6d000ff0041 (t=2752)
+T#0  fin de dérive rép  5 de 4096 :  0/8  émergences
+T#0  fin de dérive rép  6 de 4096 :  0/8  émergences
+T#0  fin de dérive rép  7 de 4096 :  1/8  émergences  ex. 0111011111051111112511041f1c02202014027a200002022050021f20dc021f0111011111051111112511041f1c02202014027a200002022050021f20dc021f (t=896)
+T#1  fin de dérive rép  0 de 4096 :  6/8  émergences  ex. 8f500014008fdc8abb00dc71dc6a76008f500014008fdc8abb00dc71dc6a7600 (t=1664)
+T#1  fin de dérive rép  1 de 4096 :  0/8  émergences
+T#1  fin de dérive rép  2 de 4096 :  0/8  émergences
+T#1  fin de dérive rép  3 de 4096 :  0/8  émergences
+T#1  fin de dérive rép  4 de 4096 :  0/8  émergences
+T#1  fin de dérive rép  5 de 4096 :  1/8  émergences  ex. 5f00d00130f73354878ae28f002e00005f00d00130f73354878ae28f002e0000 (t=64)
+T#1  fin de dérive rép  6 de 4096 :  0/8  émergences
+T#1  fin de dérive rép  7 de 4096 :  0/8  émergences
+milieux de dérive (de 1024/2048/3072, 3 graines) : 26/96 physiques fertiles
+
+real	3m38.017s
+user	21m31.823s
+sys	0m2.972s

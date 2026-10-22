@@ -1,0 +1,17 @@
+rebirth : la vie renaissante est-elle plus persistante ? Univers S#0 rép5 (graine mix(7,5)), finalistes v2 régénérés (universe_search2 race --seed 2).
+Selftest : life_run == drift_run ; phys_replay == physique finale ; bifurcation neutre/effective ; stats de rang OK. Calcul ≈7,5 min.
+Réservoir (bruit pur, N=1024, E=4096) : bases S#0 7/12 S#1 2/12 T#0 7/12 T#1 6/12 ; fin S#0 r5 12/48 ; 9 autres fins fertiles (T#1 r0 6/8, T#0 r4 3/8, 7 à 1/8), 22 fins 0/8 ; intermédiaires 26/96.
+Q1 (37 réplicateurs, même protocole) : injecté S#0 rob@352 0.075 vie 480 ; survivant 3500…0035 0.145 / 856 ; 8 renaissances E5 0.151 / 1239 ; survie stricte (dérive K=8 neuve, 4096 ép.) 4/296 au total.
+   renaissants S#0 vs premiers-nés S#0 (11 vs 4) : rob@352 0.149/0.111 p=0.074 ; vie 1095/778 p=0.19 ; mrob p=0.90.
+   nés en fin vs en départ (22 vs 15) : rob@352 p=0.34, vie p=0.51, mut 4e-3 p=1.0 ; sources T seules mrob 0.796/0.726 p=0.032 (1 test sur 15).
+   la famille de physique domine : S robuste aux lois / fragile à la mutation (meurt à 4e-3) ; T l'inverse (rob@352≈0, survit à 1.6e-2).
+Q2 (8 runs × 33280 ép., même suite de physiques sans/avec effacement) :
+   sans effacement 33 vies achevées, 3-10 gén./run, vivant 13.8 % ; dernière vie finie à 11648 ; avec effacement 22 vies, vivant 11.0 %, dernière à 14272.
+   tendance des durées vs rang : Kendall stratifié τ=-0.24 (P baisse 0.10) ; 1re gén. 1664 vs renaissances 932 (p=0.049) ; avec effacement τ=-0.39, 1664 vs 1147 (p=0.051).
+   héritage : attente 545 vs 2409 (p=0.0001), H au dominant précédent 6.6 vs 10.1 (p=0.006), H≤4 10/25 vs 0/14 ; temps vivant 0.138 vs 0.110 (p=0.21).
+   fertilité (bruit) de la physique du run 0 : dé2048 4/4, 4096 1/4, 6144 1/4, 8192…32768 0/4. Renaissances tardives avec effacement = homopolymères.
+Q3 (132 physiques, 40 fertiles) : composition 41 caractéristiques, meilleure AUC 0.644, p familial 0.22, validation par source 0.549 → aucun prédicteur compositionnel.
+   injecté de la source copie encore : fertiles 10/40 vs stériles 4/92 (Fisher p=0.001) ; part de réplicateurs étrangers qui copient AUC 0.713 (0.164 vs 0.034).
+   fertilité par âge de dérive : 4/4, 11/32, 7/32, 8/32, 10/32 (non monotone sur 4096), 0 au-delà de ~8000 sur la longue dérive.
+VERDICT : non. La renaissance n'est pas plus persistante (tendances n.s.), les vies raccourcissent puis l'univers se stérilise. La persistance est dans la physique (lois ancestrales conservées), la soupe ne transmet que la vitesse de renaissance.
+SUITE : dérive longue avec protection des entrées essentielles au dominant (ré-évaluées) vs protection aléatoire de même taille vs aucune — test causal « la fertilité = conservation des lois fonctionnelles » et première co-évolution où la vie tient ses lois.

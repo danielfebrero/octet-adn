@@ -193,3 +193,15 @@ Rendre les univers *robustement* fertiles, et pas seulement chanceux :
 - **Dérive lente** : la vie suit une petite dérive (≤ ~30 entrées de table), avec de l'adaptation réelle des
   réplicateurs. Mais elle ne fait pas mieux qu'un saut brutal vers le même point d'arrivée (57/128 contre 55/128,
   p = 0,90) : c'est la distance qui compte, pas la vitesse.
+
+## 8. Suite : renaissance (voir `rebirth/README.md` et `rebirth/results.txt`)
+- **Le renaissant n'est pas plus persistant** que le premier-né : rob@352 0.149 contre 0.111 (p=0.074), vie sous
+  une dérive neuve 1095 contre 778 (p=0.19). La survie stricte est de 4/296.
+- **Suivi de l'univers S#0 r5 sur 33280 époques :**
+  - 3 à 10 vies par run ;
+  - les vies raccourcissent : 1re 1664, renaissances 932 (p=0.049) ;
+  - l'univers devient stérile au-delà de dé≈8000.
+- **La soupe transmet de la vitesse de renaissance, pas de la durée :** attente 545 contre 2409 époques
+  (p=0.0001), temps vivant 13.8 % contre 11.0 % (p=0.21).
+- **La fertilité ne dépend pas de la composition** (p familial 0.22). Elle dépend de la survie des lois ancestrales
+  fonctionnelles : l'injecté copie encore dans 10/40 physiques fertiles contre 4/92 stériles (p=0.001).
