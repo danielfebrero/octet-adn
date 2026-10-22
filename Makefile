@@ -31,8 +31,13 @@ experiments/general_transfer: experiments/general_transfer.c $(CORE) include/oct
 experiments/general_regs: experiments/general_regs.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python
+# Paramètre d'ordre métabolique (branche feat/metabolic-order), aveugle au code.
+experiments/metabolic_order: experiments/metabolic_order.c experiments/lifeprobe.h $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
+test: tests/test_vm octet-adn no-python experiments/metabolic_order
 	./tests/test_vm
+	./experiments/metabolic_order selftest
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
@@ -62,6 +67,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer experiments/general_regs
+	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order
 
 .PHONY: all static test no-python run clean sanitize

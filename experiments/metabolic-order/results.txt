@@ -1,0 +1,350 @@
+# metabolic-order : 828 sondes, T=800 ticks, 4 copies, 6 répliques, ELF=/bin/ls
+
+## M = biomasse génome − biomasse marcheur matché, 2e moitié, en unités d'énergie initiale
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (E0)
+seeds               16    0.0001   -0.6096    0.1464    0.3762    0.6704     56.2%
+évolués          212    0.0913   -0.3749    0.0240    0.8698    0.8793     50.0%
+bruit              200   -0.1884   -0.7171    0.0000    0.0000    0.5113      5.0%
+ELF                200   -0.1446   -0.6195    0.0000    0.0000    1.2136      6.0%
+évolués-mélangés  200   -0.1774   -0.9140    0.0000    0.1698    1.0929     22.5%
+AUC évolués >  seeds 0.447  bruit 0.671  ELF 0.624  évolués-mélangés 0.630   (seuil p95 bruit = 0.0246)
+
+## M_glouton : même chose contre un marcheur glouton (mange après chaque pas et vide sa case) — témoin plus dur
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (E0)
+seeds               16   -0.0158   -0.7140    0.1507    0.3559    0.7395     56.2%
+évolués          212    0.1583   -0.2639    0.0530    0.9297    0.9393     58.5%
+bruit              200   -0.1856   -0.6956    0.0000    0.0000    0.4879      5.0%
+ELF                200   -0.1416   -0.6309    0.0000    0.0000    1.2309      5.5%
+évolués-mélangés  200   -0.1721   -0.8084    0.0000    0.1836    1.0929     24.5%
+AUC évolués >  seeds 0.508  bruit 0.723  ELF 0.682  évolués-mélangés 0.672   (seuil p95 bruit = 0.0244)
+
+## (confusion) survie seule : fraction des répliques où la lignée vit à T
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (fraction)
+seeds               16    0.7083    0.0000    1.0000    1.0000    1.0000      0.0%
+évolués          212    0.8341    0.1667    1.0000    1.0000    1.0000      0.0%
+bruit              200    0.1708    0.0000    0.0000    0.8333    1.0000      0.0%
+ELF                200    0.0875    0.0000    0.0000    0.3500    1.0000      0.0%
+évolués-mélangés  200    0.4100    0.0000    0.1667    1.0000    1.0000      0.0%
+AUC évolués >  seeds 0.555  bruit 0.889  ELF 0.925  évolués-mélangés 0.757   (seuil p95 bruit = 1.0000)
+
+## tenue : fraction des ticks de la 2e moitié où B_g > B_w
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (fraction)
+seeds               16    0.4628    0.0000    0.6194    0.7463    0.7946     68.8%
+évolués          212    0.5236    0.0645    0.5233    1.0000    1.0000     55.2%
+bruit              200    0.0831    0.0000    0.0000    0.3536    0.7846      5.0%
+ELF                200    0.0500    0.0000    0.0000    0.1860    0.9750      3.0%
+évolués-mélangés  200    0.2198    0.0000    0.0150    0.6172    1.0000     21.5%
+AUC évolués >  seeds 0.501  bruit 0.906  ELF 0.932  évolués-mélangés 0.781   (seuil p95 bruit = 0.4997)
+
+## (pour lecture) biomasse brute du génome B_g, sans soustraire le marcheur
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (E0)
+seeds               16    1.3116    0.0000    1.4481    2.2563    2.5449     43.8%
+évolués          212    1.5336    0.2027    1.3600    2.8529    3.4917     43.4%
+bruit              200    0.3033    0.0000    0.0000    1.2783    2.6771      5.0%
+ELF                200    0.2068    0.0000    0.0000    0.8288    3.6903      5.0%
+évolués-mélangés  200    0.7011    0.0000    0.1108    1.9028    2.6764     22.5%
+AUC évolués >  seeds 0.537  bruit 0.883  ELF 0.917  évolués-mélangés 0.754   (seuil p95 bruit = 1.5922)
+
+## (pour lecture) biomasse du marcheur matché B_w
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (E0)
+seeds               16    1.3115    0.1149    1.4927    1.8934    1.9948      6.2%
+évolués          212    1.4423    0.2114    1.3444    2.8544    3.5586     30.2%
+bruit              200    0.4917    0.0000    0.0000    1.7279    3.4120      5.0%
+ELF                200    0.3514    0.0000    0.0000    1.6314    4.1696      7.0%
+évolués-mélangés  200    0.8785    0.0000    0.9044    1.9236    2.6143     10.0%
+AUC évolués >  seeds 0.535  bruit 0.809  ELF 0.867  évolués-mélangés 0.681   (seuil p95 bruit = 1.9316)
+
+## à survie égale : seulement les sondes dont la lignée vit jusqu'au bout dans toutes les répliques
+groupe               n   moyenne       p10  médiane       p90       max >p95bruit  (E0)
+seeds               11    0.2427    0.0138    0.2503    0.4701    0.6704     18.2%
+évolués          163    0.1794   -0.2848    0.1016    0.8698    0.8793     29.4%
+bruit               15    0.0420   -0.1586    0.0106    0.2275    0.5113      6.7%
+ELF                  6    0.4604    0.1104    0.3407    0.9302    1.2136     66.7%
+évolués-mélangés   61    0.1119   -0.1518    0.1184    0.3704    1.0929     11.5%
+AUC évolués >  seeds 0.395  bruit 0.605  ELF 0.302  évolués-mélangés 0.520   (seuil p95 bruit = 0.3167)
+
+## détail seeds + évolués
+seed:forager                 len= 256 M=  0.2725 M_glouton=  0.2685 tenue=0.71 B_g= 2.2674 B_w= 1.9948 B_wg= 1.9988 survie=1.00 λ_step=1.17 p_turn=0.12
+seed:neural                  len= 256 M=  0.2692 M_glouton=  0.3351 tenue=0.65 B_g= 2.0411 B_w= 1.7719 B_wg= 1.7060 survie=1.00 λ_step=1.06 p_turn=0.08
+seed:echo                    len= 256 M= -0.0127 M_glouton= -0.0370 tenue=0.53 B_g= 1.8997 B_w= 1.9124 B_wg= 1.9367 survie=1.00 λ_step=1.08 p_turn=0.05
+seed:dialog                  len= 256 M=  0.4701 M_glouton=  0.3767 tenue=0.79 B_g= 2.2453 B_w= 1.7752 B_wg= 1.8686 survie=1.00 λ_step=1.03 p_turn=0.12
+seed:stock                   len= 256 M=  0.2503 M_glouton=  0.2617 tenue=0.64 B_g= 1.9407 B_w= 1.6904 B_wg= 1.6790 survie=1.00 λ_step=0.99 p_turn=0.05
+seed:social                  len= 256 M=  0.6704 M_glouton=  0.7395 tenue=0.78 B_g= 2.5449 B_w= 1.8745 B_wg= 1.8054 survie=1.00 λ_step=1.87 p_turn=0.34
+seed:predator                len= 256 M= -1.4759 M_glouton= -1.5144 tenue=0.00 B_g= 0.0000 B_w= 1.4759 B_wg= 1.5144 survie=0.00 λ_step=1.76 p_turn=0.87
+seed:walk                    len= 256 M=  0.2824 M_glouton=  0.2793 tenue=0.69 B_g= 1.9589 B_w= 1.6766 B_wg= 1.6797 survie=1.00 λ_step=1.08 p_turn=0.07
+seed:fold                    len=  64 M=  0.1348 M_glouton=  0.1251 tenue=0.60 B_g= 1.3647 B_w= 1.2299 B_wg= 1.2396 survie=1.00 λ_step=1.23 p_turn=0.28
+seed:antibiotic              len=  64 M=  0.1610 M_glouton=  0.1764 tenue=0.64 B_g= 1.5023 B_w= 1.3413 B_wg= 1.3260 survie=1.00 λ_step=1.00 p_turn=0.12
+seed:commons                 len=  64 M= -1.2065 M_glouton= -1.1591 tenue=0.12 B_g= 0.3029 B_w= 1.5095 B_wg= 1.4621 survie=0.17 λ_step=1.73 p_turn=0.89
+seed:pandemic                len=  64 M=  0.0138 M_glouton= -0.0184 tenue=0.53 B_g= 1.2801 B_w= 1.2662 B_wg= 1.2984 survie=1.00 λ_step=1.13 p_turn=0.24
+seed:repair                  len= 160 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=0.00 p_turn=0.00
+seed:selfevo                 len=  64 M=  0.1580 M_glouton=  0.1833 tenue=0.64 B_g= 1.3938 B_w= 1.2358 B_wg= 1.2105 survie=1.00 λ_step=1.29 p_turn=0.26
+seed:diagnose                len=  39 M=  0.0137 M_glouton= -0.2689 tenue=0.09 B_g= 0.2435 B_w= 0.2298 B_wg= 0.5124 survie=0.17 λ_step=0.41 p_turn=0.02
+seed:general                 len= 172 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=0.00 p_turn=0.00
+evo:antibiotic#0             len= 116 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=2.67 p_turn=0.00
+evo:antibiotic#1             len= 116 M=  0.6201 M_glouton=  0.6610 tenue=0.90 B_g= 2.5062 B_w= 1.8861 B_wg= 1.8452 survie=1.00 λ_step=0.92 p_turn=0.09
+evo:antibiotic#2             len= 118 M=  0.3772 M_glouton=  0.4344 tenue=0.95 B_g= 0.5232 B_w= 0.1460 B_wg= 0.0888 survie=1.00 λ_step=1.60 p_turn=0.00
+evo:antibiotic#3             len= 117 M= -0.0031 M_glouton=  0.0102 tenue=0.41 B_g= 1.3496 B_w= 1.3527 B_wg= 1.3393 survie=1.00 λ_step=1.34 p_turn=0.45
+evo:antibiotic#4             len= 126 M= -0.0015 M_glouton= -0.0010 tenue=0.00 B_g= 0.0000 B_w= 0.0015 B_wg= 0.0010 survie=0.00 λ_step=0.80 p_turn=0.00
+evo:antibiotic#5             len= 117 M= -0.0079 M_glouton= -0.0044 tenue=0.00 B_g= 0.0000 B_w= 0.0079 B_wg= 0.0044 survie=0.00 λ_step=0.69 p_turn=0.00
+evo:antibiotic#6             len= 136 M= -1.1472 M_glouton= -1.1370 tenue=0.39 B_g= 1.1801 B_w= 2.3273 B_wg= 2.3172 survie=0.67 λ_step=0.97 p_turn=0.18
+evo:antibiotic#7             len= 126 M= -0.0015 M_glouton= -0.0010 tenue=0.00 B_g= 0.0000 B_w= 0.0015 B_wg= 0.0010 survie=0.00 λ_step=0.80 p_turn=0.00
+evo:antibiotic#8             len= 118 M=  0.0705 M_glouton=  0.0843 tenue=0.36 B_g= 1.1368 B_w= 1.0663 B_wg= 1.0525 survie=0.67 λ_step=0.53 p_turn=0.17
+evo:code-repair#0            len= 159 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=0.00 p_turn=0.00
+evo:commons#0                len=1022 M= -0.3451 M_glouton= -0.3138 tenue=0.05 B_g= 0.2110 B_w= 0.5560 B_wg= 0.5247 survie=0.17 λ_step=0.24 p_turn=0.86
+evo:commons#1                len=1010 M= -0.7786 M_glouton= -0.9948 tenue=0.00 B_g= 0.0010 B_w= 0.7797 B_wg= 0.9959 survie=0.00 λ_step=0.33 p_turn=0.85
+evo:commons#2                len=1018 M= -0.3493 M_glouton= -0.3570 tenue=0.11 B_g= 0.2414 B_w= 0.5908 B_wg= 0.5984 survie=0.33 λ_step=0.66 p_turn=0.72
+evo:commons#3                len=1010 M= -0.1670 M_glouton= -0.1454 tenue=0.27 B_g= 0.6747 B_w= 0.8416 B_wg= 0.8201 survie=0.50 λ_step=0.86 p_turn=0.47
+evo:commons#4                len=1015 M= -0.3028 M_glouton= -0.2948 tenue=0.15 B_g= 0.4126 B_w= 0.7153 B_wg= 0.7074 survie=0.17 λ_step=1.06 p_turn=0.46
+evo:commons#5                len=1019 M= -0.3306 M_glouton= -0.3316 tenue=0.07 B_g= 0.2403 B_w= 0.5709 B_wg= 0.5719 survie=0.17 λ_step=0.70 p_turn=0.62
+evo:commons#6                len=1020 M= -0.2232 M_glouton= -0.2260 tenue=0.15 B_g= 0.3787 B_w= 0.6019 B_wg= 0.6047 survie=0.33 λ_step=0.71 p_turn=0.68
+evo:commons#7                len=1018 M= -0.2413 M_glouton= -0.2674 tenue=0.13 B_g= 0.4363 B_w= 0.6775 B_wg= 0.7036 survie=0.17 λ_step=0.61 p_turn=0.74
+evo:commons#8                len=1023 M= -0.5270 M_glouton= -0.5549 tenue=0.13 B_g= 0.3684 B_w= 0.8955 B_wg= 0.9234 survie=0.33 λ_step=0.76 p_turn=0.63
+evo:commons#9                len=1020 M=  0.0758 M_glouton=  0.0694 tenue=0.29 B_g= 0.7076 B_w= 0.6318 B_wg= 0.6382 survie=0.50 λ_step=0.61 p_turn=0.59
+evo:commons#10               len=1024 M= -0.6245 M_glouton= -0.7038 tenue=0.21 B_g= 0.4609 B_w= 1.0854 B_wg= 1.1647 survie=0.33 λ_step=0.66 p_turn=0.63
+evo:commons#11               len=1021 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=0.02 p_turn=0.99
+evo:commons#12               len=1019 M= -0.0135 M_glouton= -0.0333 tenue=0.26 B_g= 0.5370 B_w= 0.5505 B_wg= 0.5703 survie=0.50 λ_step=0.71 p_turn=0.70
+evo:commons#13               len=1011 M= -0.4548 M_glouton= -0.4335 tenue=0.10 B_g= 0.3033 B_w= 0.7581 B_wg= 0.7369 survie=0.33 λ_step=1.01 p_turn=0.48
+evo:commons#14               len=1014 M=  0.0566 M_glouton= -0.0984 tenue=0.15 B_g= 0.2569 B_w= 0.2003 B_wg= 0.3553 survie=0.17 λ_step=0.56 p_turn=0.74
+evo:commons#15               len=1019 M= -0.3515 M_glouton= -0.3336 tenue=0.08 B_g= 0.1772 B_w= 0.5288 B_wg= 0.5109 survie=0.17 λ_step=0.82 p_turn=0.63
+evo:diagnose#0               len=  33 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=1.00 p_turn=0.00
+evo:diagnose#11              len=  30 M=  0.8096 M_glouton=  0.8597 tenue=1.00 B_g= 1.1089 B_w= 0.2994 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:diagnose#12              len=  29 M=  0.4894 M_glouton=  0.5413 tenue=0.87 B_g= 0.6747 B_w= 0.1854 B_wg= 0.1335 survie=1.00 λ_step=1.45 p_turn=0.00
+evo:diagnose#13              len=  29 M=  0.7919 M_glouton=  0.8221 tenue=1.00 B_g= 0.9941 B_w= 0.2022 B_wg= 0.1720 survie=1.00 λ_step=1.23 p_turn=0.00
+evo:emit-dialog#0            len= 257 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#1            len= 262 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#2            len= 253 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#3            len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#4            len= 254 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#5            len= 253 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#6            len= 257 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#7            len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#8            len= 253 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#9            len= 256 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#10           len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-dialog#11           len= 254 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#12           len= 255 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#13           len= 256 M= -0.0888 M_glouton= -0.0647 tenue=0.03 B_g= 0.0259 B_w= 0.1146 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#14           len= 256 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-dialog#15           len= 253 M= -0.0870 M_glouton= -0.0645 tenue=0.03 B_g= 0.0261 B_w= 0.1131 B_wg= 0.0906 survie=0.00 λ_step=0.01 p_turn=0.00
+evo:emit-echo#0              len= 254 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#1              len= 263 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#2              len= 259 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#3              len= 258 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#4              len= 256 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#5              len= 254 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#6              len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#7              len= 254 M=  0.7103 M_glouton=  0.5852 tenue=1.00 B_g= 0.8168 B_w= 0.1065 B_wg= 0.2317 survie=1.00 λ_step=1.35 p_turn=0.00
+evo:emit-echo#8              len= 254 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#9              len= 255 M=  0.8793 M_glouton=  0.9393 tenue=1.00 B_g= 1.1886 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#10             len= 258 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#11             len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#12             len= 255 M=  0.8793 M_glouton=  0.9393 tenue=1.00 B_g= 1.1886 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#13             len= 257 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#14             len= 256 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:emit-echo#15             len= 256 M=  0.0000 M_glouton=  0.0000 tenue=0.00 B_g= 0.0000 B_w= 0.0000 B_wg= 0.0000 survie=0.00 λ_step=0.00 p_turn=0.00
+evo:energy-eff#0             len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:energy-eff#3             len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:fold#0                   len=1020 M=  0.0257 M_glouton=  0.0419 tenue=0.49 B_g= 1.2864 B_w= 1.2608 B_wg= 1.2445 survie=1.00 λ_step=1.16 p_turn=0.04
+evo:fold#1                   len= 988 M=  0.0162 M_glouton=  0.0182 tenue=0.20 B_g= 0.5347 B_w= 0.5185 B_wg= 0.5165 survie=0.33 λ_step=0.27 p_turn=0.14
+evo:fold#2                   len=1020 M= -0.0239 M_glouton= -0.0167 tenue=0.06 B_g= 0.1972 B_w= 0.2211 B_wg= 0.2139 survie=0.17 λ_step=0.19 p_turn=0.05
+evo:fold#3                   len=1016 M=  0.0790 M_glouton=  0.0273 tenue=0.59 B_g= 1.3333 B_w= 1.2543 B_wg= 1.3059 survie=1.00 λ_step=1.15 p_turn=0.06
+evo:fold#4                   len= 986 M= -0.0788 M_glouton= -0.0119 tenue=0.45 B_g= 1.1915 B_w= 1.2703 B_wg= 1.2034 survie=1.00 λ_step=1.21 p_turn=0.04
+evo:fold#5                   len=1008 M=  0.0172 M_glouton= -0.0070 tenue=0.56 B_g= 1.2647 B_w= 1.2474 B_wg= 1.2717 survie=1.00 λ_step=1.16 p_turn=0.04
+evo:fold#6                   len=1020 M=  0.0040 M_glouton=  0.0021 tenue=0.09 B_g= 0.2190 B_w= 0.2150 B_wg= 0.2169 survie=0.17 λ_step=0.19 p_turn=0.04
+evo:fold#7                   len=1011 M= -0.0109 M_glouton=  0.0144 tenue=0.48 B_g= 1.3175 B_w= 1.3284 B_wg= 1.3031 survie=1.00 λ_step=1.17 p_turn=0.07
+evo:fold#8                   len= 996 M= -0.0121 M_glouton= -0.0205 tenue=0.47 B_g= 1.2291 B_w= 1.2413 B_wg= 1.2496 survie=1.00 λ_step=1.18 p_turn=0.05
+evo:fold#9                   len= 991 M= -0.1277 M_glouton= -0.1168 tenue=0.01 B_g= 0.1116 B_w= 0.2393 B_wg= 0.2284 survie=0.17 λ_step=0.19 p_turn=0.03
+evo:fold#10                  len=1002 M=  0.0262 M_glouton=  0.0206 tenue=0.09 B_g= 0.2942 B_w= 0.2679 B_wg= 0.2735 survie=0.17 λ_step=0.12 p_turn=0.05
+evo:fold#11                  len= 996 M=  0.1349 M_glouton=  0.1754 tenue=0.54 B_g= 1.4226 B_w= 1.2877 B_wg= 1.2472 survie=1.00 λ_step=1.15 p_turn=0.05
+evo:fold#12                  len=1016 M= -0.0118 M_glouton= -0.0252 tenue=0.45 B_g= 1.2501 B_w= 1.2619 B_wg= 1.2753 survie=1.00 λ_step=1.16 p_turn=0.06
+evo:fold#13                  len= 986 M= -0.0093 M_glouton= -0.0233 tenue=0.06 B_g= 0.2018 B_w= 0.2110 B_wg= 0.2251 survie=0.17 λ_step=0.17 p_turn=0.05
+evo:fold#14                  len=1016 M=  0.0159 M_glouton= -0.0036 tenue=0.51 B_g= 1.2562 B_w= 1.2404 B_wg= 1.2599 survie=1.00 λ_step=1.17 p_turn=0.05
+evo:fold#15                  len=1013 M=  0.0609 M_glouton=  0.0598 tenue=0.50 B_g= 1.3185 B_w= 1.2575 B_wg= 1.2586 survie=1.00 λ_step=1.16 p_turn=0.06
+evo:general#0                len= 200 M=  0.0360 M_glouton=  0.0899 tenue=0.55 B_g= 1.7061 B_w= 1.6701 B_wg= 1.6162 survie=1.00 λ_step=0.70 p_turn=0.37
+evo:general#1                len= 200 M=  0.0612 M_glouton=  0.0495 tenue=0.53 B_g= 1.7160 B_w= 1.6548 B_wg= 1.6666 survie=1.00 λ_step=0.73 p_turn=0.36
+evo:general#2                len= 200 M=  0.2772 M_glouton=  0.2546 tenue=0.66 B_g= 2.1250 B_w= 1.8478 B_wg= 1.8704 survie=1.00 λ_step=0.64 p_turn=0.35
+evo:general#3                len= 201 M=  0.1027 M_glouton=  0.1283 tenue=0.58 B_g= 1.9829 B_w= 1.8802 B_wg= 1.8546 survie=1.00 λ_step=0.57 p_turn=0.51
+evo:general#4                len= 201 M=  0.0615 M_glouton=  0.1297 tenue=0.56 B_g= 1.9735 B_w= 1.9120 B_wg= 1.8438 survie=1.00 λ_step=0.59 p_turn=0.52
+evo:general#5                len= 200 M= -0.0284 M_glouton=  0.0257 tenue=0.48 B_g= 1.7825 B_w= 1.8109 B_wg= 1.7569 survie=1.00 λ_step=0.54 p_turn=0.42
+evo:general#6                len= 200 M= -0.5152 M_glouton= -0.3718 tenue=0.33 B_g= 1.4261 B_w= 1.9413 B_wg= 1.7979 survie=0.67 λ_step=0.33 p_turn=0.53
+evo:general#7                len= 200 M=  0.0183 M_glouton=  0.0480 tenue=0.50 B_g= 1.9159 B_w= 1.8976 B_wg= 1.8679 survie=1.00 λ_step=0.64 p_turn=0.37
+evo:general#8                len= 201 M=  0.1758 M_glouton=  0.1922 tenue=0.68 B_g= 2.0901 B_w= 1.9143 B_wg= 1.8979 survie=1.00 λ_step=0.56 p_turn=0.44
+evo:general#9                len= 204 M=  0.0111 M_glouton=  0.0509 tenue=0.52 B_g= 2.0037 B_w= 1.9927 B_wg= 1.9528 survie=1.00 λ_step=0.43 p_turn=0.35
+evo:general#10               len= 200 M= -0.0137 M_glouton=  0.0117 tenue=0.48 B_g= 1.9820 B_w= 1.9957 B_wg= 1.9703 survie=1.00 λ_step=0.52 p_turn=0.45
+evo:general#11               len= 200 M=  0.0837 M_glouton=  0.0903 tenue=0.52 B_g= 2.0252 B_w= 1.9415 B_wg= 1.9350 survie=1.00 λ_step=0.51 p_turn=0.34
+evo:general#12               len= 200 M=  0.0844 M_glouton=  0.0397 tenue=0.46 B_g= 1.9271 B_w= 1.8426 B_wg= 1.8874 survie=0.83 λ_step=0.36 p_turn=0.42
+evo:general#13               len= 200 M=  0.1150 M_glouton=  0.0857 tenue=0.59 B_g= 2.0059 B_w= 1.8909 B_wg= 1.9202 survie=1.00 λ_step=0.57 p_turn=0.48
+evo:general#14               len= 200 M=  0.0369 M_glouton=  0.1006 tenue=0.52 B_g= 1.8743 B_w= 1.8374 B_wg= 1.7737 survie=1.00 λ_step=0.60 p_turn=0.38
+evo:general#15               len= 200 M=  0.0499 M_glouton=  0.0442 tenue=0.51 B_g= 1.8241 B_w= 1.7742 B_wg= 1.7799 survie=1.00 λ_step=0.65 p_turn=0.34
+evo:max-pop#0                len= 999 M=  0.1454 M_glouton=  0.2064 tenue=0.66 B_g= 1.9680 B_w= 1.8225 B_wg= 1.7616 survie=1.00 λ_step=0.99 p_turn=0.35
+evo:max-pop#1                len=1000 M=  0.1458 M_glouton=  0.1198 tenue=0.67 B_g= 1.8397 B_w= 1.6938 B_wg= 1.7199 survie=1.00 λ_step=0.99 p_turn=0.21
+evo:max-pop#2                len= 996 M=  0.1513 M_glouton=  0.1387 tenue=0.62 B_g= 1.8449 B_w= 1.6936 B_wg= 1.7062 survie=1.00 λ_step=0.99 p_turn=0.23
+evo:max-pop#3                len=1015 M=  0.1361 M_glouton=  0.1825 tenue=0.66 B_g= 1.9118 B_w= 1.7756 B_wg= 1.7293 survie=1.00 λ_step=1.00 p_turn=0.21
+evo:max-pop#4                len=1002 M=  0.1741 M_glouton=  0.1349 tenue=0.68 B_g= 1.9925 B_w= 1.8184 B_wg= 1.8576 survie=1.00 λ_step=1.00 p_turn=0.16
+evo:max-pop#5                len= 994 M=  0.1762 M_glouton=  0.1366 tenue=0.68 B_g= 1.8724 B_w= 1.6961 B_wg= 1.7357 survie=1.00 λ_step=0.99 p_turn=0.23
+evo:max-pop#6                len=1008 M=  0.1015 M_glouton=  0.0640 tenue=0.60 B_g= 1.7836 B_w= 1.6821 B_wg= 1.7196 survie=1.00 λ_step=1.00 p_turn=0.24
+evo:max-pop#7                len=1004 M=  0.1138 M_glouton=  0.1362 tenue=0.63 B_g= 1.7841 B_w= 1.6703 B_wg= 1.6480 survie=1.00 λ_step=1.02 p_turn=0.26
+evo:max-pop#8                len= 999 M=  0.1512 M_glouton=  0.1721 tenue=0.64 B_g= 1.9455 B_w= 1.7943 B_wg= 1.7734 survie=1.00 λ_step=1.00 p_turn=0.35
+evo:max-pop#9                len=1015 M=  0.1028 M_glouton=  0.1143 tenue=0.61 B_g= 1.8665 B_w= 1.7637 B_wg= 1.7522 survie=1.00 λ_step=1.01 p_turn=0.25
+evo:max-pop#10               len=1007 M=  0.2259 M_glouton=  0.2175 tenue=0.68 B_g= 1.9068 B_w= 1.6809 B_wg= 1.6892 survie=1.00 λ_step=0.99 p_turn=0.22
+evo:max-pop#11               len= 979 M=  0.1069 M_glouton=  0.1004 tenue=0.60 B_g= 1.9678 B_w= 1.8609 B_wg= 1.8674 survie=1.00 λ_step=0.98 p_turn=0.05
+evo:max-pop#12               len=1012 M=  0.2634 M_glouton=  0.2711 tenue=0.79 B_g= 1.9975 B_w= 1.7340 B_wg= 1.7264 survie=1.00 λ_step=1.00 p_turn=0.23
+evo:max-pop#13               len= 998 M=  0.1640 M_glouton=  0.1526 tenue=0.70 B_g= 1.9361 B_w= 1.7720 B_wg= 1.7835 survie=1.00 λ_step=1.00 p_turn=0.18
+evo:max-pop#14               len=1002 M=  0.0797 M_glouton=  0.0653 tenue=0.56 B_g= 1.8971 B_w= 1.8174 B_wg= 1.8317 survie=1.00 λ_step=1.00 p_turn=0.17
+evo:max-pop#15               len= 997 M=  0.2798 M_glouton=  0.2372 tenue=0.73 B_g= 1.9445 B_w= 1.6648 B_wg= 1.7074 survie=1.00 λ_step=0.99 p_turn=0.25
+evo:org-seeds#0              len= 264 M= -1.1550 M_glouton= -0.8970 tenue=0.17 B_g= 2.4035 B_w= 3.5586 B_wg= 3.3005 survie=1.00 λ_step=1.59 p_turn=0.77
+evo:org-seeds#1              len= 988 M= -0.2311 M_glouton= -0.1767 tenue=0.41 B_g= 2.8823 B_w= 3.1134 B_wg= 3.0591 survie=1.00 λ_step=1.57 p_turn=0.80
+evo:org-seeds#2              len= 257 M= -0.0006 M_glouton=  0.0099 tenue=0.47 B_g= 1.3459 B_w= 1.3465 B_wg= 1.3361 survie=1.00 λ_step=1.77 p_turn=0.74
+evo:org-seeds#3              len= 257 M=  0.5822 M_glouton=  0.6362 tenue=0.78 B_g= 3.2484 B_w= 2.6662 B_wg= 2.6122 survie=1.00 λ_step=1.65 p_turn=0.85
+evo:org-seeds#4              len=1008 M= -0.3575 M_glouton= -0.4725 tenue=0.45 B_g= 2.3577 B_w= 2.7152 B_wg= 2.8302 survie=1.00 λ_step=1.53 p_turn=0.70
+evo:org-seeds#5              len= 255 M= -0.0008 M_glouton=  0.0315 tenue=0.50 B_g= 2.7762 B_w= 2.7770 B_wg= 2.7447 survie=1.00 λ_step=1.28 p_turn=0.77
+evo:org-seeds#6              len= 255 M=  0.7132 M_glouton=  0.7711 tenue=0.74 B_g= 3.4014 B_w= 2.6882 B_wg= 2.6303 survie=1.00 λ_step=1.48 p_turn=0.79
+evo:org-seeds#7              len= 992 M= -0.3726 M_glouton= -0.4118 tenue=0.45 B_g= 2.8545 B_w= 3.2271 B_wg= 3.2662 survie=1.00 λ_step=1.56 p_turn=0.79
+evo:org-seeds#8              len= 255 M=  0.6063 M_glouton=  0.3799 tenue=0.81 B_g= 3.1198 B_w= 2.5136 B_wg= 2.7400 survie=1.00 λ_step=1.33 p_turn=0.78
+evo:org-seeds#9              len= 255 M=  0.2895 M_glouton=  0.3732 tenue=0.72 B_g= 2.9211 B_w= 2.6316 B_wg= 2.5479 survie=1.00 λ_step=1.28 p_turn=0.71
+evo:org-seeds#10             len=1019 M=  0.0611 M_glouton=  0.2008 tenue=0.60 B_g= 3.1205 B_w= 3.0595 B_wg= 2.9197 survie=1.00 λ_step=1.62 p_turn=0.82
+evo:org-seeds#11             len= 459 M= -0.2595 M_glouton= -0.0595 tenue=0.54 B_g= 3.0661 B_w= 3.3256 B_wg= 3.1256 survie=1.00 λ_step=1.59 p_turn=0.81
+evo:org-seeds#12             len= 997 M= -0.2840 M_glouton= -0.2173 tenue=0.42 B_g= 2.4420 B_w= 2.7260 B_wg= 2.6594 survie=1.00 λ_step=1.60 p_turn=0.78
+evo:org-seeds#13             len= 254 M= -0.4293 M_glouton= -0.2164 tenue=0.51 B_g= 2.9494 B_w= 3.3787 B_wg= 3.1658 survie=1.00 λ_step=1.65 p_turn=0.81
+evo:org-seeds#14             len= 461 M=  0.0204 M_glouton=  0.0355 tenue=0.84 B_g= 1.3619 B_w= 1.3414 B_wg= 1.3263 survie=1.00 λ_step=0.82 p_turn=0.88
+evo:org-seeds#15             len= 254 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:pandemic#0               len= 690 M= -1.3031 M_glouton= -1.0506 tenue=0.18 B_g= 1.6428 B_w= 2.9458 B_wg= 2.6933 survie=1.00 λ_step=1.44 p_turn=0.09
+evo:pandemic#1               len= 682 M=  0.3196 M_glouton=  0.4472 tenue=0.73 B_g= 2.5267 B_w= 2.2071 B_wg= 2.0795 survie=1.00 λ_step=1.40 p_turn=0.23
+evo:pandemic#2               len= 686 M= -0.1908 M_glouton=  0.1422 tenue=0.47 B_g= 2.2481 B_w= 2.4389 B_wg= 2.1060 survie=1.00 λ_step=1.41 p_turn=0.10
+evo:pandemic#3               len= 693 M=  0.4140 M_glouton=  0.4992 tenue=0.64 B_g= 2.6293 B_w= 2.2153 B_wg= 2.1300 survie=1.00 λ_step=1.38 p_turn=0.23
+evo:pandemic#4               len= 688 M= -0.6070 M_glouton= -0.0338 tenue=0.36 B_g= 1.2382 B_w= 1.8452 B_wg= 1.2721 survie=1.00 λ_step=1.44 p_turn=0.03
+evo:pandemic#5               len= 690 M= -0.7561 M_glouton= -0.4464 tenue=0.27 B_g= 1.7543 B_w= 2.5104 B_wg= 2.2008 survie=1.00 λ_step=1.41 p_turn=0.10
+evo:pandemic#6               len= 683 M=  0.7465 M_glouton=  0.8627 tenue=0.77 B_g= 2.7160 B_w= 1.9695 B_wg= 1.8533 survie=1.00 λ_step=1.43 p_turn=0.19
+evo:pandemic#7               len= 689 M= -0.3940 M_glouton= -0.0689 tenue=0.46 B_g= 2.5710 B_w= 2.9651 B_wg= 2.6399 survie=1.00 λ_step=1.42 p_turn=0.17
+evo:pandemic#8               len= 689 M= -0.6023 M_glouton= -0.3151 tenue=0.45 B_g= 1.8842 B_w= 2.4866 B_wg= 2.1994 survie=1.00 λ_step=1.44 p_turn=0.13
+evo:pandemic#9               len= 687 M= -0.4930 M_glouton= -0.0572 tenue=0.40 B_g= 2.0620 B_w= 2.5550 B_wg= 2.1192 survie=1.00 λ_step=1.42 p_turn=0.13
+evo:pandemic#10              len= 683 M= -0.5130 M_glouton=  0.0500 tenue=0.47 B_g= 1.8558 B_w= 2.3689 B_wg= 1.8059 survie=1.00 λ_step=1.47 p_turn=0.13
+evo:pandemic#11              len= 683 M= -0.0999 M_glouton=  0.1709 tenue=0.55 B_g= 2.0443 B_w= 2.1442 B_wg= 1.8734 survie=1.00 λ_step=1.41 p_turn=0.19
+evo:pandemic#12              len= 681 M= -0.3752 M_glouton=  0.2570 tenue=0.32 B_g= 2.3448 B_w= 2.7200 B_wg= 2.0878 survie=1.00 λ_step=1.43 p_turn=0.12
+evo:pandemic#13              len= 690 M=  0.6997 M_glouton=  0.8036 tenue=0.85 B_g= 3.4917 B_w= 2.7920 B_wg= 2.6881 survie=1.00 λ_step=1.36 p_turn=0.32
+evo:pandemic#14              len= 689 M=  0.0284 M_glouton=  0.0904 tenue=0.59 B_g= 2.2466 B_w= 2.2182 B_wg= 2.1562 survie=1.00 λ_step=1.44 p_turn=0.14
+evo:pandemic#15              len= 691 M= -0.8593 M_glouton= -0.5328 tenue=0.30 B_g= 2.0773 B_w= 2.9365 B_wg= 2.6101 survie=1.00 λ_step=1.45 p_turn=0.11
+evo:predator-prey#0          len= 273 M=  0.0052 M_glouton=  0.0246 tenue=0.54 B_g= 1.3473 B_w= 1.3421 B_wg= 1.3227 survie=1.00 λ_step=1.55 p_turn=1.00
+evo:predator-prey#1          len= 282 M=  0.0224 M_glouton=  0.0367 tenue=0.79 B_g= 1.3582 B_w= 1.3358 B_wg= 1.3215 survie=1.00 λ_step=1.07 p_turn=1.00
+evo:predator-prey#2          len= 273 M=  0.1134 M_glouton=  0.0683 tenue=0.62 B_g= 1.4558 B_w= 1.3424 B_wg= 1.3875 survie=1.00 λ_step=1.23 p_turn=0.73
+evo:predator-prey#3          len= 287 M=  0.0196 M_glouton= -0.0036 tenue=0.53 B_g= 1.5522 B_w= 1.5326 B_wg= 1.5558 survie=1.00 λ_step=0.90 p_turn=0.30
+evo:predator-prey#4          len= 285 M=  0.1067 M_glouton=  0.1320 tenue=0.62 B_g= 1.5733 B_w= 1.4665 B_wg= 1.4413 survie=1.00 λ_step=1.10 p_turn=0.59
+evo:predator-prey#5          len= 290 M=  0.0200 M_glouton=  0.0406 tenue=0.66 B_g= 1.3510 B_w= 1.3310 B_wg= 1.3104 survie=1.00 λ_step=1.13 p_turn=0.82
+evo:predator-prey#6          len= 273 M=  0.0068 M_glouton=  0.0120 tenue=0.49 B_g= 1.2858 B_w= 1.2790 B_wg= 1.2738 survie=1.00 λ_step=1.33 p_turn=0.77
+evo:predator-prey#7          len= 272 M=  0.0110 M_glouton=  0.0324 tenue=0.51 B_g= 1.3659 B_w= 1.3549 B_wg= 1.3335 survie=1.00 λ_step=1.23 p_turn=0.72
+evo:predator-prey#8          len= 276 M=  0.0119 M_glouton=  0.0033 tenue=0.54 B_g= 1.3341 B_w= 1.3222 B_wg= 1.3308 survie=1.00 λ_step=1.25 p_turn=0.73
+evo:predator-prey#9          len= 284 M=  0.0911 M_glouton=  0.0550 tenue=0.56 B_g= 1.4947 B_w= 1.4036 B_wg= 1.4397 survie=1.00 λ_step=1.14 p_turn=0.51
+evo:predator-prey#10         len= 289 M=  0.1541 M_glouton=  0.1770 tenue=0.57 B_g= 1.8520 B_w= 1.6979 B_wg= 1.6750 survie=1.00 λ_step=0.89 p_turn=0.83
+evo:predator-prey#11         len= 284 M=  0.1557 M_glouton=  0.1277 tenue=0.66 B_g= 1.5795 B_w= 1.4238 B_wg= 1.4518 survie=1.00 λ_step=1.16 p_turn=0.60
+evo:predator-prey#12         len= 272 M=  0.1068 M_glouton=  0.1035 tenue=0.58 B_g= 1.5029 B_w= 1.3962 B_wg= 1.3994 survie=1.00 λ_step=1.23 p_turn=0.73
+evo:predator-prey#13         len= 274 M=  0.0308 M_glouton=  0.0601 tenue=0.56 B_g= 1.3693 B_w= 1.3385 B_wg= 1.3091 survie=1.00 λ_step=1.24 p_turn=0.70
+evo:predator-prey#14         len= 279 M=  0.1427 M_glouton=  0.1035 tenue=0.62 B_g= 1.4834 B_w= 1.3406 B_wg= 1.3799 survie=1.00 λ_step=1.24 p_turn=0.73
+evo:predator-prey#15         len= 284 M=  0.1621 M_glouton=  0.1172 tenue=0.65 B_g= 1.5762 B_w= 1.4141 B_wg= 1.4589 survie=1.00 λ_step=1.16 p_turn=0.64
+evo:predator-prey#16         len= 256 M= -1.4759 M_glouton= -1.5144 tenue=0.00 B_g= 0.0000 B_w= 1.4759 B_wg= 1.5144 survie=0.00 λ_step=1.76 p_turn=0.87
+evo:predict-stock#0          len= 232 M= -0.1715 M_glouton=  0.0899 tenue=0.48 B_g= 2.9387 B_w= 3.1102 B_wg= 2.8488 survie=1.00 λ_step=1.52 p_turn=0.93
+evo:predict-stock#1          len= 234 M=  0.2611 M_glouton=  0.3440 tenue=0.70 B_g= 3.2178 B_w= 2.9568 B_wg= 2.8738 survie=1.00 λ_step=1.52 p_turn=0.86
+evo:predict-stock#2          len= 238 M= -0.2030 M_glouton=  0.0050 tenue=0.42 B_g= 2.6151 B_w= 2.8181 B_wg= 2.6102 survie=1.00 λ_step=1.41 p_turn=0.95
+evo:predict-stock#3          len= 234 M= -0.2758 M_glouton= -0.2295 tenue=0.45 B_g= 3.0456 B_w= 3.3214 B_wg= 3.2751 survie=1.00 λ_step=1.64 p_turn=0.93
+evo:predict-stock#4          len= 235 M= -0.1026 M_glouton= -0.1269 tenue=0.47 B_g= 2.8975 B_w= 3.0001 B_wg= 3.0244 survie=1.00 λ_step=1.54 p_turn=0.94
+evo:predict-stock#5          len= 235 M=  0.4908 M_glouton=  0.5079 tenue=0.66 B_g= 2.6529 B_w= 2.1622 B_wg= 2.1450 survie=1.00 λ_step=1.09 p_turn=0.71
+evo:predict-stock#6          len= 234 M= -0.2092 M_glouton= -0.0054 tenue=0.52 B_g= 2.7043 B_w= 2.9135 B_wg= 2.7097 survie=1.00 λ_step=1.53 p_turn=0.96
+evo:predict-stock#7          len= 233 M= -0.4224 M_glouton= -0.1294 tenue=0.43 B_g= 3.0560 B_w= 3.4783 B_wg= 3.1854 survie=1.00 λ_step=1.64 p_turn=0.96
+evo:predict-stock#8          len= 233 M=  0.0533 M_glouton=  0.0312 tenue=0.57 B_g= 2.9117 B_w= 2.8584 B_wg= 2.8805 survie=1.00 λ_step=1.40 p_turn=0.82
+evo:predict-stock#9          len= 235 M= -0.1345 M_glouton=  0.0039 tenue=0.42 B_g= 3.0038 B_w= 3.1383 B_wg= 2.9999 survie=1.00 λ_step=1.59 p_turn=0.89
+evo:predict-stock#10         len= 232 M= -0.0540 M_glouton=  0.0804 tenue=0.56 B_g= 2.4434 B_w= 2.4974 B_wg= 2.3630 survie=1.00 λ_step=1.53 p_turn=0.95
+evo:predict-stock#11         len= 231 M= -0.0631 M_glouton= -0.1622 tenue=0.48 B_g= 2.8391 B_w= 2.9022 B_wg= 3.0013 survie=1.00 λ_step=0.97 p_turn=0.69
+evo:predict-stock#12         len= 236 M= -0.3337 M_glouton= -0.1375 tenue=0.37 B_g= 2.7834 B_w= 3.1171 B_wg= 2.9209 survie=1.00 λ_step=1.53 p_turn=0.90
+evo:predict-stock#13         len= 235 M= -0.0369 M_glouton= -0.0684 tenue=0.51 B_g= 2.9468 B_w= 2.9837 B_wg= 3.0152 survie=1.00 λ_step=1.55 p_turn=0.96
+evo:predict-stock#14         len= 235 M=  0.3301 M_glouton=  0.2724 tenue=0.72 B_g= 3.0047 B_w= 2.6746 B_wg= 2.7323 survie=1.00 λ_step=1.52 p_turn=0.92
+evo:predict-stock#15         len= 237 M= -0.0628 M_glouton= -0.0804 tenue=0.43 B_g= 1.3625 B_w= 1.4253 B_wg= 1.4429 survie=1.00 λ_step=1.22 p_turn=0.61
+evo:predict-walk#0           len= 256 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:predict-walk#1           len= 256 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+evo:self-evolve#0            len= 251 M=  0.1016 M_glouton=  0.0736 tenue=0.50 B_g= 1.2109 B_w= 1.1093 B_wg= 1.1373 survie=1.00 λ_step=1.49 p_turn=0.12
+evo:self-evolve#1            len= 255 M= -0.3997 M_glouton= -0.2330 tenue=0.25 B_g= 0.7621 B_w= 1.1618 B_wg= 0.9951 survie=0.83 λ_step=1.51 p_turn=0.05
+evo:self-evolve#2            len= 238 M= -0.1702 M_glouton= -0.1259 tenue=0.33 B_g= 0.9976 B_w= 1.1678 B_wg= 1.1235 survie=1.00 λ_step=1.53 p_turn=0.06
+evo:self-evolve#3            len= 254 M= -0.0287 M_glouton= -0.0528 tenue=0.39 B_g= 1.1107 B_w= 1.1394 B_wg= 1.1635 survie=1.00 λ_step=1.52 p_turn=0.10
+evo:self-evolve#4            len= 256 M= -0.4499 M_glouton= -0.4157 tenue=0.26 B_g= 0.7439 B_w= 1.1938 B_wg= 1.1596 survie=0.67 λ_step=1.50 p_turn=0.04
+evo:self-evolve#5            len= 234 M=  0.1275 M_glouton=  0.1000 tenue=0.50 B_g= 1.2785 B_w= 1.1510 B_wg= 1.1785 survie=1.00 λ_step=1.50 p_turn=0.06
+evo:self-evolve#6            len= 255 M= -0.1376 M_glouton= -0.1510 tenue=0.41 B_g= 0.9926 B_w= 1.1301 B_wg= 1.1436 survie=1.00 λ_step=1.52 p_turn=0.10
+evo:self-evolve#7            len= 253 M= -0.0878 M_glouton= -0.1148 tenue=0.41 B_g= 1.0175 B_w= 1.1053 B_wg= 1.1323 survie=1.00 λ_step=1.53 p_turn=0.07
+evo:self-evolve#8            len= 259 M=  0.1592 M_glouton= -0.0374 tenue=0.53 B_g= 1.1186 B_w= 0.9594 B_wg= 1.1559 survie=1.00 λ_step=1.50 p_turn=0.08
+evo:self-evolve#9            len= 252 M= -0.1139 M_glouton= -0.0538 tenue=0.43 B_g= 1.0627 B_w= 1.1766 B_wg= 1.1165 survie=0.83 λ_step=1.51 p_turn=0.06
+evo:self-evolve#10           len= 250 M= -0.1606 M_glouton= -0.1796 tenue=0.38 B_g= 0.9727 B_w= 1.1333 B_wg= 1.1523 survie=0.83 λ_step=1.51 p_turn=0.07
+evo:self-evolve#11           len= 251 M= -0.2859 M_glouton= -0.3294 tenue=0.21 B_g= 0.8463 B_w= 1.1322 B_wg= 1.1757 survie=0.83 λ_step=1.44 p_turn=0.14
+evo:self-evolve#12           len= 254 M= -0.0993 M_glouton= -0.1790 tenue=0.42 B_g= 1.0681 B_w= 1.1674 B_wg= 1.2471 survie=0.83 λ_step=1.39 p_turn=0.06
+evo:self-evolve#13           len= 252 M=  0.0511 M_glouton=  0.0427 tenue=0.52 B_g= 1.1853 B_w= 1.1342 B_wg= 1.1425 survie=1.00 λ_step=1.47 p_turn=0.05
+evo:self-evolve#14           len= 254 M= -0.0702 M_glouton= -0.0952 tenue=0.35 B_g= 1.1245 B_w= 1.1947 B_wg= 1.2197 survie=0.83 λ_step=1.45 p_turn=0.08
+evo:self-evolve#15           len= 255 M=  0.0580 M_glouton=  0.0865 tenue=0.46 B_g= 1.2300 B_w= 1.1720 B_wg= 1.1435 survie=1.00 λ_step=1.50 p_turn=0.12
+evo:self-rewrite#0           len=1023 M=  0.1016 M_glouton=  0.9370 tenue=0.51 B_g= 2.2801 B_w= 2.1785 B_wg= 1.3431 survie=1.00 λ_step=1.20 p_turn=0.00
+evo:self-rewrite#1           len=1009 M=  0.6013 M_glouton=  0.5372 tenue=0.76 B_g= 2.7541 B_w= 2.1528 B_wg= 2.2168 survie=1.00 λ_step=1.20 p_turn=0.02
+evo:self-rewrite#2           len=1016 M=  0.0160 M_glouton=  0.0141 tenue=0.50 B_g= 2.3916 B_w= 2.3756 B_wg= 2.3775 survie=1.00 λ_step=1.18 p_turn=0.02
+evo:self-rewrite#3           len=1015 M=  0.4790 M_glouton=  0.9272 tenue=0.63 B_g= 3.0264 B_w= 2.5475 B_wg= 2.0993 survie=1.00 λ_step=1.16 p_turn=0.02
+evo:self-rewrite#4           len=1024 M= -0.0735 M_glouton=  0.6724 tenue=0.55 B_g= 2.3616 B_w= 2.4351 B_wg= 1.6892 survie=1.00 λ_step=1.13 p_turn=0.03
+evo:self-rewrite#5           len=1024 M=  0.0063 M_glouton=  0.2499 tenue=0.53 B_g= 2.5927 B_w= 2.5864 B_wg= 2.3428 survie=1.00 λ_step=1.13 p_turn=0.02
+evo:self-rewrite#6           len=1020 M=  0.3268 M_glouton=  0.6396 tenue=0.70 B_g= 2.6104 B_w= 2.2835 B_wg= 1.9708 survie=1.00 λ_step=1.15 p_turn=0.02
+evo:self-rewrite#7           len=1023 M=  0.3181 M_glouton=  0.8039 tenue=0.60 B_g= 2.5408 B_w= 2.2227 B_wg= 1.7369 survie=1.00 λ_step=1.13 p_turn=0.01
+evo:self-rewrite#8           len=1024 M= -0.4257 M_glouton=  0.1576 tenue=0.39 B_g= 2.5850 B_w= 3.0108 B_wg= 2.4275 survie=1.00 λ_step=1.15 p_turn=0.01
+evo:self-rewrite#9           len=1019 M= -0.0953 M_glouton=  0.0478 tenue=0.55 B_g= 2.0653 B_w= 2.1606 B_wg= 2.0175 survie=1.00 λ_step=1.25 p_turn=0.05
+evo:self-rewrite#10          len=1018 M= -0.1094 M_glouton=  0.6574 tenue=0.48 B_g= 2.4388 B_w= 2.5483 B_wg= 1.7814 survie=1.00 λ_step=1.16 p_turn=0.02
+evo:self-rewrite#11          len=1023 M=  0.1772 M_glouton=  0.3317 tenue=0.60 B_g= 2.3376 B_w= 2.1604 B_wg= 2.0059 survie=1.00 λ_step=1.18 p_turn=0.03
+evo:self-rewrite#12          len=1024 M=  0.3025 M_glouton=  0.4021 tenue=0.64 B_g= 2.6053 B_w= 2.3028 B_wg= 2.2033 survie=1.00 λ_step=1.14 p_turn=0.01
+evo:self-rewrite#13          len=1024 M=  0.0305 M_glouton=  0.4510 tenue=0.56 B_g= 2.8893 B_w= 2.8588 B_wg= 2.4384 survie=1.00 λ_step=1.07 p_turn=0.02
+evo:self-rewrite#14          len=1013 M=  0.4801 M_glouton=  0.4901 tenue=0.63 B_g= 2.9147 B_w= 2.4347 B_wg= 2.4246 survie=1.00 λ_step=1.22 p_turn=0.01
+evo:self-rewrite#15          len=1016 M= -0.2850 M_glouton=  0.1353 tenue=0.36 B_g= 2.3681 B_w= 2.6531 B_wg= 2.2328 survie=1.00 λ_step=1.18 p_turn=0.02
+evo:survival#0               len= 255 M=  0.8698 M_glouton=  0.9297 tenue=1.00 B_g= 1.1790 B_w= 0.3093 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+
+## top-10 hors seeds/évolués (faux positifs potentiels)
+elf@0x6189                   len=1020 M=  1.2136 M_glouton=  1.2309 tenue=0.62 B_g= 3.6903 B_w= 2.4768 B_wg= 2.4594 survie=1.00 λ_step=0.31 p_turn=0.08
+shuf:diagnose#0              len=  33 M=  1.0929 M_glouton=  1.0929 tenue=1.00 B_g= 1.0929 B_w= 0.0000 B_wg= 0.0000 survie=1.00 λ_step=1.00 p_turn=0.00
+shuf:emit-echo#15            len= 256 M=  0.8138 M_glouton=  0.8638 tenue=1.00 B_g= 1.1131 B_w= 0.2994 B_wg= 0.2493 survie=1.00 λ_step=1.00 p_turn=0.00
+elf@0x6d52                   len=1020 M=  0.6469 M_glouton=  0.7134 tenue=0.74 B_g= 3.3120 B_w= 2.6651 B_wg= 2.5986 survie=1.00 λ_step=0.30 p_turn=0.17
+shuf:predator-prey#10        len= 289 M=  0.5823 M_glouton=  0.5315 tenue=1.00 B_g= 0.7709 B_w= 0.1886 B_wg= 0.2394 survie=1.00 λ_step=0.73 p_turn=0.00
+elf@0x22a0b                  len=1020 M=  0.5559 M_glouton=  0.5375 tenue=0.44 B_g= 2.7390 B_w= 2.1831 B_wg= 2.2015 survie=0.67 λ_step=0.28 p_turn=0.07
+elf@0x1b346                  len= 986 M=  0.5486 M_glouton=  0.5367 tenue=0.35 B_g= 1.8226 B_w= 1.2740 B_wg= 1.2859 survie=0.67 λ_step=0.38 p_turn=0.23
+noise#140                    len= 255 M=  0.5113 M_glouton=  0.4879 tenue=0.78 B_g= 2.6771 B_w= 2.1658 B_wg= 2.1892 survie=1.00 λ_step=0.51 p_turn=0.50
+shuf:predator-prey#15        len= 284 M=  0.4871 M_glouton=  0.3779 tenue=0.70 B_g= 2.6764 B_w= 2.1893 B_wg= 2.2985 survie=1.00 λ_step=0.67 p_turn=0.50
+elf@0x20f56                  len= 979 M=  0.4151 M_glouton=  0.4161 tenue=0.19 B_g= 1.0226 B_w= 0.6075 B_wg= 0.6065 survie=0.33 λ_step=0.19 p_turn=0.04
+
+## gene-calling par ablation (octet -> 0xFF intron), ./experiments/metabolic_order genes ... (ΔM = M(muté) − M)
+# gènes métaboliques de seed:forager (256 octets) : M=0.2725 tenue=0.71
+  octets dont l'ablation coûte > 0.05 : 11 / 256
+  0x00c  0b TURN       ΔM = -1.8390
+  0x009  08 JMP        ΔM = -1.6212
+  0x007  06 STORE      ΔM = -1.6212
+  0x004  0c STEP       ΔM = -1.5920
+  0x014  0f YIELD      ΔM = -1.0776
+  0x003  07 LOAD       ΔM = -0.8166
+  0x002  09 JZ         ΔM = -0.7459
+  0x00a  07 LOAD       ΔM = -0.5549
+  0x000  0d EAT        ΔM = -0.4494
+  0x00d  0c STEP       ΔM = -0.1723
+  0x0c1  00 NOP        ΔM = -0.0873
+  0x00b  01 INC_A      ΔM = -0.0462
+# gènes métaboliques de experiments/controls/evolved/predict-walk.ck (256 octets) : M=0.8698 tenue=1.00
+  octets dont l'ablation coûte > 0.05 : 14 / 256
+  0x00c  06 STORE      ΔM = -2.2161
+  0x00e  08 JMP        ΔM = -2.2161
+  0x00f  07 LOAD       ΔM = -1.0010
+  0x009  0c STEP       ΔM = -0.8728
+  0x012  0c STEP       ΔM = -0.8698
+  0x008  07 LOAD       ΔM = -0.8698
+  0x010  01 INC_A      ΔM = -0.8698
+  0x011  0b TURN       ΔM = -0.8698
+  0x007  09 JZ         ΔM = -0.8698
+  0x00a  07 LOAD       ΔM = -0.5576
+  0x015  06 STORE      ΔM = -0.5147
+  0x01d  1e LOOP       ΔM = -0.3560
+# gènes métaboliques de experiments/controls/evolved/diagnose.ck (33 octets) : M=0.0000 tenue=0.00
+  octets dont l'ablation coûte > 0.05 : 0 / 33
+  0x000  00 NOP        ΔM = -0.0000
+  0x001  6b INTRON     ΔM = -0.0000
+  0x002  00 NOP        ΔM = -0.0000
+  0x003  16 MOV_AB     ΔM = -0.0000
+  0x004  00 NOP        ΔM = -0.0000
+  0x005  12 SENSE_STIM ΔM = -0.0000
+  0x006  00 NOP        ΔM = -0.0000
+  0x007  00 NOP        ΔM = -0.0000
+  0x008  00 NOP        ΔM = -0.0000
+  0x009  00 NOP        ΔM = -0.0000
+  0x00a  00 NOP        ΔM = -0.0000
+  0x00b  bf INTRON     ΔM = -0.0000
