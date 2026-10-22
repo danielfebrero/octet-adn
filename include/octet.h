@@ -294,4 +294,37 @@ int nov_cell(int grid, const double *d);                 /* -1 hors grille */
 int nov_ncells(int grid);
 int nov_run(const NovRun *r, FILE *out, NovResult *res);
 
+
+/* ---------------- Soupe (experiments/soup-replicator) ----------------
+ * Aucun labo, aucune division offerte : N programmes de SOUP_PROG octets, appariés au hasard à
+ * chaque époque, concaténés en une bande de SOUP_TAPE octets puis exécutés avec l'ISA existante
+ * (SPLIT, capteurs et actions du monde = sans effet). Une naissance = une moitié réécrite en copie
+ * de l'autre, détectée après coup. Rien ici n'est appelé par les labos. */
+#include <stdio.h>
+#define SOUP_PROG 64
+#define SOUP_TAPE (2 * SOUP_PROG)
+#define SOUP_FID  56          /* copie fidèle : >= 56 octets sur 64 identiques */
+typedef struct {
+    int addr_b;               /* 0 = LOAD/STORE k adressent bande[k % 128] (sémantique d'origine) ; 1 = bande[(B + k) % 128] */
+    int no_store;             /* contrôle négatif : STORE sans effet */
+    int steps;                /* budget d'instructions par interaction (0 = 8192) */
+} SoupCfg;
+/* exécute la bande (ip = 0, A = B = 0) ; written (128 octets, peut être NULL) marque les cases réécrites. */
+int soup_exec(uint8_t *tape, const SoupCfg *c, uint8_t *written);
+/* réplicateur vérifié : copie fidèle de p (>= SOUP_FID) sur 3 bruits sur 4, et la copie fait de même.
+ * Retourne 0 = non, 1 = p en première moitié, 2 = p en seconde moitié. */
+int soup_copier(const uint8_t *p, const SoupCfg *c);
+/* ablation : ess[i] = 1 si au moins 3 substitutions sur 4 de l'octet i cassent la copie.
+ * Retourne le nb d'octets essentiels (-1 si p n'est pas un réplicateur). */
+int soup_ablate(const uint8_t *p, const SoupCfg *c, uint8_t *ess);
+typedef struct {
+    int nprog, epochs, report, inject;   /* inject : 1 = un réplicateur écrit à la main (contrôle positif) */
+    uint64_t seed;
+    double mut;                          /* mutation de fond par octet et par époque */
+    SoupCfg vm;
+} SoupRun;
+typedef struct { long t_first, t_half, births; int min_ess, copiers_final; uint64_t hash; } SoupResult;
+int soup_run(const SoupRun *r, FILE *out, SoupResult *res);
+/* réplicateurs écrits à la main (contrôles positifs), 64 octets */
+void soup_handmade(uint8_t *p, int addr_b);
 #endif

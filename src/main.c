@@ -18,6 +18,9 @@ static void usage(void) {
          "        octet-adn general FICHIER.adn|.ck  general : rejoue chaque génome seul (mémoire 2 et 3, gelé, sans récompense)\n"
          "        octet-adn novelty [options]       MAP-Elites sur general (nouveauté de comportement, hors sélection historique)\n"
          "            --grid none|agn|mem (défaut agn)  --iters N (défaut 20000)  --seed N  --report N (défaut 1000)  --init N (défaut 32)\n"
+         "        octet-adn soup [options]          soupe d'octets sans SPLIT : un réplicateur émerge-t-il du bruit ?\n"
+         "            --ticks|--epochs N (défaut 4096)  --seed N  --programs N (défaut 4096)  --mut P (défaut 0.00024)\n"
+         "            --addr abs|b (défaut abs)  --steps N (défaut 8192)  --report N (défaut 256)  --inject K (témoin : K copies du réplicateur fait main)  --no-store\n"
          "\noptions run :\n"
          "  --labs all|a,b,c        (défaut all)\n"
          "  --ticks-per-cycle N     (défaut 200)\n"
@@ -65,6 +68,7 @@ static double *load_csv(const char *path, int *n) {
     return v;
 }
 
+#define ARGS(name) (!strcmp(a, name) && nx && (i++, 1))
 int main(int argc, char **argv) {
     const char *cmd = argc > 1 && argv[1][0] != '-' ? argv[1] : "run";
     if (!strcmp(cmd, "help") || (argc > 1 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")))) { usage(); return 0; }
@@ -186,6 +190,32 @@ int main(int argc, char **argv) {
         printf("verdict grid=%d seed=%llu : couverture %d/%d  qd=%.3f  best_q=%.4f  max_m2=%.3f  max_m3=%.3f  passeurs=%d  hash=%016llx\n",
                r.grid, (unsigned long long)r.seed, res.cells, res.ncells, res.qd, res.best_q, res.max_m2, res.max_m3, res.passers,
                (unsigned long long)res.hash);
+        return 0;
+    }
+    if (!strcmp(cmd, "soup")) {                         /* experiments/soup-replicator */
+        SoupRun r = { .nprog = 4096, .epochs = 4096, .report = 256, .mut = 0.00024 };
+        for (int i = 2; i < argc; i++) {
+            const char *a = argv[i], *nx = i + 1 < argc ? argv[i + 1] : NULL;
+            if (ARGS("--ticks") || ARGS("--epochs")) r.epochs = atoi(nx);
+            else if (ARGS("--seed")) r.seed = strtoull(nx, NULL, 10);
+            else if (ARGS("--programs")) r.nprog = atoi(nx);
+            else if (ARGS("--mut")) r.mut = atof(nx);
+            else if (ARGS("--steps")) r.vm.steps = atoi(nx);
+            else if (ARGS("--report")) r.report = atoi(nx);
+            else if (ARGS("--addr")) {
+                if (!strcmp(nx, "b")) r.vm.addr_b = 1;
+                else if (strcmp(nx, "abs")) { fprintf(stderr, "--addr : abs|b\n"); return 2; }
+            }
+            else if (ARGS("--inject")) r.inject = atoi(nx);
+            else if (!strcmp(a, "--no-store")) r.vm.no_store = 1;
+            else { fprintf(stderr, "option inconnue : %s\n", a); usage(); return 2; }
+        }
+        if (r.epochs <= 0 || r.report <= 0 || r.nprog < 2 || r.mut < 0 || r.mut >= 1) { usage(); return 2; }
+        SoupResult res;
+        if (soup_run(&r, stdout, &res)) return 2;
+        printf("verdict seed=%llu addr=%s : réplicateur %s  t_first=%ld t_half=%ld  min_essentiels=%d  copieurs_fin=%d  naissances=%ld  hash=%016llx\n",
+               (unsigned long long)r.seed, r.vm.addr_b ? "b" : "abs", res.t_first >= 0 ? "OUI" : "non",
+               res.t_first, res.t_half, res.min_ess, res.copiers_final, res.births, (unsigned long long)res.hash);
         return 0;
     }
     if (strcmp(cmd, "run")) { usage(); return 2; }
