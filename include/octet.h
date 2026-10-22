@@ -190,6 +190,9 @@ struct Lab {
 
 extern const LabDef LABS[N_LABS];
 int  lab_index(const char *name);
+/* general : un génome rejoué seul sur la mémoire 2 et 3 tenues à l'écart (voir labs_h.c) */
+#define GN_CHECK_N 8
+int  gn_check(const PoolEntry *g, double *v);   /* v : GN_CHECK_N valeurs */
 void lab_init(Lab *l, int id, int max_ticks);
 void lab_free(Lab *l);
 void stock_set_csv(const double *closes, int n);

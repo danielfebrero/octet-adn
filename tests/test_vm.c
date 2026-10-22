@@ -641,6 +641,21 @@ TEST(test_general_learns_and_holds_out) {
     assert(r.extra[0] < 0.55 && r.extra[4] > 0.55);               /* affiché = lag ; known reste haut */
 }
 
+/* Critère d'émergence : seul, ≥ 0.95 sur une mémoire longue, et cette mémoire retombe d'au moins
+ * 0.5 gelée et sans récompense. La seed ne le passe pas ; les lignes à retard du test, oui. */
+TEST(test_general_check_needs_learning) {
+    PoolEntry s; seed_entry(&s, "general", 0);
+    PoolEntry p2 = gn_prog(LAG2, 172), p3 = gn_prog(LAG3, 175);
+    double v[GN_CHECK_N];
+    assert(gn_check(&s, v) == 0 && v[0] < 0.45 && v[1] < 0.48);
+    assert(gn_check(&p2, v) == 2 && v[0] > 0.95 && v[2] < 0.4 && v[4] < 0.4);
+    assert(gn_check(&p3, v) == 3 && v[1] > 0.95 && v[3] < 0.4 && v[5] < 0.4);
+    PoolEntry r = p2; r.dna[r.len++] = 0x0f;      /* un génome qui récite sans apprendre : rien */
+    for (int i = 0; i < r.len; i++) if (r.dna[i] == OP_STORE) r.dna[i] = OP_NOP;
+    assert(gn_check(&r, v) == 0);
+    printf("    general check : seed 0, ligne2 2, ligne3 3, sans STORE 0\n");
+}
+
 void hl_gn_cfg(WorldConfig *c);
 int hl_gn_sel(Lab *l, World *w, PoolEntry *out);
 void world_split(World *w, Creature *c);
@@ -687,6 +702,31 @@ TEST(test_general_germline_not_soma) {
     printf("    germline: enfant = naissance, sélection = lignée\n");
 }
 
+double gn_mem(const PoolEntry *g, int n, uint64_t seed);
+/* Niche mémoire : deux octets de la seed (0x6b : LOAD 20 au lieu de SENSE_STIM ; AND 3) clés la table
+ * par indice sur l'essai précédent. T[p1] monte, l'association tombe : la sélection du curriculum le
+ * jette, l'échelle mémoire le met en tête du pool, devant la seed. */
+TEST(test_general_memory_niche) {
+    PoolEntry s; seed_entry(&s, "general", 0);
+    PoolEntry r = s; r.dna[0x6b] = OP_LOAD; r.dna[0x6c] = 20;
+    double m1s = gn_eval(&s, 1, 1, 0, 0, 40, 0, 3, NULL), m1r = gn_eval(&r, 1, 1, 0, 0, 40, 0, 3, NULL);
+    double ms = gn_mem(&s, 1, 5), mr = gn_mem(&r, 1, 5), ts = gn_train(&s, 1, 5), tr = gn_train(&r, 1, 5);
+    printf("    niche : mémoire-1 seed=%.3f deux_octets=%.3f  échelle %.3f/%.3f  sélection %.3f/%.3f\n", m1s, m1r, ms, mr, ts, tr);
+    assert(m1s < 0.6 && m1r > 0.85 && mr > ms + 0.1 && tr < ts);
+    WorldConfig c = cfg_default(); c.germline = 1; c.max_pop = 4;
+    Rng rg; rng_seed(&rg, 4);
+    World *w = world_new(NULL, 0, &rg, &c, NULL);
+    Creature *a = creature_new(1, 1, s.dna, s.len, 200, 1, 0, -1), *b = creature_new(3, 3, r.dna, r.len, 200, 2, 0, -1);
+    a->lscore = 1; b->lscore = 0;                   /* le monde préfère la seed ; la niche, non */
+    w->cs[0] = a; w->cs[1] = b; w->ncs = 2;
+    Lab l; memset(&l, 0, sizeof l);
+    l.pool0 = &s; l.npool0 = 1; rng_seed(&l.rng0, 2);
+    PoolEntry out[POOL_MAX]; int k = hl_gn_sel(&l, w, out);
+    assert(k == 2 && out[0].len == r.len && !memcmp(out[0].dna, r.dna, (size_t)r.len));
+    assert(!memcmp(out[1].dna, s.dna, (size_t)s.len));
+    w->ncs = 0; free(a); free(b); world_free(w);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -720,6 +760,8 @@ int main(void) {
     RUN(test_diagnose_reads_and_computes);
     RUN(test_general_learns_and_holds_out);
     RUN(test_general_germline_not_soma);
-    printf("\n%d/%d tests OK\n", passed, 32);
+    RUN(test_general_check_needs_learning);
+    RUN(test_general_memory_niche);
+    printf("\n%d/%d tests OK\n", passed, 34);
     return 0;
 }

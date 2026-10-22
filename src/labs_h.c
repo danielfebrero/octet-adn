@@ -722,7 +722,13 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
  * Le mélange des familles déjà écrites dans la seed reste dans extra « known » : il ne sert plus de note.
  * Score d'une vie = justesse des essais 32..63. Budget : 192 instructions / tick (ce labo).
  * Hérédité (ce labo seul) : l'enfant et le pool reçoivent le génome de naissance. Les STORE
- * de la vie restent dans le soma. Les clones de la même lignée ne remplissent pas les 32 places. */
+ * de la vie restent dans le soma. Les clones de la même lignée ne remplissent pas les 32 places.
+ * Niche mémoire : le pool a deux moitiés. Places 0-7 = les meilleurs sur l'échelle mémoire 1, 2, 3
+ * (tables non réservées) ; places 8-15 = les meilleurs en sélection (curriculum + mémoire 2 et 3).
+ * L'échelle donne un barreau à chaque maillon : la seed apprend mal T[p1] (0.53), un registre de
+ * plus le tient (≈ 1), un second donne T[p2]. L'association ne pèse pas sur la niche : c'est elle qui
+ * rendait chaque maillon perdant. La réévaluation appariée note les deux moitiés ; la note affichée
+ * et le champion viennent de la niche. Un pool de 8 génomes ou moins est sa propre niche. */
 #define GN_TRIALS 64
 #define GN_LATE   32
 #define GN_HELD_N 40
@@ -810,7 +816,7 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     int ok[GN_TRIALS] = { 0 }; long lives = 0;
     for (int j = 0; j < ntask; j++) {
         Rng tr; rng_seed(&tr, held ? 0x6E6E0000ULL + (uint64_t)j : seed + (uint64_t)j * 0x9E3779B97F4A7C15ULL);
-        int force = fam >= 6 ? fam : -1;                 /* 6 et 7 : toutes les tâches, pas un sous-échantillon */
+        int force = (fam == 3 || fam >= 6) ? fam : -1;   /* 3, 6 et 7 : toutes les tâches, pas un sous-échantillon */
         GnTask t = gn_draw(&tr, held, level, force);
         if (force < 0 && fam >= 0 && t.fam != fam) continue;
         for (int i = 0; i < n; i++) { Rng cu = tr; gn_life(s, &g[i], &t, &cu, mode, ok); lives++; }
@@ -823,6 +829,20 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     if (curve) { curve[0] = a / (16.0 * lives); curve[1] = b / (16.0 * lives); }
     return late / ((double)(GN_TRIALS - GN_LATE) * lives);
 }
+/* Un génome sauvé, rejoué seul sur le jeu tenu à l'écart. v : [0] mémoire-2, [1] mémoire-3,
+ * [2..3] les mêmes gelées, [4..5] sans récompense, [6] familles connues, [7] sélection (graine 0).
+ * Retourne 2 ou 3 quand cette mémoire tient seule (≥ 0.95) et retombe d'au moins 0.5 gelée ET
+ * sans récompense : la réponse est apprise pendant la vie, pas récitée. 0 sinon. */
+double gn_train(const PoolEntry *g, int n, uint64_t seed);
+int gn_check(const PoolEntry *g, double *v) {
+    for (int k = 0; k < 2; k++)
+        for (int m = 0; m < 3; m++) v[2 * m + k] = gn_eval(g, 1, 1, 0, 0, GN_HELD_N, m, 6 + k, NULL);
+    v[6] = gn_eval(g, 1, 1, 0, 0, GN_HELD_N, 0, -1, NULL);
+    v[7] = gn_train(g, 1, 0);
+    for (int k = 0; k < 2; k++)
+        if (v[k] >= 0.95 && v[2 + k] <= v[k] - 0.5 && v[4 + k] <= v[k] - 0.5) return 2 + k;
+    return 0;
+}
 /* fitness de sélection : moitié curriculum (4 niveaux, 8 tâches), moitié mémoire 2 et 3
  * (tables non réservées, donc distinctes du jeu tenu à l'écart). */
 double gn_train(const PoolEntry *g, int n, uint64_t seed) {
@@ -832,6 +852,13 @@ double gn_train(const PoolEntry *g, int n, uint64_t seed) {
     double lag = 0.5 * (gn_eval(g, n, 0, 0, seed ^ 0x6A6C0001ULL, 8, 0, 6, NULL)
                       + gn_eval(g, n, 0, 0, seed ^ 0x6A6C0002ULL, 8, 0, 7, NULL));
     return 0.5 * s + 0.5 * lag;
+}
+/* Échelle mémoire de la niche : T[p1], T[p2], T[p3] à parts égales (tables non réservées).
+ * Chaque barreau demande un registre de plus ; le premier est à deux octets de la seed. */
+double gn_mem(const PoolEntry *g, int n, uint64_t seed) {
+    double s = 0;
+    for (int f = 0; f < 3; f++) s += gn_eval(g, n, 0, 0, seed ^ (0x6A6C0003ULL + (uint64_t)f), 8, 0, f ? 5 + f : 3, NULL);
+    return s / 3;
 }
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
  * curriculum ; un essai juste rapporte de l'énergie. lscore = justesse des essais 32..63, rétrécie.
@@ -866,10 +893,19 @@ void hl_gn_cfg(WorldConfig *c) {
 }
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
+/* Les deux moitiés du pool : niche mémoire = places 0..7, curriculum = places 8..15.
+ * Un pool de 8 génomes ou moins sert aux deux (la seed, un pool historique). */
+static void gn_parts(int n, int *nb, const PoolEntry **a, const PoolEntry *g, int *na) {
+    *nb = n < GN_TOP ? n : GN_TOP;
+    if (n > GN_TOP) { *a = g + GN_TOP; *na = n - GN_TOP < GN_TOP ? n - GN_TOP : GN_TOP; }
+    else { *a = g; *na = *nb; }
+}
 int gn_level_of(const PoolEntry *g, int n) {
-    if (n > 4) n = 4;
+    const PoolEntry *a; int nb, na;
+    gn_parts(n, &nb, &a, g, &na);
+    if (na > 4) na = 4;
     int L = 0;
-    while (L < GN_LEVELS - 1 && gn_eval(g, n, 0, L, 0xC0C0 + (uint64_t)L, 8, 0, -1, NULL) > 0.9) L++;
+    while (L < GN_LEVELS - 1 && gn_eval(a, na, 0, L, 0xC0C0 + (uint64_t)L, 8, 0, -1, NULL) > 0.9) L++;
     return L;
 }
 void hl_gn_init(Lab *l, World *w) {
@@ -885,23 +921,25 @@ void hl_gn_pre(Lab *l, World *w) { (void)l; w->hist_n = 0; }
 /* Graine des tâches d'entraînement d'un cycle : dérivée de l'état initial du RNG, donc la même pour le
  * nouveau pool et le pool en place dans la réévaluation appariée du runner. */
 static uint64_t gn_cycle_seed(const Lab *l) { Rng t = l->rng0; return rng_next(&t); }
-/* Fitness = le POOL lui-même (pas ses descendants après 200 ticks) : justesse d'entraînement de ses
- * génomes en bac à sable. Le monde ne sert qu'à produire les candidats (mutation, héritage). */
+/* Fitness = le POOL lui-même (pas ses descendants après 200 ticks) : moitié échelle mémoire de la
+ * niche, moitié sélection du curriculum, en bac à sable. Le monde ne sert qu'à produire les candidats. */
 double hl_gn_fit(Lab *l, World *w, int ticks) {
     (void)ticks; (void)w;
-    int n = l->npool0 < GN_TOP ? l->npool0 : GN_TOP;     /* les 8 premiers du pool (triés par la sélection) */
+    const PoolEntry *a, *b = l->pool0; int nb, na;
+    gn_parts(l->npool0, &nb, &a, l->pool0, &na);
     double tr = 0;
     memset(l->extra, 0, sizeof l->extra);
-    if (n > 0) {
-        tr = gn_train(l->pool0, n, gn_cycle_seed(l));
+    if (nb > 0) {
+        uint64_t sd = gn_cycle_seed(l);
+        tr = 0.5 * gn_mem(b, nb, sd) + 0.5 * gn_train(a, na, sd);
         l->extra[1] = tr;
         if (l->eval_only) return tr;                    /* réévaluation appariée : pas besoin du held-out */
-        double l6 = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, 6, NULL);
-        double l7 = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, 7, NULL);
-        l->extra[0] = 0.5 * (l6 + l7);                  /* note affichée : mémoires jamais écrites dans la seed */
-        l->extra[2] = 0.5 * (gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, 6, NULL)
-                           + gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, 7, NULL));
-        l->extra[4] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, NULL);   /* familles que la seed sait déjà */
+        double l6 = gn_eval(b, nb, 1, 0, 0, GN_HELD_N, 0, 6, NULL);
+        double l7 = gn_eval(b, nb, 1, 0, 0, GN_HELD_N, 0, 7, NULL);
+        l->extra[0] = 0.5 * (l6 + l7);                  /* note affichée : la niche, sur des mémoires jamais écrites dans la seed */
+        l->extra[2] = 0.5 * (gn_eval(b, nb, 1, 0, 0, GN_HELD_N, 1, 6, NULL)
+                           + gn_eval(b, nb, 1, 0, 0, GN_HELD_N, 1, 7, NULL));
+        l->extra[4] = gn_eval(a, na, 1, 0, 0, GN_HELD_N, 0, -1, NULL);   /* familles que la seed sait déjà */
     }
     l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2];
     l->extra[5] = ((GnLab *)l->ext)->level;
@@ -914,11 +952,26 @@ static void gn_inherit(PoolEntry *e, const Creature *c, int germline) {
     e->len = use ? c->germ_len : c->len;
     memcpy(e->dna, use ? c->germ : c->dna, (size_t)e->len);
 }
-/* Nouveau pool : lignées distinctes (les clones du même génome de naissance ne prennent qu'une place),
- * plus le pool reçu, notés UN PAR UN en bac à sable ; on garde les 16 meilleurs génomes distincts. */
+static int gn_same(const PoolEntry *x, const PoolEntry *y) { return x->len == y->len && !memcmp(x->dna, y->dna, (size_t)x->len); }
+/* Prend jusqu'à k génomes distincts de cand (au meilleur score s), absents de out[0..*m). */
+static void gn_take(const PoolEntry *cand, double *s, int m, int k, PoolEntry *out, int *n) {
+    for (int got = 0; got < k; ) {
+        int b = -1;
+        for (int i = 0; i < m; i++) if (s[i] > -1 && (b < 0 || s[i] > s[b])) b = i;
+        if (b < 0) return;
+        s[b] = -2;
+        int dup = 0;
+        for (int j = 0; j < *n; j++) if (gn_same(&out[j], &cand[b])) { dup = 1; break; }
+        if (!dup) { out[(*n)++] = cand[b]; got++; }
+    }
+}
+#define GN_CAND 96
+/* Nouveau pool : toutes les lignées distinctes du monde (les clones du même génome de naissance ne
+ * prennent qu'une place, au plus 96, rangées par lscore), plus le pool reçu, notées UNE PAR UNE en
+ * bac à sable. Places 0-7 : échelle mémoire ; places 8-15 : sélection du curriculum. */
 int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     if (l->eval_only) return 0;                         /* réévaluation : seule la fitness du pool compte */
-    Creature *v[CMAX]; int n = 0;
+    Creature **v = malloc(sizeof(Creature *) * CMAX); int n = 0;
     for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
     for (int i = 1; i < n; i++) {
         Creature *c = v[i]; int j = i - 1;
@@ -926,26 +979,20 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
         v[j + 1] = c;
     }
     int m = 0;
-    PoolEntry *cand = malloc(sizeof(PoolEntry) * (32 + POOL_MAX)); double *sc = malloc(sizeof(double) * (32 + POOL_MAX));
-    for (int i = 0; i < n && m < 32; i++) {
+    PoolEntry *cand = malloc(sizeof(PoolEntry) * (GN_CAND + POOL_MAX));
+    double *sm = malloc(sizeof(double) * (GN_CAND + POOL_MAX)), *st = malloc(sizeof(double) * (GN_CAND + POOL_MAX));
+    for (int i = 0; i < n && m < GN_CAND; i++) {
         PoolEntry e; gn_inherit(&e, v[i], w->cfg.germline);
         int dup = 0;
-        for (int j = 0; j < m; j++) if (cand[j].len == e.len && !memcmp(cand[j].dna, e.dna, (size_t)e.len)) { dup = 1; break; }
+        for (int j = 0; j < m; j++) if (gn_same(&cand[j], &e)) { dup = 1; break; }
         if (!dup) cand[m++] = e;
     }
     for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
     uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
-    for (int i = 0; i < m; i++) sc[i] = gn_train(&cand[i], 1, seed);
+    for (int i = 0; i < m; i++) { sm[i] = gn_mem(&cand[i], 1, seed); st[i] = gn_train(&cand[i], 1, seed); }
     int k = 0;
-    while (k < POOL_SIZE) {
-        int b = -1;
-        for (int i = 0; i < m; i++) if (sc[i] > -1 && (b < 0 || sc[i] > sc[b])) b = i;
-        if (b < 0) break;
-        sc[b] = -2;
-        int dup = 0;
-        for (int j = 0; j < k; j++) if (out[j].len == cand[b].len && !memcmp(out[j].dna, cand[b].dna, (size_t)cand[b].len)) { dup = 1; break; }
-        if (!dup) out[k++] = cand[b];
-    }
-    free(cand); free(sc);
+    gn_take(cand, sm, m, GN_TOP, out, &k);
+    gn_take(cand, st, m, POOL_SIZE - GN_TOP, out, &k);
+    free(cand); free(sm); free(st); free(v);
     return k;
 }

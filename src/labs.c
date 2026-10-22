@@ -350,7 +350,7 @@ const LabDef LABS[N_LABS] = {
       "justesse des EMIT : le médicament est ((marque + 1) XOR 4) mod 8, la marque est le stimulus ; baseline = même pool, stimulus renversé",
       { "accuracy", "emits", "best_rate", "blind", "vs_blind" }, hl_dg_cfg, hl_dg_seeds, hl_dg_pre, hl_dg_post, hl_dg_fit, hl_rank_score, hl_dg_sel, hl_dg_init, 0, 0 },
     { "general", "Apprendre pendant sa vie, généraliser à des tâches jamais vues",
-      "note affichée = justesse des essais 32..63 sur la mémoire 2 et la mémoire 3 (T[indice d'il y a 2 ou 3 essais], tables réservées) ; la sélection voit moitié curriculum, moitié ces mémoires sur d'autres tables ; le pool garde le génome de naissance, pas les STORE de la vie ; known = familles déjà dans la seed ; baseline = mêmes génomes, génome gelé",
+      "note affichée = justesse des essais 32..63 sur la mémoire 2 et la mémoire 3 (T[indice d'il y a 2 ou 3 essais], tables réservées) ; pool en deux moitiés : niche mémoire (places 0-7, échelle T[p1], T[p2], T[p3] sur d'autres tables ; note et champion) et curriculum (places 8-15) ; la réévaluation appariée note les deux ; le pool garde le génome de naissance, pas les STORE de la vie ; known = familles déjà dans la seed ; baseline = mêmes génomes, génome gelé",
       { "lag", "train", "frozen", "vs_frozen", "known", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, hl_gn_sel, hl_gn_init, 0, 1 },
 };
 

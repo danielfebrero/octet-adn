@@ -15,6 +15,7 @@ static void usage(void) {
          "        octet-adn ck FICHIER.ck           inspecte un checkpoint\n"
          "        octet-adn seeds DOSSIER           exporte les seeds embarquées en .adn\n"
          "        octet-adn eval DATA_DIR [N] [TICKS] fitness des pools (checkpoints) sur N graines tenues à l'écart\n"
+         "        octet-adn general FICHIER.adn|.ck  general : rejoue chaque génome seul (mémoire 2 et 3, gelé, sans récompense)\n"
          "\noptions run :\n"
          "  --labs all|a,b,c        (défaut all)\n"
          "  --ticks-per-cycle N     (défaut 200)\n"
@@ -132,6 +133,34 @@ int main(int argc, char **argv) {
             putchar('\n');
         }
         return 0;
+    }
+    if (!strcmp(cmd, "general")) {                      /* émergence : chaque génome rejoué seul */
+        if (argc < 3) { usage(); return 2; }
+        PoolEntry seed; seed_entry(&seed, "general", 0);
+        int found = 0;
+        for (int a = 2; a < argc; a++) {
+            static Checkpoint ck; static PoolEntry g[POOL_MAX + 1]; int n = 0;
+            if (ck_load(argv[a], &ck) == 0) {
+                for (int i = 0; i < ck.npool; i++) g[n++] = ck.pool[i];
+                if (ck.has_best) g[n++] = ck.best;
+            } else {
+                long len; uint8_t *b = slurp(argv[a], &len);
+                if (!b) return 1;
+                if (len < 1 || len > MAX_LEN) { fprintf(stderr, "%s : %ld octets\n", argv[a], len); free(b); return 1; }
+                memset(&g[0], 0, sizeof g[0]); g[0].len = (int)len; memcpy(g[0].dna, b, (size_t)len); n = 1; free(b);
+            }
+            for (int i = 0; i < n; i++) {
+                double v[GN_CHECK_N]; int e = gn_check(&g[i], v);
+                int d = abs(g[i].len - seed.len);
+                for (int k = 0; k < g[i].len && k < seed.len; k++) d += g[i].dna[k] != seed.dna[k];
+                printf("%s[%d] %d o, %d o ≠ seed  m2=%.3f m3=%.3f  gelé %.3f/%.3f  sans_récompense %.3f/%.3f  known=%.3f train=%.3f%s\n",
+                       argv[a], i, g[i].len, d, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7],
+                       e ? (e == 2 ? "  ÉMERGENCE mémoire-2" : "  ÉMERGENCE mémoire-3") : "");
+                found |= e != 0;
+            }
+        }
+        printf("émergence : %s\n", found ? "oui" : "non");
+        return found ? 0 : 3;
     }
     if (strcmp(cmd, "run")) { usage(); return 2; }
 
