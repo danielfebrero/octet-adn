@@ -701,6 +701,13 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
     return n < 1 ? 1 : n;
 }
 
+/* Expérience « null de la sélection directe » (experiments/general-joint-negative) :
+ * compiler avec -DGN_DIRECT_SEL -DGN_DIRECT_FAM=6|7. La fitness et la sélection deviennent la
+ * justesse tenue à l'écart de la mémoire 2 (6) ou 3 (7), sans les opérateurs de naissance.
+ * Sans ce drapeau, le binaire est celui de main (même code, mêmes hashes). */
+#ifndef GN_DIRECT_FAM
+#define GN_DIRECT_FAM 6
+#endif
 /* ======================= 8. general : apprendre pendant sa vie, généraliser =======================
  * Définition opérationnelle : un génome est « intelligent » ici s'il apprend PENDANT sa vie une règle
  * qu'il ne connaît pas à la naissance, et s'il le fait sur des tâches que la sélection n'a jamais vues.
@@ -904,9 +911,13 @@ static void gn_before(World *w, Creature *c) {
 void hl_gn_cfg(WorldConfig *c) {
     c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS;
     c->mut_rate = 0.005; c->dup_rate = 0.01; c->germline = 1;   /* génome long : mutation réduite ; lignée ≠ soma */
+#ifdef GN_DIRECT_SEL
+    c->delay_rate = 0.0; c->unmix_rate = 0.0; c->deepen_rate = 0.0;  /* piste A : pression seule */
+#else
     c->delay_rate = 0.12;   /* décaler la case, puis relire la case d'avant. 0 chez les autres labos */
     c->unmix_rate = 0.12;   /* puis ne plus ajouter l'indice courant à la case relue */
     c->deepen_rate = 0.12;  /* puis recopier cette case dans un intron froid : la clé lit p3 */
+#endif
 }
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
@@ -942,6 +953,23 @@ static uint64_t gn_cycle_seed(const Lab *l) { Rng t = l->rng0; return rng_next(&
  * niche, moitié sélection du curriculum, en bac à sable. Le monde ne sert qu'à produire les candidats. */
 double hl_gn_fit(Lab *l, World *w, int ticks) {
     (void)ticks; (void)w;
+#ifdef GN_DIRECT_SEL
+    /* Piste A : fitness = justesse held-out de la mémoire cible. */
+    const PoolEntry *pool = l->pool0; int n = l->npool0;
+    memset(l->extra, 0, sizeof l->extra);
+    if (n <= 0) return 0;
+    double m2 = gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 0, 6, NULL);
+    double m3 = gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 0, 7, NULL);
+    double direct = gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 0, GN_DIRECT_FAM, NULL);
+    l->extra[0] = 0.5 * (m2 + m3);
+    l->extra[1] = direct;
+    l->extra[2] = 0.5 * (gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 1, 6, NULL)
+                       + gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 1, 7, NULL));
+    l->extra[3] = l->extra[0] - l->extra[2];
+    l->extra[4] = gn_eval(pool, n, 1, 0, 0, GN_HELD_N, 0, -1, NULL);
+    l->extra[5] = ((GnLab *)l->ext)->level;
+    return direct;
+#else
     const PoolEntry *a, *b = l->pool0; int nb, na;
     gn_parts(l->npool0, &nb, &a, l->pool0, &na);
     double tr = 0;
@@ -961,6 +989,7 @@ double hl_gn_fit(Lab *l, World *w, int ticks) {
     l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2];
     l->extra[5] = ((GnLab *)l->ext)->level;
     return tr;                                          /* la sélection ne voit que l'entraînement */
+#endif
 }
 /* Copie héritée : la lignée si ce labo l'a armée, sinon le soma (les autres labos ne passent pas ici). */
 static void gn_inherit(PoolEntry *e, const Creature *c, int germline) {
@@ -1005,6 +1034,21 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
         if (!dup) cand[m++] = e;
     }
     for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
+#ifdef GN_DIRECT_SEL
+    (void)sm; (void)st;
+    double *sd = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *so = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    int other = (GN_DIRECT_FAM == 6) ? 7 : 6;
+    for (int i = 0; i < m; i++) {
+        sd[i] = gn_eval(&cand[i], 1, 1, 0, 0, GN_HELD_N, 0, GN_DIRECT_FAM, NULL);
+        so[i] = gn_eval(&cand[i], 1, 1, 0, 0, GN_HELD_N, 0, other, NULL);
+    }
+    int k = 0;
+    gn_take(cand, sd, m, 10, out, &k);                /* priorité mémoire cible held-out */
+    gn_take(cand, so, m, POOL_SIZE - k, out, &k);     /* complément : l'autre mémoire */
+    free(cand); free(sm); free(st); free(sd); free(so); free(v);
+    return k;
+#else
     uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
     double *s1 = sm, *s2 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
     double *s3 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
@@ -1021,4 +1065,5 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     gn_take(cand, st, m, POOL_SIZE - k, out, &k);     /* le reste : curriculum */
     free(cand); free(sm); free(st); free(s2); free(s3); free(v);
     return k;
+#endif
 }
