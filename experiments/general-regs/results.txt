@@ -1,0 +1,339 @@
+# general : levier « regs » (RPUSH/RPEEK, 4 registres de lignée) — mesures
+# moteur : feat/emergence-regs sur main d4a1d45, 200 ticks/cycle, --no-reload, 4 graines x 60 cycles
+# Rops = binaire par défaut de la branche (regs ON + opérateurs de naissance 0.12) — à comparer à REF60/REF300 de general-joint-negative
+# Ronly = -DGN_BIRTH_OFF (regs ON, opérateurs coupés) ; Base0 = -DGN_BIRTH_OFF -DGN_REGS=0 (témoin apparié)
+# m2/m3 sur 40 tâches tenues à l'écart ; joint = m2 ≥ 0.95 ET m3 ≥ 0.95 ; min = min(m2,m3) sur les 17 génomes vérifiés
+
+## chemins à la main (./experiments/general_regs)
+seed                               m2=0.366 m3=0.401 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.726 code=3
+0x93 STORE→RPUSH                 m2=0.366 m3=0.401 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.726 code=3
++ 0x77 LOAD→RPEEK (k=20, r0)     m2=0.366 m3=0.401 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.726 code=3
++ 0x78 k=21 (r1, p2)               m2=0.545 m3=0.388 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.761 code=3
++ 0x79 ADD→cf (p2 seul)          m2=0.586 m3=0.412 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.781 code=3
++ 0x78 k=22 (r2, p3)               m2=0.385 m3=0.537 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.722 code=3
++ 0x79 ADD→cf (p3 seul)          m2=0.399 m3=0.562 gelé=0.287/0.293 sans_récompense=0.266/0.255 known=0.717 code=3
+
+## synthèse
+Rops-c60/s0    passants_m2= 3 passants_m3= 2 joint=0 max_m2=0.999 max_m3=0.999 meilleur_min=0.409 (m2 0.409 ; m3 0.890)
+Rops-c60/s1    passants_m2= 0 passants_m3= 3 joint=0 max_m2=0.415 max_m3=1.000 meilleur_min=0.415 (m2 0.415 ; m3 0.588)
+Rops-c60/s2    passants_m2= 0 passants_m3=10 joint=0 max_m2=0.863 max_m3=1.000 meilleur_min=0.459 (m2 0.863 ; m3 0.459)
+Rops-c60/s3    passants_m2= 3 passants_m3=10 joint=0 max_m2=1.000 max_m3=1.000 meilleur_min=0.370 (m2 0.370 ; m3 0.973)
+Ronly-c60/s0   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.465 max_m3=0.434 meilleur_min=0.434 (m2 0.465 ; m3 0.434)
+Ronly-c60/s1   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.516 max_m3=0.491 meilleur_min=0.491 (m2 0.502 ; m3 0.491)
+Ronly-c60/s2   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.495 max_m3=0.477 meilleur_min=0.477 (m2 0.495 ; m3 0.477)
+Ronly-c60/s3   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.509 max_m3=0.489 meilleur_min=0.489 (m2 0.505 ; m3 0.489)
+Base0-c60/s0   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.465 max_m3=0.434 meilleur_min=0.434 (m2 0.465 ; m3 0.434)
+Base0-c60/s1   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.471 max_m3=0.470 meilleur_min=0.470 (m2 0.471 ; m3 0.470)
+Base0-c60/s2   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.496 max_m3=0.481 meilleur_min=0.481 (m2 0.496 ; m3 0.481)
+Base0-c60/s3   passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.466 max_m3=0.444 meilleur_min=0.444 (m2 0.466 ; m3 0.444)
+Ronly-c300/s1  passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.488 max_m3=0.492 meilleur_min=0.488 (m2 0.488 ; m3 0.492)
+Ronly-c300/s2  passants_m2= 0 passants_m3= 0 joint=0 max_m2=0.515 max_m3=0.509 meilleur_min=0.509 (m2 0.515 ; m3 0.509)
+Rops-c300/s2   passants_m2=11 passants_m3= 2 joint=0 max_m2=1.000 max_m3=1.000 meilleur_min=0.380 (m2 0.965 ; m3 0.380)
+
+## identité avec REF60 (sorties de check comparées ligne à ligne à general-joint-negative/results.txt)
+graine 0 : 17/17 lignes différentes
+graine 1 : 0/17 lignes différentes
+graine 2 : 0/17 lignes différentes
+graine 3 : 17/17 lignes différentes
+
+# ---- sorties brutes de `octet-adn general <checkpoint>` (fin de course) ----
+### Rops-c60/s0
+latest.ck[0] 172 o, 29 o ≠ seed  m2=0.360 m3=0.335  gelé 0.299/0.294  sans_récompense 0.260/0.244  known=0.621 train=0.348
+latest.ck[1] 172 o, 31 o ≠ seed  m2=0.360 m3=0.335  gelé 0.299/0.294  sans_récompense 0.260/0.244  known=0.621 train=0.348
+latest.ck[2] 172 o, 28 o ≠ seed  m2=0.360 m3=0.335  gelé 0.299/0.294  sans_récompense 0.260/0.244  known=0.621 train=0.348
+latest.ck[3] 172 o, 17 o ≠ seed  m2=0.999 m3=0.352  gelé 0.200/0.201  sans_récompense 0.243/0.245  known=0.727 train=0.524  ÉMERGENCE mémoire-2
+latest.ck[4] 172 o, 18 o ≠ seed  m2=0.999 m3=0.352  gelé 0.200/0.201  sans_récompense 0.243/0.245  known=0.727 train=0.524  ÉMERGENCE mémoire-2
+latest.ck[5] 172 o, 18 o ≠ seed  m2=0.999 m3=0.352  gelé 0.200/0.201  sans_récompense 0.243/0.243  known=0.727 train=0.524  ÉMERGENCE mémoire-2
+latest.ck[6] 172 o, 26 o ≠ seed  m2=0.371 m3=0.999  gelé 0.200/0.201  sans_récompense 0.250/0.253  known=0.512 train=0.509  ÉMERGENCE mémoire-3
+latest.ck[7] 172 o, 25 o ≠ seed  m2=0.374 m3=0.999  gelé 0.257/0.270  sans_récompense 0.249/0.248  known=0.513 train=0.520  ÉMERGENCE mémoire-3
+latest.ck[8] 172 o, 27 o ≠ seed  m2=0.395 m3=0.886  gelé 0.294/0.302  sans_récompense 0.270/0.259  known=0.632 train=0.548
+latest.ck[9] 172 o, 30 o ≠ seed  m2=0.409 m3=0.890  gelé 0.299/0.294  sans_récompense 0.278/0.263  known=0.629 train=0.540
+latest.ck[10] 172 o, 29 o ≠ seed  m2=0.407 m3=0.857  gelé 0.299/0.294  sans_récompense 0.241/0.275  known=0.640 train=0.548
+latest.ck[11] 172 o, 29 o ≠ seed  m2=0.404 m3=0.855  gelé 0.299/0.294  sans_récompense 0.241/0.275  known=0.639 train=0.548
+latest.ck[12] 172 o, 29 o ≠ seed  m2=0.404 m3=0.855  gelé 0.299/0.294  sans_récompense 0.241/0.275  known=0.639 train=0.548
+latest.ck[13] 172 o, 24 o ≠ seed  m2=0.404 m3=0.855  gelé 0.294/0.302  sans_récompense 0.241/0.275  known=0.639 train=0.548
+latest.ck[14] 172 o, 28 o ≠ seed  m2=0.404 m3=0.855  gelé 0.299/0.294  sans_récompense 0.241/0.275  known=0.639 train=0.548
+latest.ck[15] 172 o, 27 o ≠ seed  m2=0.404 m3=0.855  gelé 0.299/0.294  sans_récompense 0.241/0.275  known=0.639 train=0.548
+latest.ck[16] 174 o, 24 o ≠ seed  m2=0.407 m3=0.408  gelé 0.299/0.294  sans_récompense 0.241/0.264  known=0.696 train=0.420
+émergence : oui
+
+### Rops-c60/s1
+latest.ck[0] 172 o, 4 o ≠ seed  m2=0.346 m3=0.381  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.517
+latest.ck[1] 172 o, 6 o ≠ seed  m2=0.346 m3=0.381  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.517
+latest.ck[2] 172 o, 5 o ≠ seed  m2=0.346 m3=0.381  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.517
+latest.ck[3] 172 o, 17 o ≠ seed  m2=0.415 m3=0.588  gelé 0.188/0.191  sans_récompense 0.253/0.245  known=0.721 train=0.526
+latest.ck[4] 172 o, 16 o ≠ seed  m2=0.415 m3=0.588  gelé 0.188/0.191  sans_récompense 0.253/0.245  known=0.721 train=0.526
+latest.ck[5] 172 o, 18 o ≠ seed  m2=0.415 m3=0.588  gelé 0.188/0.191  sans_récompense 0.253/0.245  known=0.721 train=0.526
+latest.ck[6] 172 o, 20 o ≠ seed  m2=0.367 m3=1.000  gelé 0.188/0.191  sans_récompense 0.253/0.245  known=0.510 train=0.518  ÉMERGENCE mémoire-3
+latest.ck[7] 172 o, 18 o ≠ seed  m2=0.367 m3=1.000  gelé 0.188/0.191  sans_récompense 0.253/0.245  known=0.510 train=0.518  ÉMERGENCE mémoire-3
+latest.ck[8] 172 o, 15 o ≠ seed  m2=0.352 m3=0.977  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.606 train=0.568  ÉMERGENCE mémoire-3
+latest.ck[9] 172 o, 3 o ≠ seed  m2=0.369 m3=0.409  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[10] 172 o, 19 o ≠ seed  m2=0.398 m3=0.561  gelé 0.256/0.239  sans_récompense 0.259/0.251  known=0.722 train=0.507
+latest.ck[11] 172 o, 20 o ≠ seed  m2=0.406 m3=0.566  gelé 0.256/0.239  sans_récompense 0.259/0.251  known=0.723 train=0.505
+latest.ck[12] 172 o, 18 o ≠ seed  m2=0.394 m3=0.559  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.507
+latest.ck[13] 172 o, 18 o ≠ seed  m2=0.394 m3=0.559  gelé 0.256/0.239  sans_récompense 0.266/0.255  known=0.716 train=0.507
+latest.ck[14] 172 o, 19 o ≠ seed  m2=0.394 m3=0.559  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.507
+latest.ck[15] 172 o, 18 o ≠ seed  m2=0.394 m3=0.559  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.716 train=0.507
+latest.ck[16] 172 o, 3 o ≠ seed  m2=0.369 m3=0.409  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.727 train=0.512
+émergence : oui
+
+### Rops-c60/s2
+latest.ck[0] 172 o, 30 o ≠ seed  m2=0.402 m3=0.380  gelé 0.207/0.209  sans_récompense 0.252/0.248  known=0.634 train=0.356
+latest.ck[1] 172 o, 29 o ≠ seed  m2=0.402 m3=0.380  gelé 0.207/0.209  sans_récompense 0.252/0.248  known=0.634 train=0.356
+latest.ck[2] 172 o, 32 o ≠ seed  m2=0.332 m3=0.320  gelé 0.207/0.209  sans_récompense 0.233/0.243  known=0.621 train=0.331
+latest.ck[3] 172 o, 18 o ≠ seed  m2=0.863 m3=0.459  gelé 0.287/0.293  sans_récompense 0.241/0.275  known=0.704 train=0.508
+latest.ck[4] 172 o, 22 o ≠ seed  m2=0.863 m3=0.459  gelé 0.287/0.293  sans_récompense 0.241/0.275  known=0.704 train=0.508
+latest.ck[5] 172 o, 21 o ≠ seed  m2=0.863 m3=0.459  gelé 0.287/0.293  sans_récompense 0.241/0.275  known=0.704 train=0.508
+latest.ck[6] 172 o, 37 o ≠ seed  m2=0.369 m3=1.000  gelé 0.252/0.253  sans_récompense 0.253/0.245  known=0.511 train=0.518  ÉMERGENCE mémoire-3
+latest.ck[7] 172 o, 38 o ≠ seed  m2=0.370 m3=1.000  gelé 0.252/0.253  sans_récompense 0.243/0.248  known=0.515 train=0.515  ÉMERGENCE mémoire-3
+latest.ck[8] 172 o, 37 o ≠ seed  m2=0.370 m3=0.983  gelé 0.280/0.265  sans_récompense 0.254/0.259  known=0.616 train=0.562  ÉMERGENCE mémoire-3
+latest.ck[9] 172 o, 38 o ≠ seed  m2=0.370 m3=0.983  gelé 0.280/0.265  sans_récompense 0.254/0.259  known=0.616 train=0.562  ÉMERGENCE mémoire-3
+latest.ck[10] 172 o, 36 o ≠ seed  m2=0.362 m3=0.980  gelé 0.278/0.280  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[11] 172 o, 35 o ≠ seed  m2=0.362 m3=0.980  gelé 0.000/0.000  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[12] 172 o, 35 o ≠ seed  m2=0.362 m3=0.980  gelé 0.278/0.280  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[13] 172 o, 36 o ≠ seed  m2=0.362 m3=0.980  gelé 0.278/0.280  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[14] 172 o, 35 o ≠ seed  m2=0.362 m3=0.980  gelé 0.278/0.280  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[15] 172 o, 36 o ≠ seed  m2=0.362 m3=0.980  gelé 0.278/0.280  sans_récompense 0.246/0.264  known=0.608 train=0.566  ÉMERGENCE mémoire-3
+latest.ck[16] 172 o, 29 o ≠ seed  m2=0.402 m3=0.380  gelé 0.207/0.209  sans_récompense 0.252/0.248  known=0.634 train=0.356
+émergence : oui
+
+### Rops-c60/s3
+latest.ck[0] 172 o, 25 o ≠ seed  m2=0.363 m3=0.348  gelé 0.299/0.294  sans_récompense 0.260/0.244  known=0.602 train=0.341
+latest.ck[1] 172 o, 23 o ≠ seed  m2=0.329 m3=0.352  gelé 0.196/0.198  sans_récompense 0.260/0.244  known=0.613 train=0.334
+latest.ck[2] 172 o, 24 o ≠ seed  m2=0.329 m3=0.352  gelé 0.196/0.198  sans_récompense 0.260/0.244  known=0.613 train=0.334
+latest.ck[3] 172 o, 17 o ≠ seed  m2=0.999 m3=0.352  gelé 0.188/0.191  sans_récompense 0.241/0.252  known=0.727 train=0.523  ÉMERGENCE mémoire-2
+latest.ck[4] 172 o, 18 o ≠ seed  m2=0.999 m3=0.352  gelé 0.188/0.191  sans_récompense 0.241/0.252  known=0.727 train=0.523  ÉMERGENCE mémoire-2
+latest.ck[5] 172 o, 25 o ≠ seed  m2=1.000 m3=0.356  gelé 0.196/0.198  sans_récompense 0.259/0.237  known=0.732 train=0.523  ÉMERGENCE mémoire-2
+latest.ck[6] 172 o, 25 o ≠ seed  m2=0.367 m3=1.000  gelé 0.196/0.198  sans_récompense 0.252/0.259  known=0.520 train=0.509  ÉMERGENCE mémoire-3
+latest.ck[7] 172 o, 26 o ≠ seed  m2=0.367 m3=1.000  gelé 0.252/0.258  sans_récompense 0.252/0.259  known=0.520 train=0.509  ÉMERGENCE mémoire-3
+latest.ck[8] 172 o, 32 o ≠ seed  m2=0.354 m3=0.982  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.553  ÉMERGENCE mémoire-3
+latest.ck[9] 172 o, 30 o ≠ seed  m2=0.354 m3=0.982  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.553  ÉMERGENCE mémoire-3
+latest.ck[10] 172 o, 31 o ≠ seed  m2=0.354 m3=0.982  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.553  ÉMERGENCE mémoire-3
+latest.ck[11] 172 o, 31 o ≠ seed  m2=0.354 m3=0.982  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.553  ÉMERGENCE mémoire-3
+latest.ck[12] 172 o, 33 o ≠ seed  m2=0.354 m3=0.982  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.553  ÉMERGENCE mémoire-3
+latest.ck[13] 172 o, 32 o ≠ seed  m2=0.363 m3=0.984  gelé 0.287/0.293  sans_récompense 0.242/0.261  known=0.612 train=0.550  ÉMERGENCE mémoire-3
+latest.ck[14] 172 o, 33 o ≠ seed  m2=0.361 m3=0.968  gelé 0.287/0.293  sans_récompense 0.248/0.246  known=0.609 train=0.544  ÉMERGENCE mémoire-3
+latest.ck[15] 172 o, 30 o ≠ seed  m2=0.370 m3=0.973  gelé 0.287/0.293  sans_récompense 0.251/0.263  known=0.620 train=0.558  ÉMERGENCE mémoire-3
+latest.ck[16] 172 o, 24 o ≠ seed  m2=0.363 m3=0.348  gelé 0.188/0.191  sans_récompense 0.260/0.244  known=0.602 train=0.341
+émergence : oui
+
+### Ronly-c60/s0
+latest.ck[0] 172 o, 9 o ≠ seed  m2=0.363 m3=0.352  gelé 0.299/0.294  sans_récompense 0.255/0.267  known=0.599 train=0.342
+latest.ck[1] 172 o, 9 o ≠ seed  m2=0.357 m3=0.352  gelé 0.299/0.294  sans_récompense 0.261/0.244  known=0.603 train=0.341
+latest.ck[2] 172 o, 9 o ≠ seed  m2=0.424 m3=0.394  gelé 0.299/0.294  sans_récompense 0.256/0.246  known=0.623 train=0.356
+latest.ck[3] 172 o, 19 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[4] 172 o, 19 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[5] 172 o, 21 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[6] 172 o, 15 o ≠ seed  m2=0.387 m3=0.398  gelé 0.302/0.295  sans_récompense 0.294/0.280  known=0.559 train=0.345
+latest.ck[7] 172 o, 10 o ≠ seed  m2=0.392 m3=0.405  gelé 0.302/0.295  sans_récompense 0.241/0.234  known=0.568 train=0.424
+latest.ck[8] 172 o, 11 o ≠ seed  m2=0.384 m3=0.393  gelé 0.302/0.295  sans_récompense 0.241/0.238  known=0.738 train=0.513
+latest.ck[9] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[10] 172 o, 6 o ≠ seed  m2=0.369 m3=0.409  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[11] 172 o, 10 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[12] 172 o, 7 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[13] 172 o, 10 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[14] 172 o, 11 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[15] 172 o, 41 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.270  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[16] 172 o, 9 o ≠ seed  m2=0.363 m3=0.352  gelé 0.299/0.294  sans_récompense 0.255/0.267  known=0.599 train=0.342
+émergence : non
+
+### Ronly-c60/s1
+latest.ck[0] 172 o, 10 o ≠ seed  m2=0.361 m3=0.334  gelé 0.299/0.294  sans_récompense 0.248/0.240  known=0.610 train=0.363
+latest.ck[1] 172 o, 7 o ≠ seed  m2=0.361 m3=0.334  gelé 0.299/0.294  sans_récompense 0.248/0.240  known=0.610 train=0.363
+latest.ck[2] 172 o, 9 o ≠ seed  m2=0.361 m3=0.334  gelé 0.299/0.294  sans_récompense 0.248/0.240  known=0.610 train=0.363
+latest.ck[3] 172 o, 15 o ≠ seed  m2=0.502 m3=0.491  gelé 0.287/0.266  sans_récompense 0.246/0.264  known=0.681 train=0.461
+latest.ck[4] 172 o, 14 o ≠ seed  m2=0.516 m3=0.487  gelé 0.287/0.266  sans_récompense 0.246/0.264  known=0.681 train=0.462
+latest.ck[5] 172 o, 13 o ≠ seed  m2=0.516 m3=0.487  gelé 0.287/0.266  sans_récompense 0.246/0.264  known=0.681 train=0.462
+latest.ck[6] 172 o, 15 o ≠ seed  m2=0.516 m3=0.487  gelé 0.287/0.266  sans_récompense 0.246/0.264  known=0.681 train=0.462
+latest.ck[7] 172 o, 13 o ≠ seed  m2=0.516 m3=0.487  gelé 0.287/0.266  sans_récompense 0.246/0.264  known=0.681 train=0.462
+latest.ck[8] 172 o, 8 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[9] 172 o, 9 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[10] 172 o, 10 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[11] 172 o, 8 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[12] 172 o, 9 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[13] 172 o, 9 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[14] 172 o, 9 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[15] 172 o, 9 o ≠ seed  m2=0.404 m3=0.430  gelé 0.287/0.266  sans_récompense 0.266/0.255  known=0.694 train=0.506
+latest.ck[16] 172 o, 10 o ≠ seed  m2=0.361 m3=0.334  gelé 0.299/0.294  sans_récompense 0.248/0.240  known=0.610 train=0.363
+émergence : non
+
+### Ronly-c60/s2
+latest.ck[0] 174 o, 11 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[1] 174 o, 12 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[2] 174 o, 12 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[3] 172 o, 19 o ≠ seed  m2=0.464 m3=0.453  gelé 0.251/0.263  sans_récompense 0.277/0.266  known=0.706 train=0.473
+latest.ck[4] 172 o, 20 o ≠ seed  m2=0.476 m3=0.453  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.676 train=0.496
+latest.ck[5] 172 o, 21 o ≠ seed  m2=0.476 m3=0.453  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.676 train=0.496
+latest.ck[6] 172 o, 18 o ≠ seed  m2=0.495 m3=0.477  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.702 train=0.470
+latest.ck[7] 172 o, 19 o ≠ seed  m2=0.495 m3=0.477  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.702 train=0.470
+latest.ck[8] 172 o, 10 o ≠ seed  m2=0.409 m3=0.417  gelé 0.287/0.293  sans_récompense 0.241/0.275  known=0.685 train=0.510
+latest.ck[9] 172 o, 10 o ≠ seed  m2=0.408 m3=0.425  gelé 0.287/0.293  sans_récompense 0.250/0.241  known=0.680 train=0.479
+latest.ck[10] 173 o, 14 o ≠ seed  m2=0.404 m3=0.426  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.679 train=0.505
+latest.ck[11] 172 o, 11 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[12] 172 o, 10 o ≠ seed  m2=0.405 m3=0.424  gelé 0.261/0.263  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[13] 172 o, 9 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[14] 172 o, 9 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[15] 172 o, 9 o ≠ seed  m2=0.405 m3=0.424  gelé 0.395/0.407  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[16] 173 o, 9 o ≠ seed  m2=0.449 m3=0.473  gelé 0.287/0.268  sans_récompense 0.266/0.255  known=0.676 train=0.366
+émergence : non
+
+### Ronly-c60/s3
+latest.ck[0] 172 o, 15 o ≠ seed  m2=0.391 m3=0.373  gelé 0.292/0.302  sans_récompense 0.266/0.255  known=0.684 train=0.416
+latest.ck[1] 172 o, 14 o ≠ seed  m2=0.408 m3=0.416  gelé 0.292/0.302  sans_récompense 0.266/0.255  known=0.697 train=0.418
+latest.ck[2] 172 o, 15 o ≠ seed  m2=0.408 m3=0.416  gelé 0.251/0.258  sans_récompense 0.266/0.255  known=0.697 train=0.418
+latest.ck[3] 172 o, 15 o ≠ seed  m2=0.505 m3=0.489  gelé 0.188/0.191  sans_récompense 0.222/0.242  known=0.562 train=0.370
+latest.ck[4] 172 o, 14 o ≠ seed  m2=0.509 m3=0.483  gelé 0.188/0.191  sans_récompense 0.252/0.239  known=0.562 train=0.370
+latest.ck[5] 172 o, 37 o ≠ seed  m2=0.447 m3=0.470  gelé 0.196/0.198  sans_récompense 0.252/0.248  known=0.576 train=0.381
+latest.ck[6] 172 o, 15 o ≠ seed  m2=0.505 m3=0.489  gelé 0.188/0.191  sans_récompense 0.234/0.252  known=0.562 train=0.370
+latest.ck[7] 172 o, 36 o ≠ seed  m2=0.447 m3=0.470  gelé 0.196/0.198  sans_récompense 0.252/0.248  known=0.576 train=0.381
+latest.ck[8] 172 o, 10 o ≠ seed  m2=0.358 m3=0.398  gelé 0.264/0.269  sans_récompense 0.257/0.265  known=0.723 train=0.519
+latest.ck[9] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.248/0.270  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[10] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.264/0.269  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[11] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.264/0.269  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[12] 172 o, 10 o ≠ seed  m2=0.369 m3=0.409  gelé 0.264/0.269  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[13] 172 o, 15 o ≠ seed  m2=0.369 m3=0.409  gelé 0.237/0.239  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[14] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.264/0.269  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[15] 172 o, 13 o ≠ seed  m2=0.369 m3=0.409  gelé 0.264/0.269  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[16] 172 o, 14 o ≠ seed  m2=0.408 m3=0.416  gelé 0.292/0.302  sans_récompense 0.266/0.255  known=0.697 train=0.418
+émergence : non
+
+### Base0-c60/s0
+latest.ck[0] 172 o, 9 o ≠ seed  m2=0.363 m3=0.352  gelé 0.299/0.294  sans_récompense 0.255/0.267  known=0.599 train=0.342
+latest.ck[1] 172 o, 9 o ≠ seed  m2=0.357 m3=0.352  gelé 0.299/0.294  sans_récompense 0.261/0.244  known=0.603 train=0.341
+latest.ck[2] 172 o, 9 o ≠ seed  m2=0.424 m3=0.394  gelé 0.299/0.294  sans_récompense 0.256/0.246  known=0.623 train=0.356
+latest.ck[3] 172 o, 19 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[4] 172 o, 19 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[5] 172 o, 21 o ≠ seed  m2=0.465 m3=0.434  gelé 0.201/0.214  sans_récompense 0.256/0.246  known=0.642 train=0.456
+latest.ck[6] 172 o, 15 o ≠ seed  m2=0.387 m3=0.398  gelé 0.302/0.295  sans_récompense 0.294/0.280  known=0.559 train=0.345
+latest.ck[7] 172 o, 10 o ≠ seed  m2=0.392 m3=0.405  gelé 0.302/0.295  sans_récompense 0.241/0.234  known=0.568 train=0.424
+latest.ck[8] 172 o, 11 o ≠ seed  m2=0.384 m3=0.393  gelé 0.302/0.295  sans_récompense 0.241/0.238  known=0.738 train=0.513
+latest.ck[9] 172 o, 9 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[10] 172 o, 6 o ≠ seed  m2=0.369 m3=0.409  gelé 0.287/0.293  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[11] 172 o, 10 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[12] 172 o, 7 o ≠ seed  m2=0.369 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.727 train=0.512
+latest.ck[13] 172 o, 10 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[14] 172 o, 11 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.295  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[15] 172 o, 41 o ≠ seed  m2=0.370 m3=0.409  gelé 0.302/0.270  sans_récompense 0.266/0.255  known=0.723 train=0.514
+latest.ck[16] 172 o, 9 o ≠ seed  m2=0.363 m3=0.352  gelé 0.299/0.294  sans_récompense 0.255/0.267  known=0.599 train=0.342
+émergence : non
+
+### Base0-c60/s1
+latest.ck[0] 172 o, 8 o ≠ seed  m2=0.341 m3=0.338  gelé 0.299/0.294  sans_récompense 0.228/0.247  known=0.593 train=0.341
+latest.ck[1] 172 o, 13 o ≠ seed  m2=0.332 m3=0.338  gelé 0.299/0.294  sans_récompense 0.254/0.245  known=0.588 train=0.347
+latest.ck[2] 172 o, 12 o ≠ seed  m2=0.332 m3=0.338  gelé 0.299/0.294  sans_récompense 0.254/0.245  known=0.588 train=0.347
+latest.ck[3] 172 o, 12 o ≠ seed  m2=0.471 m3=0.470  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.679 train=0.497
+latest.ck[4] 172 o, 14 o ≠ seed  m2=0.470 m3=0.462  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.629 train=0.460
+latest.ck[5] 172 o, 15 o ≠ seed  m2=0.470 m3=0.462  gelé 0.277/0.270  sans_récompense 0.266/0.255  known=0.629 train=0.460
+latest.ck[6] 172 o, 12 o ≠ seed  m2=0.470 m3=0.464  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.688 train=0.472
+latest.ck[7] 172 o, 14 o ≠ seed  m2=0.470 m3=0.464  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.688 train=0.472
+latest.ck[8] 172 o, 13 o ≠ seed  m2=0.357 m3=0.352  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.467
+latest.ck[9] 172 o, 30 o ≠ seed  m2=0.357 m3=0.352  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.467
+latest.ck[10] 172 o, 13 o ≠ seed  m2=0.357 m3=0.352  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.467
+latest.ck[11] 172 o, 31 o ≠ seed  m2=0.357 m3=0.352  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.467
+latest.ck[12] 172 o, 12 o ≠ seed  m2=0.331 m3=0.338  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.468
+latest.ck[13] 172 o, 13 o ≠ seed  m2=0.331 m3=0.338  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.719 train=0.468
+latest.ck[14] 172 o, 12 o ≠ seed  m2=0.470 m3=0.464  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.688 train=0.472
+latest.ck[15] 172 o, 14 o ≠ seed  m2=0.470 m3=0.464  gelé 0.307/0.296  sans_récompense 0.266/0.255  known=0.688 train=0.472
+latest.ck[16] 172 o, 8 o ≠ seed  m2=0.347 m3=0.339  gelé 0.299/0.294  sans_récompense 0.240/0.237  known=0.592 train=0.355
+émergence : non
+
+### Base0-c60/s2
+latest.ck[0] 173 o, 10 o ≠ seed  m2=0.449 m3=0.473  gelé 0.287/0.268  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[1] 174 o, 11 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[2] 174 o, 12 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[3] 172 o, 13 o ≠ seed  m2=0.475 m3=0.448  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.634 train=0.355
+latest.ck[4] 172 o, 17 o ≠ seed  m2=0.496 m3=0.481  gelé 0.307/0.296  sans_récompense 0.273/0.256  known=0.711 train=0.477
+latest.ck[5] 172 o, 16 o ≠ seed  m2=0.496 m3=0.481  gelé 0.307/0.296  sans_récompense 0.273/0.256  known=0.711 train=0.477
+latest.ck[6] 172 o, 16 o ≠ seed  m2=0.495 m3=0.477  gelé 0.268/0.270  sans_récompense 0.266/0.255  known=0.702 train=0.470
+latest.ck[7] 172 o, 14 o ≠ seed  m2=0.495 m3=0.477  gelé 0.268/0.270  sans_récompense 0.266/0.255  known=0.702 train=0.470
+latest.ck[8] 172 o, 10 o ≠ seed  m2=0.404 m3=0.426  gelé 0.294/0.302  sans_récompense 0.246/0.264  known=0.679 train=0.505
+latest.ck[9] 172 o, 10 o ≠ seed  m2=0.404 m3=0.426  gelé 0.294/0.302  sans_récompense 0.246/0.264  known=0.679 train=0.505
+latest.ck[10] 172 o, 11 o ≠ seed  m2=0.404 m3=0.426  gelé 0.294/0.302  sans_récompense 0.246/0.264  known=0.679 train=0.505
+latest.ck[11] 172 o, 8 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[12] 172 o, 11 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[13] 172 o, 12 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[14] 172 o, 11 o ≠ seed  m2=0.405 m3=0.424  gelé 0.355/0.358  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[15] 172 o, 11 o ≠ seed  m2=0.405 m3=0.424  gelé 0.287/0.293  sans_récompense 0.246/0.264  known=0.680 train=0.511
+latest.ck[16] 174 o, 11 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+émergence : non
+
+### Base0-c60/s3
+latest.ck[0] 172 o, 17 o ≠ seed  m2=0.369 m3=0.357  gelé 0.188/0.191  sans_récompense 0.258/0.245  known=0.602 train=0.349
+latest.ck[1] 172 o, 16 o ≠ seed  m2=0.330 m3=0.359  gelé 0.188/0.191  sans_récompense 0.237/0.254  known=0.600 train=0.360
+latest.ck[2] 172 o, 13 o ≠ seed  m2=0.354 m3=0.363  gelé 0.188/0.191  sans_récompense 0.240/0.250  known=0.592 train=0.366
+latest.ck[3] 172 o, 15 o ≠ seed  m2=0.466 m3=0.444  gelé 0.172/0.174  sans_récompense 0.239/0.255  known=0.630 train=0.466
+latest.ck[4] 172 o, 16 o ≠ seed  m2=0.466 m3=0.444  gelé 0.172/0.174  sans_récompense 0.239/0.255  known=0.630 train=0.466
+latest.ck[5] 172 o, 16 o ≠ seed  m2=0.456 m3=0.435  gelé 0.235/0.225  sans_récompense 0.240/0.246  known=0.634 train=0.466
+latest.ck[6] 172 o, 17 o ≠ seed  m2=0.456 m3=0.435  gelé 0.235/0.225  sans_récompense 0.240/0.246  known=0.634 train=0.466
+latest.ck[7] 172 o, 16 o ≠ seed  m2=0.456 m3=0.435  gelé 0.235/0.225  sans_récompense 0.240/0.246  known=0.634 train=0.466
+latest.ck[8] 172 o, 18 o ≠ seed  m2=0.366 m3=0.415  gelé 0.264/0.269  sans_récompense 0.268/0.262  known=0.729 train=0.523
+latest.ck[9] 172 o, 16 o ≠ seed  m2=0.370 m3=0.412  gelé 0.264/0.269  sans_récompense 0.277/0.254  known=0.734 train=0.521
+latest.ck[10] 172 o, 16 o ≠ seed  m2=0.369 m3=0.407  gelé 0.264/0.269  sans_récompense 0.266/0.271  known=0.730 train=0.521
+latest.ck[11] 172 o, 15 o ≠ seed  m2=0.369 m3=0.407  gelé 0.264/0.269  sans_récompense 0.266/0.271  known=0.730 train=0.521
+latest.ck[12] 172 o, 15 o ≠ seed  m2=0.369 m3=0.407  gelé 0.264/0.269  sans_récompense 0.266/0.271  known=0.730 train=0.521
+latest.ck[13] 172 o, 17 o ≠ seed  m2=0.369 m3=0.407  gelé 0.264/0.269  sans_récompense 0.266/0.271  known=0.730 train=0.521
+latest.ck[14] 172 o, 17 o ≠ seed  m2=0.370 m3=0.408  gelé 0.264/0.269  sans_récompense 0.265/0.255  known=0.716 train=0.516
+latest.ck[15] 172 o, 12 o ≠ seed  m2=0.369 m3=0.407  gelé 0.264/0.269  sans_récompense 0.266/0.271  known=0.730 train=0.521
+latest.ck[16] 172 o, 16 o ≠ seed  m2=0.330 m3=0.359  gelé 0.188/0.191  sans_récompense 0.237/0.254  known=0.600 train=0.360
+émergence : non
+
+### Ronly-c300/s1
+latest.ck[0] 172 o, 26 o ≠ seed  m2=0.363 m3=0.329  gelé 0.299/0.294  sans_récompense 0.270/0.248  known=0.620 train=0.345
+latest.ck[1] 172 o, 28 o ≠ seed  m2=0.364 m3=0.329  gelé 0.299/0.294  sans_récompense 0.251/0.243  known=0.622 train=0.344
+latest.ck[2] 172 o, 27 o ≠ seed  m2=0.363 m3=0.329  gelé 0.299/0.294  sans_récompense 0.270/0.248  known=0.620 train=0.345
+latest.ck[3] 172 o, 39 o ≠ seed  m2=0.482 m3=0.480  gelé 0.273/0.245  sans_récompense 0.277/0.252  known=0.667 train=0.436
+latest.ck[4] 173 o, 45 o ≠ seed  m2=0.482 m3=0.480  gelé 0.273/0.245  sans_récompense 0.277/0.252  known=0.667 train=0.436
+latest.ck[5] 172 o, 39 o ≠ seed  m2=0.488 m3=0.492  gelé 0.297/0.273  sans_récompense 0.277/0.252  known=0.649 train=0.479
+latest.ck[6] 172 o, 39 o ≠ seed  m2=0.470 m3=0.478  gelé 0.297/0.273  sans_récompense 0.277/0.252  known=0.719 train=0.491
+latest.ck[7] 172 o, 40 o ≠ seed  m2=0.451 m3=0.477  gelé 0.256/0.261  sans_récompense 0.263/0.261  known=0.697 train=0.493
+latest.ck[8] 172 o, 39 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[9] 172 o, 39 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[10] 172 o, 42 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[11] 172 o, 38 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[12] 172 o, 42 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[13] 172 o, 40 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[14] 172 o, 43 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[15] 172 o, 39 o ≠ seed  m2=0.435 m3=0.466  gelé 0.297/0.273  sans_récompense 0.273/0.254  known=0.688 train=0.465
+latest.ck[16] 172 o, 15 o ≠ seed  m2=0.363 m3=0.329  gelé 0.299/0.294  sans_récompense 0.270/0.248  known=0.620 train=0.345
+émergence : non
+
+### Ronly-c300/s2
+latest.ck[0] 174 o, 24 o ≠ seed  m2=0.449 m3=0.473  gelé 0.283/0.241  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[1] 174 o, 22 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[2] 174 o, 22 o ≠ seed  m2=0.449 m3=0.473  gelé 0.302/0.281  sans_récompense 0.266/0.255  known=0.676 train=0.366
+latest.ck[3] 173 o, 59 o ≠ seed  m2=0.515 m3=0.509  gelé 0.220/0.209  sans_récompense 0.282/0.232  known=0.653 train=0.431
+latest.ck[4] 173 o, 58 o ≠ seed  m2=0.513 m3=0.502  gelé 0.141/0.138  sans_récompense 0.244/0.227  known=0.664 train=0.447
+latest.ck[5] 173 o, 60 o ≠ seed  m2=0.512 m3=0.494  gelé 0.210/0.212  sans_récompense 0.244/0.227  known=0.669 train=0.441
+latest.ck[6] 173 o, 59 o ≠ seed  m2=0.480 m3=0.466  gelé 0.248/0.255  sans_récompense 0.215/0.258  known=0.630 train=0.429
+latest.ck[7] 173 o, 59 o ≠ seed  m2=0.480 m3=0.466  gelé 0.248/0.255  sans_récompense 0.215/0.258  known=0.630 train=0.429
+latest.ck[8] 172 o, 33 o ≠ seed  m2=0.396 m3=0.409  gelé 0.266/0.260  sans_récompense 0.243/0.234  known=0.666 train=0.512
+latest.ck[9] 172 o, 32 o ≠ seed  m2=0.409 m3=0.404  gelé 0.266/0.260  sans_récompense 0.247/0.237  known=0.688 train=0.521
+latest.ck[10] 172 o, 32 o ≠ seed  m2=0.409 m3=0.404  gelé 0.266/0.260  sans_récompense 0.247/0.237  known=0.688 train=0.521
+latest.ck[11] 172 o, 33 o ≠ seed  m2=0.409 m3=0.404  gelé 0.266/0.260  sans_récompense 0.247/0.237  known=0.688 train=0.521
+latest.ck[12] 172 o, 33 o ≠ seed  m2=0.402 m3=0.413  gelé 0.266/0.260  sans_récompense 0.246/0.236  known=0.681 train=0.519
+latest.ck[13] 172 o, 33 o ≠ seed  m2=0.402 m3=0.409  gelé 0.266/0.260  sans_récompense 0.246/0.236  known=0.688 train=0.526
+latest.ck[14] 172 o, 30 o ≠ seed  m2=0.402 m3=0.409  gelé 0.266/0.260  sans_récompense 0.246/0.236  known=0.688 train=0.526
+latest.ck[15] 172 o, 31 o ≠ seed  m2=0.402 m3=0.409  gelé 0.266/0.260  sans_récompense 0.246/0.236  known=0.688 train=0.526
+latest.ck[16] 174 o, 21 o ≠ seed  m2=0.449 m3=0.473  gelé 0.317/0.289  sans_récompense 0.266/0.255  known=0.676 train=0.366
+émergence : non
+
+### Rops-c300/s2
+latest.ck[0] 173 o, 69 o ≠ seed  m2=0.363 m3=0.327  gelé 0.252/0.253  sans_récompense 0.270/0.248  known=0.621 train=0.346
+latest.ck[1] 173 o, 68 o ≠ seed  m2=0.363 m3=0.327  gelé 0.252/0.253  sans_récompense 0.270/0.248  known=0.621 train=0.346
+latest.ck[2] 173 o, 68 o ≠ seed  m2=0.363 m3=0.327  gelé 0.252/0.253  sans_récompense 0.270/0.248  known=0.621 train=0.346
+latest.ck[3] 172 o, 67 o ≠ seed  m2=1.000 m3=0.362  gelé 0.299/0.294  sans_récompense 0.205/0.219  known=0.730 train=0.522  ÉMERGENCE mémoire-2
+latest.ck[4] 172 o, 66 o ≠ seed  m2=1.000 m3=0.362  gelé 0.299/0.294  sans_récompense 0.205/0.219  known=0.730 train=0.522  ÉMERGENCE mémoire-2
+latest.ck[5] 172 o, 67 o ≠ seed  m2=1.000 m3=0.362  gelé 0.299/0.294  sans_récompense 0.205/0.219  known=0.730 train=0.522  ÉMERGENCE mémoire-2
+latest.ck[6] 172 o, 59 o ≠ seed  m2=0.372 m3=1.000  gelé 0.114/0.110  sans_récompense 0.245/0.249  known=0.519 train=0.512  ÉMERGENCE mémoire-3
+latest.ck[7] 172 o, 58 o ≠ seed  m2=0.372 m3=1.000  gelé 0.114/0.110  sans_récompense 0.245/0.249  known=0.519 train=0.512  ÉMERGENCE mémoire-3
+latest.ck[8] 172 o, 73 o ≠ seed  m2=0.973 m3=0.376  gelé 0.285/0.273  sans_récompense 0.250/0.250  known=0.800 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[9] 172 o, 73 o ≠ seed  m2=0.973 m3=0.376  gelé 0.285/0.273  sans_récompense 0.250/0.250  known=0.800 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[10] 172 o, 71 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[11] 172 o, 71 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[12] 172 o, 73 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[13] 172 o, 72 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[14] 172 o, 72 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[15] 172 o, 73 o ≠ seed  m2=0.965 m3=0.380  gelé 0.285/0.273  sans_récompense 0.252/0.259  known=0.803 train=0.591  ÉMERGENCE mémoire-2
+latest.ck[16] 172 o, 40 o ≠ seed  m2=0.387 m3=0.371  gelé 0.139/0.143  sans_récompense 0.250/0.259  known=0.677 train=0.416
+émergence : oui
+

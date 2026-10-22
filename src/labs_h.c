@@ -708,6 +708,10 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
 #ifndef GN_DIRECT_FAM
 #define GN_DIRECT_FAM 6
 #endif
+/* Levier « regs » : RPUSH / RPEEK actifs dans general (monde et bac à sable). -DGN_REGS=0 = main. */
+#ifndef GN_REGS
+#define GN_REGS 1
+#endif
 /* ======================= 8. general : apprendre pendant sa vie, généraliser =======================
  * Définition opérationnelle : un génome est « intelligent » ici s'il apprend PENDANT sa vie une règle
  * qu'il ne connaît pas à la naissance, et s'il le fait sur des tâches que la sélection n'a jamais vues.
@@ -786,6 +790,7 @@ typedef struct { int level; } GnLab;
 static GnState *gn_state_new(void) {
     GnState *s = calloc(1, sizeof *s);
     WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0; sc.ops_per_tick = GN_OPS;
+    sc.regs = GN_REGS;
     Rng *r = malloc(sizeof *r); rng_seed(r, 0);
     s->sb = world_new(NULL, 0, r, &sc, NULL);
     return s;
@@ -911,8 +916,9 @@ static void gn_before(World *w, Creature *c) {
 void hl_gn_cfg(WorldConfig *c) {
     c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS;
     c->mut_rate = 0.005; c->dup_rate = 0.01; c->germline = 1;   /* génome long : mutation réduite ; lignée ≠ soma */
-#ifdef GN_DIRECT_SEL
-    c->delay_rate = 0.0; c->unmix_rate = 0.0; c->deepen_rate = 0.0;  /* piste A : pression seule */
+    c->regs = GN_REGS;      /* levier : RPUSH / RPEEK (experiments/general-regs) */
+#if defined(GN_DIRECT_SEL) || defined(GN_BIRTH_OFF)
+    c->delay_rate = 0.0; c->unmix_rate = 0.0; c->deepen_rate = 0.0;  /* pression seule, sans échafaudage */
 #else
     c->delay_rate = 0.12;   /* décaler la case, puis relire la case d'avant. 0 chez les autres labos */
     c->unmix_rate = 0.12;   /* puis ne plus ajouter l'indice courant à la case relue */
