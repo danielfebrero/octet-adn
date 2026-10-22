@@ -1,0 +1,24 @@
+universe-search v2 — résumé chiffré (bruts : race_seed1.txt, race_seed2.txt, origin_N16384.txt, drift_sources_*.txt)
+Machine : 8 cœurs ; calcul total ≈ 16 min.
+
+[1] Fitness robuste + racing (budget identique : 1344 sims N=1024 + 48 sims N=4096 par bras ; 6 finalistes × 12 graines neuves N=4096)
+course 1 : sélection étape0 0/1152, reval 0/72 (IC95 0–5,1 %) ; témoin étape0 1/1152, reval 3/72 (4,2 %) ; Fisher S>T p=1 (bilatéral 0,245)
+course 2 : sélection étape0 128/1152, reval 33/72 (45,8 %) ; témoin étape0 5/1152, reval 14/72 (19,4 %) ;
+           Fisher S>T p=0,00063 (bilatéral 0,00125) ; permutation par univers p=0,0126
+poolé 2 courses : 33/144 vs 17/144, Fisher unilatéral p=0,0095, bilatéral p=0,019
+finalistes S course 2 (reval/12) : 7,6,4,6,5,5 — tous L=16 kper=4, addr abs×2 / ip×4, mut 1e-3 (un à 0)
+finalistes T course 2 (reval/12) : 5,2,0,5,0,2 — tous addr=b
+origine à N=4096 : 0/12 (course 1), 0/12 (course 2)
+
+[2] Origine à N=16384, E=2048, 8 graines neuves communes
+origine 0/8 ; S#0 5/8 (p=0,013) ; S#1 1/8 (p=0,5) ; T#0 8/8 (p=7,8e-5) ; T#1 8/8 (p=7,8e-5)
+soupe historique dans la même fenêtre de 2048 époques : 1/4 → 0/8 vs 1/4, Fisher bilatéral p=0,33 (compatible)
+
+[3] Dérive lente (N=1024, établissement 512, dérive 4096 époques), 4 sources × 8 répliques, vivants en fin (copieurs ≥0,25)
+sans dérive 31/32
+K=512 (8 chgts, dist~6)     dérive 25/32  saut 20/32  p=0,27
+K=128 (32 chgts, dist~28)   dérive 22/32  saut 21/32  p=1
+K=32  (128 chgts, dist~100) dérive  9/32  saut 11/32  p=0,79
+K=8   (512 chgts, dist 200+) dérive  1/32  saut  3/32  p=0,61
+tous K : dérive 57/128, saut 55/128, p=0,90
+adaptations (vivant alors que le réplicateur initial ne copie plus sous la physique finale) : 21 trajectoires de dérive

@@ -183,3 +183,13 @@ Rendre les univers *robustement* fertiles, et pas seulement chanceux :
 2. re-tester l'origine à N=16384 pour situer son seuil ;
 3. faire de la migration *dans* une lignée, entre univers voisins, pour voir si la vie suit une physique qui
    dérive lentement : l'évolution conjointe de la vie et de la physique.
+
+## 7. Suite : v2 (voir `v2/README.md` et `v2/results.txt`)
+- **Fitness robuste + racing** : la course 2 donne sélection 33/72 contre témoin 14/72 sur des graines neuves à
+  N=4096 (Fisher p = 6×10⁻⁴, permutation p = 0,013). La course 1, où l'AG n'a vu aucune émergence, donne 0/72 contre
+  3/72. L'AG est bimodal. Poolé : p = 0,0095.
+- **Origine à N=16384** : 0/8 en 2048 époques, ce qui est compatible avec la soupe (1/4 dans la même fenêtre,
+  p = 0,33). Les univers trouvés la battent à taille égale (5/8, 8/8, 8/8).
+- **Dérive lente** : la vie suit une petite dérive (≤ ~30 entrées de table), avec de l'adaptation réelle des
+  réplicateurs. Mais elle ne fait pas mieux qu'un saut brutal vers le même point d'arrivée (57/128 contre 55/128,
+  p = 0,90) : c'est la distance qui compte, pas la vitesse.

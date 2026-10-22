@@ -51,12 +51,17 @@ experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(COR
 experiments/universe_search: experiments/universe_search.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search
+# v2 : fitness robuste (racing), origine à grand N, dérive lente de la physique (inclut universe_search.c sans le modifier).
+experiments/universe_search2: experiments/universe_search2.c experiments/universe_search.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
+test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2
 	./tests/test_vm
 	./experiments/metabolic_order selftest
 	./experiments/mi_detector selftest
 	./experiments/terrarium_run selftest
 	./experiments/universe_search selftest
+	./experiments/universe_search2 selftest
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
@@ -86,6 +91,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search
+	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2
 
 .PHONY: all static test no-python run clean sanitize

@@ -1,0 +1,100 @@
+# universe_search2 drift N=1024 établissement=512 époques, dérive=4096 époques, K=512,128,32,8 ; 2 sources × 8 répliques
+
+## source 0 : L=64 kper=1 addr=b rcost=4 wcost=2 steps=2048 mut=0.004 ; réplicateur 13 octets essentiels
+# condition        vivants/8  établis  copieurs_fin(moy)  min(moy)  changements  coups_sur_essentiels  dist_table  réplicateur_initial_encore_copieur  dominant: dist_Hamming / octets_ess_changés (médiane)
+dérive K=512     5/8  8/8  0.56  0.27  8.0  0.2  6.4  1/8  64 / 16  (n=5)
+SAUT   K=512      4/8  8/8  0.42  0.35  8.0  0.2  6.4  1/8  64 / 15  (n=4)
+dérive K=128     3/8  8/8  0.34  0.18  32.0  0.9  26.6  2/8  63 / 19  (n=3)
+SAUT   K=128      5/8  8/8  0.61  0.50  32.0  0.9  26.6  2/8  53 / 9  (n=5)
+dérive K=32      2/8  8/8  0.24  0.00  128.0  4.9  90.6  0/8  62 / 17  (n=2)
+SAUT   K=32       1/8  8/8  0.11  0.09  128.0  4.9  90.6  0/8  60 / 11  (n=1)
+dérive K=8       0/8  8/8  0.00  0.00  512.0  17.5  205.0  0/8  -1 / -1  (n=0)
+SAUT   K=8        2/8  8/8  0.23  0.00  512.0  17.5  205.0  0/8  61 / 17  (n=2)
+sans dérive      8/8  8/8  0.86  0.71  0.0  0.0  0.0  8/8  63 / 18  (n=8)
+  ADAPTATION K=512 rép 1 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.88) ; dominant à 64 octets, 7 essentiels :
+    03db777510bff736559598e89595f79503db777510bff736559598e89595f79503db777510bff736559598e89595f79503db777510bff736559598e89595f795
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 0:03=DEC_B 1:db=H1_DEC 3:75=LOAD 4:10=MOV_BA 5:bf=H0_INC 6:f7=WRITE_H 7:36=LOOP
+  ADAPTATION K=512 rép 2 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.80) ; dominant à 63 octets, 8 essentiels :
+    a8a7aafbf6f59966c0f800838acd21fe31bf7683f7194cac246f16363188bf01a776587efb2ec7e73e6b898ff258ab11784cabe06763ecc4828c5b70a71da4d6
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 0:a8=CLRI 2:aa=DEC_B 5:f5=CLRI 7:66=LOAD 8:c0=H0_INC 9:f8=STORE 10:00=WRITE_H 11:83=LOOP
+  ADAPTATION K=512 rép 6 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.86) ; dominant à 63 octets, 8 essentiels :
+    8eaa9cdb42a202a0494d367c7fa10c478c11061852e7cc75fb7378a3f932ef0a8eaa9cdb42a202a0494d367c7fa10c478c11061852e7cc75fb7378a3f932ef0a
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 0:8e=SUB 1:aa=DEC_B 2:9c=INC_A 3:db=H1_DEC 6:02=LOAD 7:a0=INC_A 8:49=WRITE_H 9:4d=LOOP
+  ADAPTATION K=512 rép 7 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.91) ; dominant à 64 octets, 7 essentiels :
+    7fbfe5289a5175a0e9004d907218ed4eec4db4366d7c5262a9c1df102104924e7fbfe5289a5175a0e9004d907218ed4eec4db4366d7c5262a9c1df102104924e
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 1:bf=H0_INC 2:e5=DEC_A 6:75=LOAD 7:a0=INC_A 8:e9=STORE 9:00=WRITE_H 10:4d=LOOP
+  ADAPTATION K=128 rép 6 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.84) ; dominant à 63 octets, 10 essentiels :
+    00d6e8a8d6d288eddd6c7cb87cd6ef2baa01cc04f9b95fc089c0c79707007c03226fee2d80d161e5888859288800760965000000710000000000000000006b00
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 0:00=WRITE_H 2:e8=H0_INC 3:a8=CLRI 5:d2=JZ 6:88=DEC_B 15:2b=H1_DEC 16:aa=DEC_B 20:f9=CLRI 22:5f=LOAD 23:c0=H0_INC
+  ADAPTATION K=32 rép 3 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.95) ; dominant à 60 octets, 13 essentiels :
+    0090aa8fe06b083898c5b23315ecaa2db0c284073b085b44c0d400da3eaaaaaaaaaa08aaa3da00d4c0445b083bb984c2b02daaec813378c59838086be08f3790
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 0:00=WRITE_H 1:90=READ_H 4:e0=LOADI 9:c5=H0_DEC 11:33=NOP 12:15=H1_DEC 13:ec=CLRI 15:2d=JNZ 17:c2=DEC_B 21:08=LOADI 23:44=LOAD 24:c0=LOADI 25:d4=LOOP
+  ADAPTATION K=32 rép 4 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.98) ; dominant à 62 octets, 7 essentiels :
+    7882e5e900f42036510056319cea0411563651ee6e00f9f95c420040eda1b2317882e5e900f42036510056319cea0411563651ee6e00f9f95c420040eda1b231
+    ess init : 0:00=WRITE_H 1:00=WRITE_H 3:00=WRITE_H 6:f3=JMP 7:06=H0_INC 14:6f=CLRI 16:fa=H1_DEC 17:aa=DEC_B 21:30=JZ 23:75=LOAD 24:c0=H0_INC 25:30=JZ 26:00=WRITE_H
+    ess fin  : 1:82=INC_B 2:e5=DEC_A 3:e9=LOAD 4:00=JNZ 5:f4=STORE 6:20=HALT 7:36=LOOP
+  courbe copieurs rép 0 dérive : K=512 0.81 0.77 0.92 0.91 0.94 0.94 0.91 0.86 0.91 0.89 0.89 0.89 0.89 0.92 0.98 0.89 0.00 0.00 
+  courbe copieurs rép 0 dérive : K=128 0.81 0.77 0.92 0.88 0.88 0.83 0.94 0.81 0.84 0.89 0.89 0.77 1.00 1.00 1.00 1.00 0.00 0.00 
+  courbe copieurs rép 0 dérive : K=32 0.81 0.77 0.92 0.94 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 
+  courbe copieurs rép 0 dérive : K=8 0.81 0.77 0.91 0.73 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 
+  courbe copieurs rép 0 sans dérive : 0.81 0.77 0.92 0.91 0.94 0.94 0.92 0.88 0.92 0.92 0.86 0.88 0.91 0.88 0.94 0.92 0.94 0.92 
+
+## source 1 : L=32 kper=2 addr=b rcost=2 wcost=1 steps=1024 mut=0.004 ; réplicateur 6 octets essentiels
+# condition        vivants/8  établis  copieurs_fin(moy)  min(moy)  changements  coups_sur_essentiels  dist_table  réplicateur_initial_encore_copieur  dominant: dist_Hamming / octets_ess_changés (médiane)
+dérive K=512     8/8  8/8  0.91  0.75  8.0  0.1  7.0  7/8  26 / 2  (n=8)
+SAUT   K=512      7/8  8/8  0.72  0.60  8.0  0.1  7.0  7/8  27 / 3  (n=7)
+dérive K=128     7/8  8/8  0.85  0.62  32.0  0.4  27.0  4/8  27 / 3  (n=7)
+SAUT   K=128      7/8  8/8  0.81  0.64  32.0  0.4  27.0  4/8  27 / 4  (n=7)
+dérive K=32      4/8  8/8  0.47  0.15  128.0  3.1  97.5  1/8  25 / 5  (n=4)
+SAUT   K=32       6/8  8/8  0.72  0.55  128.0  3.1  97.5  1/8  26 / 5  (n=6)
+dérive K=8       0/8  8/8  0.00  0.00  512.0  8.6  295.8  0/8  -1 / -1  (n=0)
+SAUT   K=8        0/8  8/8  0.00  0.00  512.0  8.6  295.8  0/8  -1 / -1  (n=0)
+sans dérive      8/8  8/8  0.89  0.80  0.0  0.0  0.0  8/8  27 / 3  (n=8)
+  ADAPTATION K=512 rép 5 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.97) ; dominant à 29 octets, 7 essentiels :
+    0e7e80f5d7712d45defe785f104d0e46bfb58dfa6bb73adc8f7a552b813d4b00
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:0e=DEC_B 1:7e=STORE 2:80=CLR_A 4:d7=AND 10:78=LOAD 11:5f=STORE 12:10=LOOP
+  ADAPTATION K=128 rép 3 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 1.00) ; dominant à 25 octets, 6 essentiels :
+    0c00008921b07d31ca51155f10ddec007c3c9105e6ab90dbf957227f99efff00
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+  ADAPTATION K=128 rép 6 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.94) ; dominant à 28 octets, 8 essentiels :
+    0c5f007845f086af3f7515dfe2b525653548c613f5e2c9158378ff2c49457800
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:0c=DEC_B 1:5f=STORE 2:00=H0_DEC 3:78=JMP 4:45=JMP 10:15=LOAD 11:df=CLR_B 12:e2=LOOP
+  ADAPTATION K=128 rép 7 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.95) ; dominant à 27 octets, 7 essentiels :
+    1e0000ef87a95763a06e635f10ca768d204e98a62df830e90da365cfb8fb6900
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:1e=DEC_B 1:00=STORE 2:00=H0_DEC 5:a9=MOV_AB 10:63=LOAD 11:5f=STORE 12:10=LOOP
+  ADAPTATION K=32 rép 0 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.84) ; dominant à 25 octets, 6 essentiels :
+    0c0000ff90f8e91abad2965f020e8346473262fb19bc24b7000140006d280000
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:96=LOAD 11:5f=STORE 12:02=LOOP
+  ADAPTATION K=32 rép 3 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 0.92) ; dominant à 25 octets, 9 essentiels :
+    0c00003d7441ac75d7ffc35fbe3c0cbf2bb715161a1015f715019e1515151500
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 5:41=AND 7:75=NOP 8:d7=AND 10:c3=LOAD 11:5f=STORE 12:be=LOOP
+  ADAPTATION K=32 rép 7 : réplicateur initial n'est plus copieur sous la physique finale, la population si (copieurs 1.00) ; dominant à 28 octets, 6 essentiels :
+    490000b2635fa6700e94e5c5706ffc854185ad6c976f8593b30094008e706f00
+    ess init : 0:0c=DEC_B 1:00=STORE 2:00=H0_DEC 10:15=LOAD 11:5f=STORE 12:10=LOOP
+    ess fin  : 0:49=DEC_B 1:00=STORE 2:00=H0_DEC 4:63=LOAD 5:5f=STORE 6:a6=LOOP
+  courbe copieurs rép 0 dérive : K=512 0.89 0.91 0.97 0.91 0.89 0.88 0.95 0.92 0.91 0.94 0.91 0.92 0.88 0.91 0.95 0.88 0.89 0.92 
+  courbe copieurs rép 0 dérive : K=128 0.89 0.91 0.97 0.91 0.91 0.88 0.92 0.94 0.89 0.95 0.89 0.86 0.88 0.81 0.52 0.84 0.83 1.00 
+  courbe copieurs rép 0 dérive : K=32 0.89 0.91 0.97 0.91 0.86 0.88 0.89 0.92 0.95 0.95 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 
+  courbe copieurs rép 0 dérive : K=8 0.89 0.91 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 
+  courbe copieurs rép 0 sans dérive : 0.89 0.91 0.97 0.91 0.89 0.88 0.89 0.92 0.91 0.92 0.91 0.86 0.84 0.91 0.97 0.88 0.94 0.91 
+
+## bilan poolé (2 sources × 8 répliques) : vivants en fin, dérive vs saut vers le même point d'arrivée
+sans dérive : 16/16
+K=512  dérive 13/16  saut 11/16  Fisher bilatéral p = 0.685 ; dérive vs sans dérive p = 0.226
+K=128  dérive 10/16  saut 12/16  Fisher bilatéral p = 0.704 ; dérive vs sans dérive p = 0.0177
+K=32   dérive  6/16  saut  7/16  Fisher bilatéral p = 1 ; dérive vs sans dérive p = 0.000248
+K=8    dérive  0/16  saut  2/16  Fisher bilatéral p = 0.484 ; dérive vs sans dérive p = 3.33e-09
+tous K : dérive 29/64  saut 32/64  Fisher bilatéral p = 0.724 (unilatéral dérive > saut p = 0.76)
+temps 102s
