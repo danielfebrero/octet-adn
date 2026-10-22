@@ -1,0 +1,53 @@
+table de départ S#0 : L=16 kper=4 abs ; 68 entrées réassignées à READ_LAW/WRITE_LAW (34 chacune, essai 0) ; injecté 350000ae00f100000000f100ae000035
+table de départ S#1 : L=16 kper=4 abs ; 68 entrées réassignées à READ_LAW/WRITE_LAW (34 chacune, essai 0) ; injecté e2000031fe000000000000fe310000e2
+table de départ T#0 : L=64 kper=1 b ; 18 entrées réassignées à READ_LAW/WRITE_LAW (9 chacune, essai 0) ; injecté 0000b000003bf3062d0b00e1aa016fd3faaa805de5300075c030004dbfed0000fe7e49fe896c00fe454ceafdaaedeeeff0f1f2f3f43df6f7f8f959fbfcfdfcfd
+table de départ T#1 : L=32 kper=2 b ; 34 entrées réassignées à READ_LAW/WRITE_LAW (17 chacune, essai 1) ; injecté 0c000027bbfa5175008f155f107e78092b9d1f9affb4000c28c9b300a69e0000
+# 192 runs (4 sources × 8 graines × 6 bras), établissement 512 + dérive 8192 (K=8 : 1024 pas), N=1024, mort = 0 copieur vérifié dans la pop ENTIÈRE (contrôle /64 ép.), naissance ≥51 ; 218 s
+# unité = run ; continuité stricte = établi et jamais 0 copieur ; vivant = part des contrôles de dérive où la lignée vit ; stérilisation = dernière mort (époque de dérive) si mort en fin ;
+#   fertile = émergence depuis le bruit (2048 ép., lois figées) sous la table finale ; dist = entrées de table ≠ départ ; écr = réécritures de lois acceptées ; tent = WRITE_LAW exécutées
+bras     établis  continuité  vivant  morts  naiss.  mort-en-fin  stérilisation(méd.)  fertile-fin  dist   écr    tent/époque
+v2        32/32     0/32      0.150   1.66   0.69    31/32           1152              1/32         455      0      0.00
+A         32/32     0/32      0.079   1.38   0.41    31/32            256              0/32         463    981   2196.06
+A-jet     32/32     0/32      0.163   1.69   0.72    31/32            960              3/32         455      0   3289.20
+A-redir   32/32     0/32      0.101   1.41   0.41    32/32            896              0/32         599    978   1800.60
+B         32/32     0/32      0.476   3.16   2.31    27/32           6208              8/32         455      0      0.00
+B-perm    32/32     0/32      0.227   2.03   1.03    32/32           1664              1/32         457      0      0.00
+
+# par source : continuité stricte k/établis | part vivante moyenne
+S#0   v2 0/8 0.13  A 0/8 0.01  A-jet 0/8 0.14  A-redir 0/8 0.12  B 0/8 0.71  B-perm 0/8 0.26
+S#1   v2 0/8 0.16  A 0/8 0.03  A-jet 0/8 0.26  A-redir 0/8 0.11  B 0/8 0.63  B-perm 0/8 0.20
+T#0   v2 0/8 0.06  A 0/8 0.04  A-jet 0/8 0.04  A-redir 0/8 0.04  B 0/8 0.07  B-perm 0/8 0.11
+T#1   v2 0/8 0.25  A 0/8 0.23  A-jet 0/8 0.21  A-redir 0/8 0.13  B 0/8 0.49  B-perm 0/8 0.33
+
+# comparaisons appariées (mêmes graines ; v2/A/A-jet/A-redir partagent la même suite de dérive) sur la part vivante, permutation à signes (20000)
+  A       vs v2      : 0.079 vs 0.150  (meilleur 5, pire 20, égal 7)  p=0.0055
+  A       vs A-jet   : 0.079 vs 0.163  (meilleur 6, pire 17, égal 9)  p=0.0069
+  A       vs A-redir : 0.079 vs 0.101  (meilleur 8, pire 19, égal 5)  p=0.4957
+  B       vs v2      : 0.476 vs 0.150  (meilleur 25, pire 5, égal 2)  p=0.0000
+  B       vs B-perm  : 0.476 vs 0.227  (meilleur 24, pire 7, égal 1)  p=0.0001
+  (B-perm vs v2 : 0.227 vs 0.150 p=0.0698)
+
+# écritures de lois acceptées pendant que la lignée vit (dominant vérifié) : cible-t-on les entrées que le dominant exécute ?
+#   « utilisée » = entrée exécutée par le dominant du moment quand il se copie ; attendu = Σ nused/n (hasard uniforme) ;
+#   défaire = remettre la valeur d'avant le dernier pas de dérive de cette entrée ; casse/répare = le dominant copie avant et plus après / l'inverse
+A        écritures 31407 (toutes) dont 19442 sans effet (même valeur) ; défaites de la dérive 263 ; retour à la valeur de départ 549
+         pendant la vie : 2028 ; sur entrée utilisée 333 (attendu 45.6, enrichissement ×7.31, z=42.6) dont 240 sans effet ; par un copieur 1119 ; cassent le dominant 30, le réparent 8
+         écritures EFFECTIVES (valeur changée) pendant la vie : 832, sur entrée utilisée 93 (attendu 19.8, ×4.69)
+         nul « composition » (cible = phase × octet présent dans le dominant) : 647 écritures, utilisées 333 (attendu 209.6, ×1.59) ; effectives 234, utilisées 93 (attendu 69.1, ×1.35)
+         enrichissement 1re moitié ×7.70 (329/42.7), 2e moitié ×1.41 (4/2.8)
+A-redir  écritures 31300 (toutes) dont 5960 sans effet (même valeur) ; défaites de la dérive 1930 ; retour à la valeur de départ 533
+         pendant la vie : 2828 ; sur entrée utilisée 43 (attendu 48.8, enrichissement ×0.88, z=-0.8) dont 4 sans effet ; par un copieur 1180 ; cassent le dominant 23, le réparent 0
+         écritures EFFECTIVES (valeur changée) pendant la vie : 2649, sur entrée utilisée 39 (attendu 45.6, ×0.85)
+         nul « composition » (cible = phase × octet présent dans le dominant) : 155 écritures, utilisées 43 (attendu 45.1, ×0.95) ; effectives 146, utilisées 39 (attendu 41.9, ×0.93)
+         enrichissement 1re moitié ×0.88 (43/48.8), 2e moitié ×0.00 (0/0.0)
+
+# artefacts : auto-destruction = morts dans les 128 ép. suivant une écriture qui casse le dominant ; gel = dist finale (cf. tableau) et part des pas de dérive défaits
+  A        morts 44 dont auto-destruction 17 ; pas de dérive 32768, défaits par la soupe 263 (0.80 %)
+  A-jet    morts 54 dont auto-destruction 0 ; pas de dérive 32768, défaits par la soupe 0 (0.00 %)
+  A-redir  morts 45 dont auto-destruction 9 ; pas de dérive 32768, défaits par la soupe 1930 (5.89 %)
+
+# gardien : écriture (bras A, lignée vivante) qui RÉPARE le dominant (il ne copiait plus, il copie de nouveau)
+  T#1 graine 4, époque 632 (dérive 120) : loi tab[1][ff] HALT → INC_A (utilisée=1, défait la dérive=0) ; écrivain 0c0000413959064a8155155f1007c8e657e27f9aa3975bff0f0070e400feed00 (copieur=1, H au dominant=24)
+  ablation (après l'époque 632, 8 bifurcations de dérive) : écritures gardées part vivante 0.138, vivant en fin 0/8 ; écritures jetées 0.386, vivant en fin 2/8 ; p apparié=0.1067
+
+temps total 238 s

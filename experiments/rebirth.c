@@ -403,6 +403,7 @@ static int selftest4(void) {
     return fail;
 }
 
+#ifndef RB_NO_MAIN   /* law_keepers.c inclut ce fichier sans son main */
 int main(int argc, char **argv) {
     const char *load = NULL, *save = NULL, *pool = NULL;
     (void)selftest2; (void)cmd_drift; (void)cmd_origin; (void)cmd_race; (void)selftest3; (void)cmd_replay; (void)cmd_trace; (void)cmd_robust; (void)cmd_fresh; (void)cmd_fertile; (void)cmd_knock; (void)run_traces;
@@ -423,3 +424,4 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "features")) return cmd_features();
     return 2;
 }
+#endif

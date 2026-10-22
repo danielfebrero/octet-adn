@@ -205,3 +205,13 @@ Rendre les univers *robustement* fertiles, et pas seulement chanceux :
   (p=0.0001), temps vivant 13.8 % contre 11.0 % (p=0.21).
 - **La fertilité ne dépend pas de la composition** (p familial 0.22). Elle dépend de la survie des lois ancestrales
   fonctionnelles : l'injecté copie encore dans 10/40 physiques fertiles contre 4/92 stériles (p=0.001).
+
+## 9. Suite : gardiens des lois (voir `law-keepers/README.md` et `law-keepers/results.txt`)
+- **Pas de protection émergente.** Avec `READ_LAW`/`WRITE_LAW` (1 octet, un jeton par pas de dérive), la vie vit
+  moins longtemps : part vivante 0.079 contre 0.150 en v2 (p=0.006) et contre 0.163 quand les écritures sont jetées
+  (p=0.007). Elle ne fait pas mieux que des écritures envoyées au hasard (0.101, p=0.50).
+- **Ciblage surtout mécanique :** ×7.3 contre le hasard uniforme, mais ×1.35 seulement contre le nul composition
+  pour les écritures effectives. Elles cassent le dominant 30 fois et le réparent 8 fois, et 39 % des morts sont des
+  auto-destructions. Le seul réparateur trouvé n'est pas un gardien : son ablation améliore la survie.
+- **L'inertie par l'usage (B, mécanisme posé) protège :** 0.476 contre 0.150 (p<5e-5) et contre 0.227 avec l'usage
+  permuté (p=1e-4). Fertilité en fin : 8/32 contre 1/32. Continuité stricte : 0/32 partout.
