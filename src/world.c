@@ -18,8 +18,8 @@ WorldConfig cfg_default(void) {
 Creature *creature_new(int x, int y, const uint8_t *dna, int len, int e, int id, int species, int parent) {
     Creature *c = calloc(1, sizeof *c);
     c->x = x; c->y = y; c->e = e; c->id = id; c->species = species; c->parent = parent;
-    c->len = len; c->emitted = -1;
-    memcpy(c->dna, dna, (size_t)len);
+    c->len = len; c->germ_len = len; c->emitted = -1;
+    if (len > 0) { memcpy(c->dna, dna, (size_t)len); memcpy(c->germ, dna, (size_t)len); }
     return c;
 }
 
@@ -100,13 +100,20 @@ void world_split(World *w, Creature *c) {
     if (c->e < w->cfg.split_energy || w->ncs + w->nnb >= w->cfg.max_pop) return;
     uint8_t tmp[MAX_LEN], child[MAX_LEN + 16];
     EvoParams ep = w->cfg.self_evo ? evo_params(c->dna, c->len) : (EvoParams){ 0, 0, 0, 0 };
+    /* general : muter le génome de naissance. Le soma (STORE) ne part pas dans l'enfant.
+     * germline à 0 : même source qu'avant, donc les mêmes tirages pour les labos historiques. */
     int n = c->len;
-    memcpy(tmp, c->dna, (size_t)n);
+    const uint8_t *src = c->dna;
+    if (w->cfg.germline && c->germ_len > 0) { n = c->germ_len; src = c->germ; }
+    memcpy(tmp, src, (size_t)n);
     if (w->cfg.self_evo ? (ep.xover) : w->cfg.crossover) {
         for (int i = 0; i < w->ncs; i++) {
             Creature *o = w->cs[i];
             if (o != c && o->species == c->species && o->e > 0 && near(o, c)) {
-                n = crossover(c->dna, c->len, o->dna, o->len, w->rng, tmp);
+                const uint8_t *ob = o->dna;
+                int ol = o->len;
+                if (w->cfg.germline && o->germ_len > 0) { ob = o->germ; ol = o->germ_len; }
+                n = crossover(src, n, ob, ol, w->rng, tmp);
                 w->st.crossovers++;
                 break;
             }

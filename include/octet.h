@@ -69,6 +69,9 @@ typedef struct Creature {
     int ls[6]; double lscore;
     int win_len;                  /* code-repair : > 0 = fenêtre patient mappée sur STORE/LOAD imm >= 0xE0 */
     uint8_t win[32], win0[32];
+    /* Lignée (general) : copie de naissance. STORE n'y écrit pas. 0 = les autres labos l'ignorent. */
+    int germ_len;
+    uint8_t germ[MAX_LEN];
 } Creature;
 
 typedef struct {
@@ -86,6 +89,7 @@ typedef struct {
     int self_evo;         /* self-evolve : paramètres de mutation lus dans le génome à SPLIT (0 = constantes) */
     int eat_guard;        /* commons : 1 = manger une case < 8 ou la vider baisse lscore (0 ailleurs) */
     int ops_per_tick;     /* general : budget d'instructions par tick (0 = OPS_PER_TICK) */
+    int germline;         /* general : 1 = SPLIT et la sélection copient germ, pas le soma */
 } WorldConfig;
 WorldConfig cfg_default(void);
 

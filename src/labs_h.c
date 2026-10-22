@@ -720,14 +720,16 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
  * (tables non réservées). Fitness de sélection = moitié curriculum, moitié mémoire 2 et 3.
  * Affichage (fitness et best) = mémoire 2 et 3 tenues à l'écart (tables réservées, sans bruit).
  * Le mélange des familles déjà écrites dans la seed reste dans extra « known » : il ne sert plus de note.
- * Score d'une vie = justesse des essais 32..63. Budget : 96 instructions / tick (ce labo). */
+ * Score d'une vie = justesse des essais 32..63. Budget : 192 instructions / tick (ce labo).
+ * Hérédité (ce labo seul) : l'enfant et le pool reçoivent le génome de naissance. Les STORE
+ * de la vie restent dans le soma. Les clones de la même lignée ne remplissent pas les 32 places. */
 #define GN_TRIALS 64
 #define GN_LATE   32
 #define GN_HELD_N 40
 #define GN_TOP    8
 #define GN_REWARD 2
 #define GN_LEVELS 4
-#define GN_OPS    96
+#define GN_OPS    192
 typedef struct { int fam, t1, t2, nsw, sw[3], noise; uint32_t q1, q2; } GnTask;
 static int gn_held_code(int code) { return (((unsigned)code * 167u) >> 3 & 3u) == 0; }
 static int gn_draw_code(Rng *r, int held, int avoid) {
@@ -858,7 +860,10 @@ static void gn_before(World *w, Creature *c) {
     w->stimulus = cue | r << 2 | (c->ls[1] == 0) << 3;     /* bit 3 : premier essai d'une tâche */
     c->ls[2] = cue | p1 << 2 | p2 << 4 | p3 << 6;          /* p3 du prochain essai = p2 de celui-ci */
 }
-void hl_gn_cfg(WorldConfig *c) { c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS; c->mut_rate = 0.005; c->dup_rate = 0.01; }   /* génome long : charge de mutation réduite */
+void hl_gn_cfg(WorldConfig *c) {
+    c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS;
+    c->mut_rate = 0.005; c->dup_rate = 0.01; c->germline = 1;   /* génome long : mutation réduite ; lignée ≠ soma */
+}
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
 int gn_level_of(const PoolEntry *g, int n) {
@@ -902,8 +907,15 @@ double hl_gn_fit(Lab *l, World *w, int ticks) {
     l->extra[5] = ((GnLab *)l->ext)->level;
     return tr;                                          /* la sélection ne voit que l'entraînement */
 }
-/* Nouveau pool : les 32 meilleurs du monde (lscore) + le pool reçu, notés UN PAR UN en bac à sable sur
- * les tâches d'entraînement du cycle ; on garde les 16 meilleurs génomes distincts. */
+/* Copie héritée : la lignée si ce labo l'a armée, sinon le soma (les autres labos ne passent pas ici). */
+static void gn_inherit(PoolEntry *e, const Creature *c, int germline) {
+    int use = germline && c->germ_len > 0;
+    e->species = 0;
+    e->len = use ? c->germ_len : c->len;
+    memcpy(e->dna, use ? c->germ : c->dna, (size_t)e->len);
+}
+/* Nouveau pool : lignées distinctes (les clones du même génome de naissance ne prennent qu'une place),
+ * plus le pool reçu, notés UN PAR UN en bac à sable ; on garde les 16 meilleurs génomes distincts. */
 int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     if (l->eval_only) return 0;                         /* réévaluation : seule la fitness du pool compte */
     Creature *v[CMAX]; int n = 0;
@@ -913,10 +925,14 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
         while (j >= 0 && (v[j]->lscore < c->lscore || (v[j]->lscore == c->lscore && v[j]->e < c->e))) { v[j + 1] = v[j]; j--; }
         v[j + 1] = c;
     }
-    if (n > 32) n = 32;
     int m = 0;
     PoolEntry *cand = malloc(sizeof(PoolEntry) * (32 + POOL_MAX)); double *sc = malloc(sizeof(double) * (32 + POOL_MAX));
-    for (int i = 0; i < n; i++) { cand[m].species = 0; cand[m].len = v[i]->len; memcpy(cand[m].dna, v[i]->dna, (size_t)v[i]->len); m++; }
+    for (int i = 0; i < n && m < 32; i++) {
+        PoolEntry e; gn_inherit(&e, v[i], w->cfg.germline);
+        int dup = 0;
+        for (int j = 0; j < m; j++) if (cand[j].len == e.len && !memcmp(cand[j].dna, e.dna, (size_t)e.len)) { dup = 1; break; }
+        if (!dup) cand[m++] = e;
+    }
     for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
     uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
     for (int i = 0; i < m; i++) sc[i] = gn_train(&cand[i], 1, seed);

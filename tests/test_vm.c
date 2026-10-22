@@ -641,6 +641,52 @@ TEST(test_general_learns_and_holds_out) {
     assert(r.extra[0] < 0.55 && r.extra[4] > 0.55);               /* affiché = lag ; known reste haut */
 }
 
+void hl_gn_cfg(WorldConfig *c);
+int hl_gn_sel(Lab *l, World *w, PoolEntry *out);
+void world_split(World *w, Creature *c);
+/* general : l'enfant reçoit le génome de naissance. Le soma réécrit par STORE ne part pas.
+ * germline à 0 : l'enfant reçoit le soma, comme les labos historiques. */
+TEST(test_general_germline_not_soma) {
+    WorldConfig gc = cfg_default();
+    hl_gn_cfg(&gc);
+    assert(gc.germline == 1 && gc.ops_per_tick == 192);
+    const uint8_t prog[] = { 0x1c, 0x21, 0x06, 0x00, 0x0e, 0x0f };   /* LOADI 33 ; STORE 0 ; SPLIT ; YIELD */
+    for (int arm = 0; arm < 2; arm++) {
+        Rng r; rng_seed(&r, 3);
+        WorldConfig c = cfg_default();
+        c.germline = arm; c.mut_rate = 0; c.dup_rate = 0; c.max_pop = 8; c.split_energy = 10;
+        World *w = world_new(NULL, 0, &r, &c, NULL);
+        Creature *p = creature_new(1, 1, prog, 6, 200, 1, 0, -1);
+        world_spawn(w, p);
+        assert(vm_run(p, w) == 1 && w->nnb == 2);
+        Creature *ch = w->nb[1];
+        assert(p->dna[0] == 0x21 && p->germ[0] == 0x1c && p->germ_len == 6);
+        assert(ch->len == 6 && ch->germ_len == 6 && ch->dna[0] == ch->germ[0]);
+        assert(ch->dna[0] == (arm ? 0x1c : 0x21));
+        world_free(w);
+    }
+    PoolEntry seed; seed_entry(&seed, "general", 0);
+    PoolEntry bad; memset(&bad, 0, sizeof bad); bad.len = 8;
+    Rng r; rng_seed(&r, 9);
+    WorldConfig c = cfg_default(); c.germline = 1; c.max_pop = 4;
+    World *w = world_new(NULL, 0, &r, &c, NULL);
+    Creature *p = creature_new(2, 2, seed.dna, seed.len, 200, 2, 0, -1);
+    memset(p->dna, 0xff, (size_t)p->len);          /* soma illisible ; la lignée reste la seed */
+    p->lscore = 1;
+    w->cs[0] = p; w->ncs = 1;
+    Lab l; memset(&l, 0, sizeof l);
+    l.pool0 = &bad; l.npool0 = 1; rng_seed(&l.rng0, 1);
+    PoolEntry out[POOL_MAX]; int k = hl_gn_sel(&l, w, out);
+    int found = 0;
+    for (int i = 0; i < k; i++) {
+        if (out[i].len == seed.len && !memcmp(out[i].dna, seed.dna, (size_t)seed.len)) found = 1;
+        if (out[i].len == seed.len) assert(out[i].dna[0] != 0xff);
+    }
+    assert(k > 0 && found);
+    w->ncs = 0; free(p); world_free(w);
+    printf("    germline: enfant = naissance, sélection = lignée\n");
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -673,6 +719,7 @@ int main(void) {
     RUN(test_core_state_hash_matches_main);
     RUN(test_diagnose_reads_and_computes);
     RUN(test_general_learns_and_holds_out);
-    printf("\n%d/%d tests OK\n", passed, 31);
+    RUN(test_general_germline_not_soma);
+    printf("\n%d/%d tests OK\n", passed, 32);
     return 0;
 }
