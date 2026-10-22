@@ -1,0 +1,25 @@
+Gardiens des lois — résultats (192 runs : 4 sources × 8 graines × 6 bras ; 512 + 8192 époques de dérive K=8 ; N=1024 ; 238 s)
+Sortie brute : run.txt
+
+bras      part vivante  morts/run  morte en fin  stérilisation méd.  fertile en fin  dist  écritures
+v2        0.150         1.66       31/32         1152                1/32            455   0
+A         0.079         1.38       31/32          256                0/32            463   981
+A-jet     0.163         1.69       31/32          960                3/32            455   0
+A-redir   0.101         1.41       32/32          896                0/32            599   978
+B         0.476         3.16       27/32         6208                8/32            455   0
+B-perm    0.227         2.03       32/32         1664                1/32            457   0
+continuité stricte : 0/32 dans tous les bras
+
+appariés (permutation à signes) : A<v2 p=0.0055 ; A<A-jet p=0.0069 ; A≈A-redir p=0.50 ; B>v2 p<5e-5 ; B>B-perm p=0.0001 ; B-perm vs v2 p=0.07
+
+émergence (écritures pendant la vie, bras A) :
+  sur entrée utilisée 333/2028 (×7.3 contre hasard uniforme ; ×1.59 contre nul composition, z≈8.5)
+  effectives sur entrée utilisée 93/832 (×4.7 uniforme ; ×1.35 composition, z≈2.9) ; 72 % des écritures « utilisées » réécrivent la même valeur
+  cassent le dominant 30, le réparent 8 (A-redir : 23 / 0)
+  auto-destruction : 17/44 morts dans les 128 ép. après une casse (A-redir 9/45, A-jet 0/54) ; gel : absent (dist 463 contre 455, 0.8 % des pas défaits)
+meilleur réparateur : T#1 g4 dé120, tab[1][ff] HALT→INC_A, écrivain 0c0000413959064a8155155f1007c8e657e27f9aa3975bff0f0070e400feed00
+  ablation (8 bifurcations) : écritures gardées 0.138 vivant (0/8 en fin) ; jetées 0.386 (2/8) ; p=0.11 → pas un gardien
+
+VERDICT : pas d'émergence. L'accès en écriture aux lois abrège la vie (biais mécanique d'adressage, casse > répare, gain non appropriable).
+L'inertie par l'usage (B, mécanisme posé) protège : 0.476 contre 0.150, fertilité 8/32 contre 1/32.
+Prochaine étape : lois locales héritées avec le réplicateur, pour rendre la protection appropriable.
