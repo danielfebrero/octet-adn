@@ -47,11 +47,16 @@ experiments/terrarium_run: experiments/terrarium.c $(CORE) include/octet.h
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run
+# Méta-évolution d'univers : sélection de physiques (table octet→primitive élémentaire) contre témoin aléatoire.
+experiments/universe_search: experiments/universe_search.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
+test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search
 	./tests/test_vm
 	./experiments/metabolic_order selftest
 	./experiments/mi_detector selftest
 	./experiments/terrarium_run selftest
+	./experiments/universe_search selftest
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
@@ -81,6 +86,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run
+	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search
 
 .PHONY: all static test no-python run clean sanitize

@@ -1,0 +1,341 @@
+# universe_search — sorties brutes, 3 graines (commit de cette branche)
+# commande : ./experiments/universe_search run --seed S --pop 48 --gens 20 --N 1024 --epochs 1024 --val 4   (S = 1, 2, 3)
+# temps mur : 2m16 + ~2m45 + ~2m45 sur 8 cœurs
+
+################################ graine 1
+# universe_search run seed=1 pop=48 gens=20 N=1024 E=1024 E1=128 fixL=0 threads=8
+
+## SÉLECTION d'univers (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   0 (+0 cristaux)  0.187  0.000  0  38  3s
+   1   1 (+0 cristaux)  0.371  2.552  1  24  6s
+   2   0 (+0 cristaux)  0.400  2.458  1  20  9s
+   3   3 (+0 cristaux)  0.965  2.468  4  10  12s
+   4   1 (+0 cristaux)  0.673  2.675  5  11  16s
+   5   1 (+0 cristaux)  1.139  2.770  6  10  19s
+   6   1 (+0 cristaux)  1.507  2.789  7  9  22s
+   7   4 (+0 cristaux)  1.733  3.231  11  14  24s
+   8   1 (+0 cristaux)  1.360  4.602  11  17  27s
+   9   1 (+0 cristaux)  2.009  4.615  11  9  31s
+  10   0 (+0 cristaux)  1.889  3.654  11  10  34s
+  11   0 (+0 cristaux)  2.165  2.957  11  7  37s
+  12   1 (+0 cristaux)  2.096  2.841  12  8  41s
+  13   6 (+0 cristaux)  2.534  4.219  17  8  45s
+  14   5 (+0 cristaux)  2.683  3.867  22  3  49s
+  15   1 (+0 cristaux)  2.404  4.003  22  5  52s
+  16   1 (+0 cristaux)  2.470  3.696  23  5  57s
+  17   2 (+0 cristaux)  2.448  3.529  24  6  61s
+  18   1 (+0 cristaux)  2.535  3.782  25  5  65s
+  19   1 (+0 cristaux)  2.366  3.457  27  7  70s
+
+## TÉMOIN : univers aléatoires (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   1 (+0 cristaux)  0.242  0.000  1  40  3s
+   1   0 (+0 cristaux)  0.149  0.000  1  38  6s
+   2   0 (+0 cristaux)  0.166  0.000  1  32  9s
+   3   1 (+0 cristaux)  0.298  0.000  2  35  12s
+   4   0 (+0 cristaux)  0.194  0.000  2  37  15s
+   5   0 (+0 cristaux)  0.179  0.000  2  38  17s
+   6   0 (+0 cristaux)  0.160  0.000  2  32  21s
+   7   0 (+1 cristaux)  0.151  0.000  2  39  23s
+   8   0 (+0 cristaux)  0.119  0.000  2  42  24s
+   9   0 (+0 cristaux)  0.149  0.000  2  36  26s
+  10   0 (+0 cristaux)  0.178  0.000  2  33  29s
+  11   1 (+0 cristaux)  0.301  0.000  3  34  31s
+  12   1 (+0 cristaux)  0.234  0.000  4  33  34s
+  13   0 (+0 cristaux)  0.112  0.000  4  43  37s
+  14   0 (+0 cristaux)  0.137  0.000  4  39  38s
+  15   2 (+0 cristaux)  0.320  0.000  6  36  41s
+  16   1 (+0 cristaux)  0.218  0.000  7  38  44s
+  17   0 (+0 cristaux)  0.114  0.000  7  40  46s
+  18   0 (+0 cristaux)  0.115  0.000  7  42  48s
+  19   0 (+1 cristaux)  0.130  0.000  7  38  51s
+
+## Bilan brut
+sélection : 31/960 évaluations avec émergence informationnelle (3.2 %) + 0 cristaux homopolymères, 728 univers distincts évalués, 25 fertiles au moins une fois
+témoin    : 7/960 évaluations avec émergence informationnelle (0.7 %) + 2 cristaux homopolymères, 960 univers distincts évalués, 7 fertiles au moins une fois
+
+## Revalidation : 4 graines fraîches par univers (même échelle N=1024, E=1024)
+sélection : 8 univers fertiles retenus, émergence sur graines fraîches 3/32 (9.4 %) ; par univers : 0 1 1 0 0 0 1 0
+témoin    : 7 univers fertiles retenus, émergence sur graines fraîches 1/28 (3.6 %) ; par univers : 0 1 0 0 0 0 0
+origine (soup b, steps 8192) : 0/8 ; origine (steps 2048) : 0/8   (à N=1024, E=1024)
+
+## Profil des univers fertiles revalidés
+S#0 (0/4) L=64 kper=4 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash e2d04a53520e1393]
+   table (entrées / 1024) : NOP:34 HALT:28 INC_A:37 DEC_A:27 INC_B:38 DEC_B:40 CLR_A:25 CLR_B:40 MOV_BA:35 MOV_AB:33 ADD:36 SUB:35 XOR:21 LOADI:48 AND:34 CLRI:51 LOAD:36 STORE:31 JMP:32 JZ:67 JNZ:33 LOOP:58 READ_H:36 WRITE_H:32 H0_INC:29 H0_DEC:42 H1_INC:34 H1_DEC:32
+S#1 (1/4) L=64 kper=4 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash 9264255e83f1c8bd]
+   table (entrées / 1024) : NOP:32 HALT:29 INC_A:36 DEC_A:29 INC_B:36 DEC_B:40 CLR_A:25 CLR_B:42 MOV_BA:35 MOV_AB:33 ADD:37 SUB:35 XOR:21 LOADI:49 AND:34 CLRI:52 LOAD:35 STORE:31 JMP:33 JZ:66 JNZ:33 LOOP:56 READ_H:36 WRITE_H:32 H0_INC:30 H0_DEC:43 H1_INC:33 H1_DEC:31
+   réplicateur dominant (1/64 de l'échantillon) : 8 octets essentiels sur 64
+     0de3deac3f009f51ad69c213c0eedc075a003f9fadc29edc5af81c7eaddcf2a40de3deac3f009f51ad69c213c0eedc075a003f9fadc29edc5af81c7eaddcf2a4
+     essentiels : 0:0d=H1_DEC 5:00=LOAD 6:9f=CLRI 7:51=WRITE_H 8:ad=DEC_B 9:69=LOADI 11:13=INC_A 12:c0=LOOP
+S#2 (1/4) L=64 kper=4 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash f131e7df5b332084]
+   table (entrées / 1024) : NOP:36 HALT:37 INC_A:30 DEC_A:35 INC_B:36 DEC_B:40 CLR_A:33 CLR_B:26 MOV_BA:31 MOV_AB:44 ADD:32 SUB:40 XOR:34 LOADI:47 AND:32 CLRI:39 LOAD:34 STORE:46 JMP:28 JZ:50 JNZ:42 LOOP:55 READ_H:31 WRITE_H:43 H0_INC:25 H0_DEC:39 H1_INC:21 H1_DEC:38
+   réplicateur dominant (2/64 de l'échantillon) : 13 octets essentiels sur 64
+     00f15d32f18e0aa0f14c90f1aef1f1c7799ed0f1c54f0af0f1f1f1f1f1f1330100f15d32f18e0aa0f14c90f1aef1f1c7799ed0f1c54f0af0f1f1f1f1f1f13301
+     essentiels : 0:00=INC_B 3:32=MOV_AB 4:f1=H1_DEC 5:8e=WRITE_H 8:f1=H1_DEC 10:90=DEC_B 12:ae=READ_H 13:f1=LOADI 15:c7=READ_H 16:79=LOAD 17:9e=ADD 18:d0=JMP 19:f1=WRITE_H
+S#3 (0/4) L=64 kper=4 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash 9b6fcba70d1fbda1]
+   table (entrées / 1024) : NOP:32 HALT:29 INC_A:37 DEC_A:28 INC_B:37 DEC_B:40 CLR_A:25 CLR_B:42 MOV_BA:34 MOV_AB:33 ADD:37 SUB:35 XOR:21 LOADI:50 AND:34 CLRI:52 LOAD:35 STORE:31 JMP:32 JZ:66 JNZ:33 LOOP:57 READ_H:36 WRITE_H:31 H0_INC:30 H0_DEC:43 H1_INC:33 H1_DEC:31
+S#4 (0/4) L=64 kper=4 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash 8696b1f6d4bf5989]
+   table (entrées / 1024) : NOP:36 HALT:37 INC_A:30 DEC_A:35 INC_B:35 DEC_B:40 CLR_A:33 CLR_B:26 MOV_BA:31 MOV_AB:44 ADD:32 SUB:41 XOR:34 LOADI:47 AND:32 CLRI:39 LOAD:34 STORE:45 JMP:28 JZ:50 JNZ:42 LOOP:56 READ_H:31 WRITE_H:43 H0_INC:24 H0_DEC:39 H1_INC:22 H1_DEC:38
+S#5 (0/4) L=64 kper=4 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash d94b104ce48d1598]
+   table (entrées / 1024) : NOP:36 HALT:37 INC_A:29 DEC_A:35 INC_B:36 DEC_B:40 CLR_A:34 CLR_B:26 MOV_BA:31 MOV_AB:44 ADD:32 SUB:40 XOR:34 LOADI:47 AND:32 CLRI:39 LOAD:35 STORE:46 JMP:28 JZ:50 JNZ:42 LOOP:55 READ_H:30 WRITE_H:43 H0_INC:25 H0_DEC:39 H1_INC:21 H1_DEC:38
+S#6 (1/4) L=64 kper=4 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash d59a18b107bfb834]
+   table (entrées / 1024) : NOP:32 HALT:29 INC_A:37 DEC_A:28 INC_B:36 DEC_B:40 CLR_A:25 CLR_B:42 MOV_BA:35 MOV_AB:33 ADD:37 SUB:35 XOR:21 LOADI:49 AND:34 CLRI:52 LOAD:35 STORE:31 JMP:33 JZ:66 JNZ:33 LOOP:56 READ_H:36 WRITE_H:32 H0_INC:30 H0_DEC:43 H1_INC:33 H1_DEC:31
+   réplicateur dominant (2/64 de l'échantillon) : 9 octets essentiels sur 64
+     f1003f34c39116ee712c97817ba1cdc804849d6ca7a517e5527aca352c0097d16cbe54f1a3fb4b6dc1682b2614be11a70c22006cc300000000b42b357b0055f1
+     essentiels : 0:f1=H1_DEC 1:00=LOAD 2:3f=H0_INC 3:34=WRITE_H 4:c3=ADD 5:91=JMP 6:16=DEC_A 31:d1=DEC_B 32:6c=LOOP
+S#7 (0/4) L=64 kper=4 addr=b rcost=2 wcost=2 steps=1024 mut=0.004  [hash 73bda8188f54cb25]
+   table (entrées / 1024) : NOP:36 HALT:30 INC_A:32 DEC_A:25 INC_B:36 DEC_B:38 CLR_A:26 CLR_B:41 MOV_BA:37 MOV_AB:33 ADD:35 SUB:35 XOR:21 LOADI:52 AND:37 CLRI:47 LOAD:36 STORE:33 JMP:33 JZ:66 JNZ:32 LOOP:57 READ_H:39 WRITE_H:31 H0_INC:32 H0_DEC:39 H1_INC:33 H1_DEC:32
+T#0 (0/4) L=16 kper=1 addr=b rcost=2 wcost=4 steps=256 mut=0.00024  [hash 2c7b453a08a81d51]
+   table (entrées / 256) : NOP:15 HALT:18 INC_A:12 DEC_A:5 INC_B:7 DEC_B:8 CLR_A:7 CLR_B:10 MOV_BA:8 MOV_AB:13 ADD:6 SUB:5 XOR:14 LOADI:6 AND:7 CLRI:9 LOAD:13 STORE:8 JMP:7 JZ:12 JNZ:9 LOOP:9 READ_H:9 WRITE_H:7 H0_INC:6 H0_DEC:9 H1_INC:11 H1_DEC:6
+T#1 (1/4) L=32 kper=4 addr=b rcost=1 wcost=4 steps=2048 mut=0.0001  [hash 7943004560d089ae]
+   table (entrées / 1024) : NOP:36 HALT:30 INC_A:33 DEC_A:44 INC_B:43 DEC_B:35 CLR_A:29 CLR_B:36 MOV_BA:37 MOV_AB:37 ADD:44 SUB:45 XOR:46 LOADI:37 AND:33 CLRI:30 LOAD:41 STORE:37 JMP:42 JZ:31 JNZ:33 LOOP:35 READ_H:39 WRITE_H:37 H0_INC:36 H0_DEC:26 H1_INC:36 H1_DEC:36
+   réplicateur dominant (17/64 de l'échantillon) : 7 octets essentiels sur 32
+     988eb7fffbffd7e2e4b11b363cc50000988eb7fffbffd7e2e4b11b363cc50000
+     essentiels : 0:98=STORE 1:8e=H1_DEC 2:b7=LOAD 3:ff=MOV_BA 4:fb=H0_DEC 5:ff=INC_B 6:d7=LOOP
+T#2 (0/4) L=32 kper=2 addr=b rcost=4 wcost=2 steps=512 mut=0.004  [hash a12f945da28a6810]
+   table (entrées / 512) : NOP:25 HALT:19 INC_A:12 DEC_A:15 INC_B:17 DEC_B:18 CLR_A:20 CLR_B:15 MOV_BA:11 MOV_AB:18 ADD:10 SUB:20 XOR:15 LOADI:21 AND:22 CLRI:22 LOAD:17 STORE:15 JMP:23 JZ:14 JNZ:15 LOOP:19 READ_H:15 WRITE_H:25 H0_INC:19 H0_DEC:29 H1_INC:19 H1_DEC:22
+T#3 (0/4) L=16 kper=2 addr=b rcost=1 wcost=1 steps=512 mut=0.004  [hash bfafc2a9b2393bdf]
+   table (entrées / 512) : NOP:16 HALT:17 INC_A:21 DEC_A:18 INC_B:11 DEC_B:27 CLR_A:14 CLR_B:14 MOV_BA:19 MOV_AB:15 ADD:24 SUB:16 XOR:17 LOADI:22 AND:24 CLRI:15 LOAD:23 STORE:19 JMP:22 JZ:16 JNZ:17 LOOP:17 READ_H:20 WRITE_H:17 H0_INC:19 H0_DEC:21 H1_INC:14 H1_DEC:17
+T#4 (0/4) L=16 kper=4 addr=b rcost=1 wcost=2 steps=512 mut=0.004  [hash 68624d8800b15c13]
+   table (entrées / 1024) : NOP:33 HALT:42 INC_A:38 DEC_A:35 INC_B:33 DEC_B:33 CLR_A:27 CLR_B:35 MOV_BA:46 MOV_AB:48 ADD:40 SUB:35 XOR:39 LOADI:30 AND:26 CLRI:39 LOAD:40 STORE:39 JMP:40 JZ:36 JNZ:34 LOOP:38 READ_H:41 WRITE_H:25 H0_INC:37 H0_DEC:28 H1_INC:44 H1_DEC:43
+T#5 (0/4) L=16 kper=1 addr=b rcost=1 wcost=2 steps=2048 mut=0.004  [hash 4adf294ea4f6d140]
+   table (entrées / 256) : NOP:10 HALT:5 INC_A:8 DEC_A:9 INC_B:10 DEC_B:10 CLR_A:10 CLR_B:9 MOV_BA:9 MOV_AB:4 ADD:13 SUB:10 XOR:10 LOADI:12 AND:9 CLRI:3 LOAD:9 STORE:11 JMP:8 JZ:9 JNZ:6 LOOP:13 READ_H:10 WRITE_H:6 H0_INC:15 H0_DEC:8 H1_INC:9 H1_DEC:11
+T#6 (0/4) L=64 kper=2 addr=b rcost=2 wcost=1 steps=512 mut=0.001  [hash f8b2879612c69f8c]
+   table (entrées / 512) : NOP:16 HALT:18 INC_A:20 DEC_A:15 INC_B:23 DEC_B:14 CLR_A:13 CLR_B:22 MOV_BA:17 MOV_AB:21 ADD:16 SUB:17 XOR:20 LOADI:19 AND:16 CLRI:17 LOAD:15 STORE:27 JMP:14 JZ:20 JNZ:13 LOOP:24 READ_H:19 WRITE_H:24 H0_INC:17 H0_DEC:18 H1_INC:19 H1_DEC:18
+
+Fertiles revalidés : 4
+  L 16/32/64 : 0/1/3   addr abs/b/ip : 0/4/0   kper 1/2/4 : 0/0/4
+  steps 256/512/1024/2048 : 0/0/2/2   mut 0/1e-4/2.4e-4/1e-3/4e-3 : 0/1/0/0/3   rcost 1/2/4 : 1/2/1   wcost 1/2/4 : 3/0/1
+  part des primitives dans la table (uniforme = 0.036) : NOP=0.033 HALT=0.031 INC_A=0.033 DEC_A=0.033 INC_B=0.037 DEC_B=0.038 CLR_A=0.027 CLR_B=0.036 MOV_BA=0.034 MOV_AB=0.036 ADD=0.037 SUB=0.038 XOR=0.030 LOADI=0.044 AND=0.032 CLRI=0.042 LOAD=0.035 STORE=0.035 JMP=0.033 JZ=0.052 JNZ=0.034 LOOP=0.049 READ_H=0.035 WRITE_H=0.035 H0_INC=0.030 H0_DEC=0.037 H1_INC=0.030 H1_DEC=0.033
+  primitives des octets ESSENTIELS des réplicateurs (37 octets) : INC_A=1 DEC_A=1 INC_B=2 DEC_B=3 MOV_BA=1 MOV_AB=1 ADD=2 LOADI=2 CLRI=1 LOAD=4 STORE=1 JMP=2 LOOP=3 READ_H=2 WRITE_H=4 H0_INC=1 H0_DEC=1 H1_DEC=5
+  tailles des réplicateurs (octets essentiels) : 8 13 9 7
+
+## Migration (4 sources × 7 cibles) : 32 copies du réplicateur dominant de la source dans une soupe de bruit de la cible
+# cellule = direct/invasion/témoin : direct = l'immigré est un copieur vérifié sous la physique cible (1/0) ;
+# invasion = copieurs ≥ 25 % et ≥ 25 % de l'échantillon à ≥ L/2 octets de l'immigré après 512 époques ;
+# témoin = émergence spontanée dans la cible sans injection (même graine). Longueurs différentes : tronqué / complété de bruit.
+src\cible         S#1        S#2        S#6        T#1    origine     aléa0     aléa1
+S#1             1/0/0      0/0/0      1/0/1      0/0/0      0/0/0      0/0/0      0/0/0
+S#2             0/0/0      1/0/0      0/0/0      0/0/0      0/0/0      0/0/0      0/0/0
+S#6             1/0/0      0/0/0      1/0/0      0/0/0      0/0/0      0/0/0      0/0/0
+T#1             0/0/0      0/0/0      0/0/0      1/1/0      0/0/0      0/0/0      0/0/0
+auto-migration (témoin positif) : 1/4 envahissent ; migrations croisées : 0/24 envahissent, 2/24 immigrés copieurs directs
+
+################################ graine 2
+# universe_search run seed=2 pop=48 gens=20 N=1024 E=1024 E1=128 fixL=0 threads=8
+
+## SÉLECTION d'univers (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   0 (+0 cristaux)  0.124  0.000  0  39  3s
+   1   0 (+0 cristaux)  0.173  0.429  0  36  6s
+   2   0 (+0 cristaux)  0.237  0.554  0  21  12s
+   3   2 (+0 cristaux)  0.488  1.518  2  12  18s
+   4   3 (+0 cristaux)  0.533  2.429  5  15  25s
+   5   0 (+0 cristaux)  0.345  2.588  5  11  33s
+   6   0 (+0 cristaux)  0.391  1.921  5  10  41s
+   7   0 (+0 cristaux)  0.443  1.587  5  8  52s
+   8   1 (+0 cristaux)  0.587  1.385  6  5  65s
+   9   0 (+0 cristaux)  0.512  2.411  6  4  81s
+  10   2 (+0 cristaux)  0.677  1.789  7  4  95s
+  11   3 (+0 cristaux)  0.776  2.573  10  6  108s
+  12   3 (+0 cristaux)  0.761  4.297  12  2  121s
+  13   0 (+0 cristaux)  0.596  3.055  12  1  135s
+  14   4 (+0 cristaux)  0.892  2.438  15  0  146s
+  15   0 (+0 cristaux)  0.588  2.524  15  0  157s
+  16   1 (+0 cristaux)  0.705  1.909  16  3  167s
+  17   3 (+0 cristaux)  0.809  2.742  19  3  177s
+  18   2 (+0 cristaux)  0.752  2.697  20  1  186s
+  19   1 (+0 cristaux)  0.717  2.354  21  2  195s
+
+## TÉMOIN : univers aléatoires (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   0 (+0 cristaux)  0.138  0.000  0  34  2s
+   1   0 (+0 cristaux)  0.155  0.000  0  36  5s
+   2   0 (+0 cristaux)  0.167  0.000  0  35  7s
+   3   0 (+0 cristaux)  0.161  0.000  0  34  10s
+   4   0 (+0 cristaux)  0.142  0.000  0  38  13s
+   5   0 (+0 cristaux)  0.140  0.000  0  38  15s
+   6   0 (+1 cristaux)  0.160  0.000  0  37  18s
+   7   0 (+0 cristaux)  0.144  0.000  0  33  21s
+   8   0 (+0 cristaux)  0.177  0.000  0  37  26s
+   9   0 (+0 cristaux)  0.148  0.000  0  38  29s
+  10   0 (+0 cristaux)  0.198  0.000  0  35  31s
+  11   0 (+0 cristaux)  0.136  0.000  0  35  35s
+  12   1 (+0 cristaux)  0.222  0.000  1  35  38s
+  13   0 (+0 cristaux)  0.138  0.000  1  39  41s
+  14   2 (+0 cristaux)  0.326  0.000  3  37  43s
+  15   0 (+0 cristaux)  0.131  0.000  3  37  46s
+  16   0 (+0 cristaux)  0.115  0.000  3  38  49s
+  17   0 (+0 cristaux)  0.188  0.000  3  31  53s
+  18   0 (+0 cristaux)  0.111  0.000  3  43  54s
+  19   0 (+0 cristaux)  0.157  0.000  3  37  56s
+
+## Bilan brut
+sélection : 25/960 évaluations avec émergence informationnelle (2.6 %) + 0 cristaux homopolymères, 729 univers distincts évalués, 21 fertiles au moins une fois
+témoin    : 3/960 évaluations avec émergence informationnelle (0.3 %) + 1 cristaux homopolymères, 960 univers distincts évalués, 3 fertiles au moins une fois
+
+## Revalidation : 4 graines fraîches par univers (même échelle N=1024, E=1024)
+sélection : 8 univers fertiles retenus, émergence sur graines fraîches 2/32 (6.2 %) ; par univers : 0 0 1 0 1 0 0 0
+témoin    : 3 univers fertiles retenus, émergence sur graines fraîches 0/12 (0.0 %) ; par univers : 0 0 0
+origine (soup b, steps 8192) : 0/8 ; origine (steps 2048) : 0/8   (à N=1024, E=1024)
+
+## Profil des univers fertiles revalidés
+S#0 (0/4) L=64 kper=1 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash a28662b76bafc43f]
+   table (entrées / 256) : NOP:12 HALT:3 INC_A:3 DEC_A:6 INC_B:5 DEC_B:5 CLR_A:9 CLR_B:12 MOV_BA:10 MOV_AB:16 ADD:8 SUB:11 XOR:8 LOADI:11 AND:11 CLRI:8 LOAD:8 STORE:12 JMP:11 JZ:11 JNZ:9 LOOP:13 READ_H:5 WRITE_H:13 H0_INC:6 H0_DEC:11 H1_INC:8 H1_DEC:11
+S#1 (0/4) L=64 kper=1 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash 28c00d957aad7ccb]
+   table (entrées / 256) : NOP:11 HALT:4 INC_A:2 DEC_A:3 INC_B:7 DEC_B:6 CLR_A:12 CLR_B:12 MOV_BA:7 MOV_AB:12 ADD:6 SUB:8 XOR:13 LOADI:11 AND:9 CLRI:11 LOAD:7 STORE:13 JMP:10 JZ:10 JNZ:10 LOOP:12 READ_H:9 WRITE_H:13 H0_INC:9 H0_DEC:8 H1_INC:7 H1_DEC:14
+S#2 (1/4) L=64 kper=2 addr=b rcost=2 wcost=4 steps=2048 mut=0.004  [hash 36246e520737699c]
+   table (entrées / 512) : NOP:22 HALT:10 INC_A:4 DEC_A:14 INC_B:12 DEC_B:14 CLR_A:18 CLR_B:30 MOV_BA:14 MOV_AB:30 ADD:10 SUB:26 XOR:18 LOADI:20 AND:28 CLRI:18 LOAD:12 STORE:22 JMP:26 JZ:24 JNZ:14 LOOP:18 READ_H:12 WRITE_H:20 H0_INC:10 H0_DEC:24 H1_INC:18 H1_DEC:24
+   réplicateur dominant (2/64 de l'échantillon) : 7 octets essentiels sur 64
+     ff6700046c90c0213f3d9e5e48a36e159202fc3d69d48c166b79c60afae31e6ff81af900464de527ffb1ff77ff6eff7eff00f4c52130bb00ff00ffdbf8005a3f
+     essentiels : 0:ff=DEC_B 2:00=WRITE_H 5:90=LOAD 6:c0=JZ 7:21=H1_DEC 8:3f=WRITE_H 10:9e=LOOP
+S#3 (0/4) L=64 kper=2 addr=b rcost=2 wcost=4 steps=2048 mut=0.004  [hash ff9696f644f75b86]
+   table (entrées / 512) : NOP:24 HALT:16 INC_A:16 DEC_A:20 INC_B:14 DEC_B:15 CLR_A:20 CLR_B:22 MOV_BA:18 MOV_AB:17 ADD:18 SUB:15 XOR:15 LOADI:26 AND:14 CLRI:14 LOAD:15 STORE:22 JMP:14 JZ:20 JNZ:27 LOOP:22 READ_H:18 WRITE_H:25 H0_INC:11 H0_DEC:15 H1_INC:18 H1_DEC:21
+S#4 (1/4) L=64 kper=1 addr=b rcost=2 wcost=1 steps=1024 mut=0.004  [hash ecc825e0ff0725f1]
+   table (entrées / 256) : NOP:10 HALT:7 INC_A:3 DEC_A:3 INC_B:6 DEC_B:6 CLR_A:8 CLR_B:14 MOV_BA:10 MOV_AB:12 ADD:9 SUB:10 XOR:12 LOADI:9 AND:11 CLRI:8 LOAD:6 STORE:11 JMP:11 JZ:9 JNZ:13 LOOP:13 READ_H:9 WRITE_H:14 H0_INC:8 H0_DEC:7 H1_INC:7 H1_DEC:10
+   réplicateur dominant (1/64 de l'échantillon) : 16 octets essentiels sur 64
+     00479e0015ff0000004bbf00f000bdbe0082002f1b0000715e00d616dd01adcff0782f4d6a86a1bb3fec03192e915567788897a5c8bec9d31616161616161601
+     essentiels : 0:00=WRITE_H 1:47=XOR 2:9e=CLR_A 3:00=WRITE_H 4:15=LOAD 5:ff=DEC_B 7:00=WRITE_H 8:00=WRITE_H 9:4b=STORE 10:bf=NOP 12:f0=H0_DEC 14:bd=CLRI 16:00=WRITE_H 17:82=INC_A 18:00=WRITE_H 19:2f=LOOP
+S#5 (0/4) L=64 kper=1 addr=b rcost=2 wcost=1 steps=2048 mut=0.004  [hash 4276e389e6293fc4]
+   table (entrées / 256) : NOP:13 HALT:6 INC_A:3 DEC_A:5 INC_B:7 DEC_B:5 CLR_A:9 CLR_B:15 MOV_BA:9 MOV_AB:13 ADD:6 SUB:16 XOR:8 LOADI:9 AND:10 CLRI:9 LOAD:7 STORE:14 JMP:13 JZ:11 JNZ:5 LOOP:11 READ_H:5 WRITE_H:11 H0_INC:6 H0_DEC:10 H1_INC:9 H1_DEC:11
+S#6 (0/4) L=64 kper=1 addr=b rcost=2 wcost=4 steps=2048 mut=0.004  [hash 8b20cf407c9be3c2]
+   table (entrées / 256) : NOP:12 HALT:3 INC_A:3 DEC_A:4 INC_B:6 DEC_B:7 CLR_A:8 CLR_B:13 MOV_BA:11 MOV_AB:16 ADD:3 SUB:14 XOR:10 LOADI:11 AND:13 CLRI:8 LOAD:6 STORE:13 JMP:12 JZ:10 JNZ:10 LOOP:11 READ_H:6 WRITE_H:9 H0_INC:5 H0_DEC:11 H1_INC:8 H1_DEC:13
+S#7 (0/4) L=64 kper=1 addr=b rcost=2 wcost=4 steps=2048 mut=0.004  [hash d926f8adc5f6f7a9]
+   table (entrées / 256) : NOP:10 HALT:5 INC_A:3 DEC_A:7 INC_B:6 DEC_B:7 CLR_A:9 CLR_B:15 MOV_BA:7 MOV_AB:15 ADD:5 SUB:13 XOR:9 LOADI:10 AND:13 CLRI:8 LOAD:6 STORE:11 JMP:13 JZ:12 JNZ:7 LOOP:9 READ_H:7 WRITE_H:10 H0_INC:5 H0_DEC:12 H1_INC:10 H1_DEC:12
+T#0 (0/4) L=64 kper=2 addr=b rcost=2 wcost=1 steps=2048 mut=0.004  [hash fd6187683d340a59]
+   table (entrées / 512) : NOP:16 HALT:18 INC_A:12 DEC_A:17 INC_B:17 DEC_B:16 CLR_A:24 CLR_B:13 MOV_BA:16 MOV_AB:16 ADD:11 SUB:26 XOR:10 LOADI:21 AND:25 CLRI:17 LOAD:28 STORE:19 JMP:22 JZ:21 JNZ:13 LOOP:24 READ_H:18 WRITE_H:18 H0_INC:14 H0_DEC:20 H1_INC:22 H1_DEC:18
+T#1 (0/4) L=32 kper=4 addr=b rcost=4 wcost=1 steps=512 mut=0.001  [hash 686dd6f9819c60ac]
+   table (entrées / 1024) : NOP:41 HALT:34 INC_A:33 DEC_A:43 INC_B:39 DEC_B:41 CLR_A:44 CLR_B:31 MOV_BA:37 MOV_AB:36 ADD:37 SUB:41 XOR:42 LOADI:38 AND:39 CLRI:45 LOAD:28 STORE:31 JMP:27 JZ:40 JNZ:37 LOOP:25 READ_H:28 WRITE_H:29 H0_INC:40 H0_DEC:42 H1_INC:28 H1_DEC:48
+T#2 (0/4) L=16 kper=2 addr=ip rcost=2 wcost=1 steps=1024 mut=0.004  [hash b1c914518428d46a]
+   table (entrées / 512) : NOP:26 HALT:19 INC_A:23 DEC_A:17 INC_B:16 DEC_B:8 CLR_A:19 CLR_B:23 MOV_BA:20 MOV_AB:16 ADD:17 SUB:14 XOR:29 LOADI:23 AND:20 CLRI:22 LOAD:15 STORE:14 JMP:20 JZ:13 JNZ:17 LOOP:13 READ_H:16 WRITE_H:29 H0_INC:21 H0_DEC:16 H1_INC:15 H1_DEC:11
+
+Fertiles revalidés : 2
+  L 16/32/64 : 0/0/2   addr abs/b/ip : 0/2/0   kper 1/2/4 : 1/1/0
+  steps 256/512/1024/2048 : 0/0/1/1   mut 0/1e-4/2.4e-4/1e-3/4e-3 : 0/0/0/0/2   rcost 1/2/4 : 0/2/0   wcost 1/2/4 : 1/0/1
+  part des primitives dans la table (uniforme = 0.036) : NOP=0.042 HALT=0.022 INC_A=0.009 DEC_A=0.022 INC_B=0.023 DEC_B=0.026 CLR_A=0.034 CLR_B=0.057 MOV_BA=0.031 MOV_AB=0.055 ADD=0.025 SUB=0.047 XOR=0.039 LOADI=0.038 AND=0.051 CLRI=0.034 LOAD=0.023 STORE=0.043 JMP=0.048 JZ=0.043 JNZ=0.035 LOOP=0.040 READ_H=0.027 WRITE_H=0.044 H0_INC=0.023 H0_DEC=0.040 H1_INC=0.033 H1_DEC=0.044
+  primitives des octets ESSENTIELS des réplicateurs (23 octets) : NOP=1 INC_A=1 DEC_B=2 CLR_A=1 XOR=1 CLRI=1 LOAD=2 STORE=1 JZ=1 LOOP=2 WRITE_H=8 H0_DEC=1 H1_DEC=1
+  tailles des réplicateurs (octets essentiels) : 7 16
+
+## Migration (2 sources × 5 cibles) : 32 copies du réplicateur dominant de la source dans une soupe de bruit de la cible
+# cellule = direct/invasion/témoin : direct = l'immigré est un copieur vérifié sous la physique cible (1/0) ;
+# invasion = copieurs ≥ 25 % et ≥ 25 % de l'échantillon à ≥ L/2 octets de l'immigré après 512 époques ;
+# témoin = émergence spontanée dans la cible sans injection (même graine). Longueurs différentes : tronqué / complété de bruit.
+src\cible         S#2        S#4    origine     aléa0     aléa1
+S#2             1/0/0      0/0/0      0/0/0      0/0/0      0/0/0
+S#4             0/0/0      1/0/0      0/0/0      0/0/0      0/0/0
+auto-migration (témoin positif) : 0/2 envahissent ; migrations croisées : 0/8 envahissent, 0/8 immigrés copieurs directs
+
+################################ graine 3
+# universe_search run seed=3 pop=48 gens=20 N=1024 E=1024 E1=128 fixL=0 threads=8
+
+## SÉLECTION d'univers (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   1 (+0 cristaux)  0.188  0.000  1  40  2s
+   1   0 (+0 cristaux)  0.191  2.345  1  25  6s
+   2   0 (+0 cristaux)  0.237  1.676  1  22  10s
+   3   0 (+0 cristaux)  0.336  1.297  1  13  13s
+   4   1 (+0 cristaux)  0.484  1.186  2  2  18s
+   5   0 (+0 cristaux)  0.476  3.256  2  6  22s
+   6   2 (+0 cristaux)  0.641  2.228  4  3  27s
+   7   0 (+0 cristaux)  0.477  2.497  4  10  32s
+   8   1 (+0 cristaux)  0.620  1.807  5  10  38s
+   9   0 (+0 cristaux)  0.715  2.803  5  3  45s
+  10   2 (+0 cristaux)  0.766  2.107  7  5  52s
+  11   1 (+0 cristaux)  0.737  2.639  8  3  60s
+  12   0 (+0 cristaux)  0.691  2.519  8  3  67s
+  13   1 (+0 cristaux)  0.776  1.916  8  3  74s
+  14   3 (+0 cristaux)  0.898  1.617  11  5  81s
+  15   3 (+0 cristaux)  0.932  2.620  14  0  89s
+  16   2 (+0 cristaux)  0.789  2.695  16  5  95s
+  17   5 (+0 cristaux)  1.054  4.539  19  3  102s
+  18   1 (+0 cristaux)  0.771  3.282  21  2  110s
+  19   3 (+0 cristaux)  0.940  2.916  22  0  117s
+
+## TÉMOIN : univers aléatoires (pop 48 × 20 générations = 960 évaluations, N=1024, E=1024, tri précoce à 128)
+# gen  émergences/48  fitness_moy  meilleure_moy(≥2 éval)  univers_fertiles_cumulés  arrêts_précoces  t
+   0   0 (+0 cristaux)  0.140  0.000  0  37  2s
+   1   0 (+0 cristaux)  0.125  0.000  0  38  4s
+   2   1 (+0 cristaux)  0.244  0.000  1  34  7s
+   3   0 (+0 cristaux)  0.157  0.000  1  36  9s
+   4   0 (+1 cristaux)  0.166  0.000  1  36  12s
+   5   0 (+0 cristaux)  0.205  0.000  1  33  15s
+   6   0 (+0 cristaux)  0.206  0.000  1  35  18s
+   7   0 (+0 cristaux)  0.124  0.000  1  40  21s
+   8   1 (+0 cristaux)  0.237  0.000  2  38  23s
+   9   1 (+0 cristaux)  0.279  0.000  3  35  25s
+  10   0 (+0 cristaux)  0.177  0.000  3  33  28s
+  11   0 (+0 cristaux)  0.214  0.000  3  41  30s
+  12   1 (+0 cristaux)  0.301  0.000  4  31  33s
+  13   0 (+0 cristaux)  0.187  0.000  4  33  36s
+  14   1 (+0 cristaux)  0.207  0.000  5  38  38s
+  15   0 (+0 cristaux)  0.201  0.000  5  34  42s
+  16   0 (+0 cristaux)  0.172  0.000  5  33  44s
+  17   0 (+0 cristaux)  0.128  0.000  5  37  46s
+  18   1 (+0 cristaux)  0.191  0.000  6  39  48s
+  19   0 (+0 cristaux)  0.145  0.000  6  36  50s
+
+## Bilan brut
+sélection : 26/960 évaluations avec émergence informationnelle (2.7 %) + 0 cristaux homopolymères, 728 univers distincts évalués, 19 fertiles au moins une fois
+témoin    : 6/960 évaluations avec émergence informationnelle (0.6 %) + 1 cristaux homopolymères, 960 univers distincts évalués, 6 fertiles au moins une fois
+
+## Revalidation : 4 graines fraîches par univers (même échelle N=1024, E=1024)
+sélection : 8 univers fertiles retenus, émergence sur graines fraîches 3/32 (9.4 %) ; par univers : 0 0 0 0 1 2 0 0
+témoin    : 6 univers fertiles retenus, émergence sur graines fraîches 1/24 (4.2 %) ; par univers : 0 0 0 1 0 0
+origine (soup b, steps 8192) : 0/8 ; origine (steps 2048) : 0/8   (à N=1024, E=1024)
+
+## Profil des univers fertiles revalidés
+S#0 (0/4) L=64 kper=2 addr=b rcost=4 wcost=1 steps=1024 mut=0.004  [hash 32c9c782e3c4ea03]
+   table (entrées / 512) : NOP:10 HALT:14 INC_A:23 DEC_A:9 INC_B:19 DEC_B:31 CLR_A:5 CLR_B:21 MOV_BA:21 MOV_AB:22 ADD:16 SUB:20 XOR:18 LOADI:20 AND:27 CLRI:18 LOAD:11 STORE:20 JMP:21 JZ:14 JNZ:18 LOOP:26 READ_H:15 WRITE_H:13 H0_INC:17 H0_DEC:22 H1_INC:23 H1_DEC:18
+S#1 (0/4) L=64 kper=2 addr=b rcost=1 wcost=1 steps=1024 mut=0.004  [hash 6b5c8d4645897656]
+   table (entrées / 512) : NOP:14 HALT:15 INC_A:16 DEC_A:12 INC_B:20 DEC_B:26 CLR_A:18 CLR_B:20 MOV_BA:15 MOV_AB:24 ADD:18 SUB:22 XOR:18 LOADI:16 AND:15 CLRI:12 LOAD:18 STORE:19 JMP:23 JZ:20 JNZ:15 LOOP:30 READ_H:12 WRITE_H:15 H0_INC:21 H0_DEC:16 H1_INC:21 H1_DEC:21
+S#2 (0/4) L=64 kper=4 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash e71bb350ebd45a50]
+   table (entrées / 1024) : NOP:21 HALT:40 INC_A:39 DEC_A:33 INC_B:32 DEC_B:53 CLR_A:16 CLR_B:24 MOV_BA:43 MOV_AB:38 ADD:41 SUB:35 XOR:40 LOADI:44 AND:56 CLRI:32 LOAD:20 STORE:40 JMP:43 JZ:32 JNZ:27 LOOP:60 READ_H:36 WRITE_H:27 H0_INC:24 H0_DEC:36 H1_INC:59 H1_DEC:33
+S#3 (0/4) L=64 kper=4 addr=b rcost=4 wcost=1 steps=1024 mut=0.004  [hash 686d235be270661c]
+   table (entrées / 1024) : NOP:17 HALT:38 INC_A:43 DEC_A:27 INC_B:37 DEC_B:59 CLR_A:14 CLR_B:32 MOV_BA:42 MOV_AB:44 ADD:37 SUB:39 XOR:32 LOADI:40 AND:53 CLRI:33 LOAD:22 STORE:33 JMP:53 JZ:32 JNZ:27 LOOP:57 READ_H:28 WRITE_H:35 H0_INC:31 H0_DEC:36 H1_INC:55 H1_DEC:28
+S#4 (1/4) L=64 kper=2 addr=b rcost=4 wcost=2 steps=2048 mut=0.004  [hash 730d2eaa619a8540]
+   table (entrées / 512) : NOP:13 HALT:13 INC_A:19 DEC_A:15 INC_B:19 DEC_B:25 CLR_A:23 CLR_B:19 MOV_BA:13 MOV_AB:22 ADD:16 SUB:19 XOR:17 LOADI:12 AND:12 CLRI:15 LOAD:17 STORE:20 JMP:21 JZ:23 JNZ:15 LOOP:29 READ_H:10 WRITE_H:19 H0_INC:24 H0_DEC:20 H1_INC:19 H1_DEC:23
+   réplicateur dominant (3/64 de l'échantillon) : 6 octets essentiels sur 64
+     90fe2043006320006d00004a22e522469ef2226d100020a91d0022d4918ea3a990fe2043006320006d00004a22e522469ef2226d100020a91d0022d4918ea3a9
+     essentiels : 2:20=INC_B 3:43=LOAD 4:00=SUB 5:63=STORE 6:20=INC_B 8:6d=LOOP
+S#5 (2/4) L=64 kper=2 addr=b rcost=4 wcost=1 steps=1024 mut=0.004  [hash d03b0164136d50e1]
+   table (entrées / 512) : NOP:10 HALT:15 INC_A:23 DEC_A:9 INC_B:19 DEC_B:31 CLR_A:5 CLR_B:20 MOV_BA:21 MOV_AB:22 ADD:16 SUB:20 XOR:18 LOADI:20 AND:27 CLRI:18 LOAD:11 STORE:20 JMP:21 JZ:14 JNZ:18 LOOP:26 READ_H:15 WRITE_H:13 H0_INC:17 H0_DEC:22 H1_INC:23 H1_DEC:18
+   réplicateur dominant (7/64 de l'échantillon) : 10 octets essentiels sur 64
+     02000000550000006877088fc919000002000000550000006877088fc919000002000000550000006877088fc919000002000000550000006877088fc9190000
+     essentiels : 0:02=H1_DEC 1:00=WRITE_H 2:00=WRITE_H 3:00=WRITE_H 4:55=DEC_B 5:00=WRITE_H 7:00=WRITE_H 10:08=LOAD 11:8f=CLRI 12:c9=LOOP
+S#6 (0/4) L=64 kper=2 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash 9f9b88a5e67c9996]
+   table (entrées / 512) : NOP:12 HALT:19 INC_A:16 DEC_A:17 INC_B:14 DEC_B:18 CLR_A:9 CLR_B:18 MOV_BA:23 MOV_AB:22 ADD:23 SUB:18 XOR:24 LOADI:23 AND:30 CLRI:20 LOAD:12 STORE:14 JMP:25 JZ:11 JNZ:19 LOOP:25 READ_H:12 WRITE_H:10 H0_INC:16 H0_DEC:20 H1_INC:28 H1_DEC:14
+S#7 (0/4) L=64 kper=2 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash 84d8dd71aca526a6]
+   table (entrées / 512) : NOP:7 HALT:17 INC_A:20 DEC_A:11 INC_B:19 DEC_B:31 CLR_A:5 CLR_B:17 MOV_BA:17 MOV_AB:22 ADD:21 SUB:18 XOR:15 LOADI:19 AND:26 CLRI:16 LOAD:10 STORE:18 JMP:25 JZ:16 JNZ:16 LOOP:28 READ_H:16 WRITE_H:17 H0_INC:19 H0_DEC:19 H1_INC:31 H1_DEC:16
+T#0 (0/4) L=16 kper=4 addr=b rcost=2 wcost=1 steps=1024 mut=0.00024  [hash a17d24b36dc1b0b9]
+   table (entrées / 1024) : NOP:35 HALT:45 INC_A:24 DEC_A:28 INC_B:42 DEC_B:43 CLR_A:38 CLR_B:34 MOV_BA:42 MOV_AB:38 ADD:37 SUB:24 XOR:37 LOADI:40 AND:22 CLRI:38 LOAD:41 STORE:41 JMP:36 JZ:34 JNZ:34 LOOP:43 READ_H:36 WRITE_H:31 H0_INC:35 H0_DEC:43 H1_INC:37 H1_DEC:46
+T#1 (0/4) L=16 kper=2 addr=b rcost=1 wcost=1 steps=2048 mut=0.0001  [hash 0ec6dff321f201f9]
+   table (entrées / 512) : NOP:17 HALT:15 INC_A:16 DEC_A:20 INC_B:24 DEC_B:15 CLR_A:13 CLR_B:17 MOV_BA:15 MOV_AB:22 ADD:24 SUB:18 XOR:22 LOADI:27 AND:15 CLRI:13 LOAD:29 STORE:20 JMP:15 JZ:22 JNZ:14 LOOP:20 READ_H:7 WRITE_H:24 H0_INC:20 H0_DEC:13 H1_INC:19 H1_DEC:16
+T#2 (0/4) L=16 kper=4 addr=b rcost=1 wcost=1 steps=512 mut=0.00024  [hash 797df257f427a495]
+   table (entrées / 1024) : NOP:36 HALT:41 INC_A:30 DEC_A:36 INC_B:41 DEC_B:29 CLR_A:35 CLR_B:33 MOV_BA:37 MOV_AB:34 ADD:30 SUB:37 XOR:45 LOADI:33 AND:36 CLRI:38 LOAD:36 STORE:43 JMP:33 JZ:27 JNZ:47 LOOP:41 READ_H:35 WRITE_H:40 H0_INC:42 H0_DEC:37 H1_INC:36 H1_DEC:36
+T#3 (1/4) L=32 kper=4 addr=b rcost=4 wcost=1 steps=2048 mut=0.004  [hash 19ae33d30a96cc01]
+   table (entrées / 1024) : NOP:33 HALT:27 INC_A:32 DEC_A:43 INC_B:57 DEC_B:37 CLR_A:36 CLR_B:38 MOV_BA:28 MOV_AB:34 ADD:36 SUB:26 XOR:34 LOADI:49 AND:42 CLRI:34 LOAD:35 STORE:42 JMP:37 JZ:31 JNZ:41 LOOP:43 READ_H:41 WRITE_H:35 H0_INC:35 H0_DEC:30 H1_INC:35 H1_DEC:33
+   réplicateur dominant (2/64 de l'échantillon) : 6 octets essentiels sur 32
+     52fe709e28da09bb6f1d23195b3af99726550c1f2c6ad0d60aaadc766d008370
+     essentiels : 0:52=LOAD 1:fe=LOOP 2:70=STORE 3:9e=JMP 4:28=INC_B 7:bb=LOOP
+T#4 (0/4) L=16 kper=2 addr=b rcost=2 wcost=2 steps=1024 mut=0.004  [hash cd64ef2cecf3f378]
+   table (entrées / 512) : NOP:23 HALT:14 INC_A:22 DEC_A:20 INC_B:21 DEC_B:14 CLR_A:16 CLR_B:19 MOV_BA:23 MOV_AB:21 ADD:19 SUB:21 XOR:17 LOADI:17 AND:17 CLRI:23 LOAD:17 STORE:21 JMP:19 JZ:15 JNZ:23 LOOP:20 READ_H:13 WRITE_H:15 H0_INC:21 H0_DEC:10 H1_INC:9 H1_DEC:22
+T#5 (0/4) L=32 kper=1 addr=b rcost=1 wcost=1 steps=2048 mut=0.001  [hash b54be7efd031567c]
+   table (entrées / 256) : NOP:10 HALT:14 INC_A:9 DEC_A:7 INC_B:4 DEC_B:7 CLR_A:9 CLR_B:8 MOV_BA:8 MOV_AB:10 ADD:3 SUB:7 XOR:12 LOADI:7 AND:15 CLRI:6 LOAD:12 STORE:11 JMP:10 JZ:16 JNZ:11 LOOP:7 READ_H:8 WRITE_H:6 H0_INC:10 H0_DEC:9 H1_INC:13 H1_DEC:7
+
+Fertiles revalidés : 3
+  L 16/32/64 : 0/1/2   addr abs/b/ip : 0/3/0   kper 1/2/4 : 0/2/1
+  steps 256/512/1024/2048 : 0/0/1/2   mut 0/1e-4/2.4e-4/1e-3/4e-3 : 0/0/0/0/3   rcost 1/2/4 : 0/0/3   wcost 1/2/4 : 2/1/0
+  part des primitives dans la table (uniforme = 0.036) : NOP=0.027 HALT=0.027 INC_A=0.036 DEC_A=0.033 INC_B=0.046 DEC_B=0.045 CLR_A=0.031 CLR_B=0.038 MOV_BA=0.030 MOV_AB=0.038 ADD=0.033 SUB=0.032 XOR=0.034 LOADI=0.040 AND=0.040 CLRI=0.033 LOAD=0.031 STORE=0.040 JMP=0.039 JZ=0.033 JNZ=0.036 LOOP=0.048 READ_H=0.032 WRITE_H=0.033 H0_INC=0.037 H0_DEC=0.035 H1_INC=0.038 H1_DEC=0.036
+  primitives des octets ESSENTIELS des réplicateurs (22 octets) : INC_B=3 DEC_B=1 SUB=1 CLRI=1 LOAD=3 STORE=2 JMP=1 LOOP=4 WRITE_H=5 H1_DEC=1
+  tailles des réplicateurs (octets essentiels) : 6 10 6
+
+## Migration (3 sources × 6 cibles) : 32 copies du réplicateur dominant de la source dans une soupe de bruit de la cible
+# cellule = direct/invasion/témoin : direct = l'immigré est un copieur vérifié sous la physique cible (1/0) ;
+# invasion = copieurs ≥ 25 % et ≥ 25 % de l'échantillon à ≥ L/2 octets de l'immigré après 512 époques ;
+# témoin = émergence spontanée dans la cible sans injection (même graine). Longueurs différentes : tronqué / complété de bruit.
+src\cible         S#4        S#5        T#3    origine     aléa0     aléa1
+S#4             1/0/0      0/0/0      0/0/0      0/0/0      0/0/0      0/0/0
+S#5             0/0/0      1/1/0      0/0/0      0/0/0      0/0/0      0/0/0
+T#3             0/0/0      0/0/0      1/0/0      0/0/0      0/0/0      0/0/0
+auto-migration (témoin positif) : 1/3 envahissent ; migrations croisées : 0/15 envahissent, 0/15 immigrés copieurs directs
