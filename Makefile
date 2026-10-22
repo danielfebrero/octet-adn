@@ -65,7 +65,10 @@ experiments/rebirth: experiments/rebirth.c experiments/k8_survivor.c experiments
 experiments/law_keepers: experiments/law_keepers.c experiments/rebirth.c experiments/k8_survivor.c experiments/universe_search2.c experiments/universe_search.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers
+experiments/incubation_stepback: experiments/incubation_stepback.c experiments/universe_search2.c experiments/universe_search.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
+test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/incubation_stepback
 	./tests/test_vm
 	./experiments/metabolic_order selftest
 	./experiments/mi_detector selftest
@@ -75,6 +78,7 @@ test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/
 	./experiments/k8_survivor selftest
 	./experiments/rebirth selftest
 	./experiments/law_keepers selftest
+	./experiments/incubation_stepback selftest
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
@@ -105,5 +109,6 @@ run: octet-adn
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
 	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers
+	rm -f experiments/incubation_stepback
 
 .PHONY: all static test no-python run clean sanitize

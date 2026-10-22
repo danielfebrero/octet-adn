@@ -1,0 +1,115 @@
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -o tests/test_vm tests/test_vm.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -c -o src/main.o src/main.c
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude  -o octet-adn src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o src/main.o -lm
+strip octet-adn
+no-python : OK (aucun .py/.js/.rb/.sh/.json/.yaml versionné)
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -o experiments/metabolic_order experiments/metabolic_order.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -o experiments/mi_detector experiments/mi_detector.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/terrarium_run experiments/terrarium.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/universe_search experiments/universe_search.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/universe_search2 experiments/universe_search2.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/k8_survivor experiments/k8_survivor.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/rebirth experiments/rebirth.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -o experiments/law_keepers experiments/law_keepers.c src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o -lm
+./tests/test_vm
+ok  test_legacy_opcodes_preserved
+ok  test_decode_bytes
+ok  test_introns
+ok  test_seeds_embedded_match_files
+ok  test_tick_deterministic
+ok  test_store_rewrites_byte_and_counts_useful
+ok  test_neural_identity_on_stimulus
+ok  test_mutation_bounds_and_determinism
+ok  test_duplication_and_crossover
+ok  test_ten_labs_registered
+    emit-echo 60 ticks : accuracy=0.9756 fitness=0.9063
+ok  test_emit_echo_small_sim
+ok  test_runner_dry_run_two_labs
+ok  test_runner_persists_and_is_deterministic
+ok  test_checkpoint_roundtrip
+ok  test_pp_predators_are_mortal
+    predator-prey 20 cycles : 4 acceptations (c6-20), fitness moy. c11-20 = 0.612
+ok  test_pp_selection_not_frozen
+ok  test_walk_seed_shrinks_and_survives_indels
+    predict-walk 40 cycles : écart moyen à la persistance = +0.0273
+ok  test_predict_walk_beats_persistence
+ok  test_reseed_on_engine_change
+ok  test_sixteen_labs_and_core_untouched
+ok  test_evo_params_bounded
+    fold=0.349 antibiotic=0.543 commons=0.282 pandemic=0.368 code-repair=0.401 self-evolve=0.191 vs=+0.014 gel=0.151
+ok  test_new_labs_beat_naive_baselines
+ok  test_new_labs_exploits_closed
+ok  test_resume_legacy_checkpoints_with_16_labs
+ok  test_contribution_outranks_energy
+ok  test_selfevo_seed_keeps_a_mutation_rate
+ok  test_foreign_admits_only_positive_gap
+    code-repair 12 cycles : vs_baseline moyen = +0.3292  pool_remplace=0
+ok  test_code_repair_pool_beats_flips
+ok  test_core_state_hash_matches_main
+    diagnose seed=0.400 copy=0.245 step=0.461 full=0.641 vs_blind=+0.241
+ok  test_diagnose_reads_and_computes
+    general seed known=0.726 L0=0.943 gelé=0.384 sans_récompense=0.266 cte=0.346 m2=0.366 m3=0.401 mix=0.538 début/fin=0.552/0.748
+    general ligne2=0.995 gelé=0.299 sans_récompense=0.238 autre_lag=0.428  ligne3=0.979 gelé=0.294 sans_récompense=0.252
+    general sélection f=0.461 (train, non saturé)
+ok  test_general_learns_and_holds_out
+    germline: enfant = naissance, sélection = lignée
+ok  test_general_germline_not_soma
+    general check : seed 0, ligne2 2, ligne3 3, sans STORE 0
+ok  test_general_check_needs_learning
+    niche : mémoire-1 seed=0.565 deux_octets=0.945  échelle 0.465/0.871  sélection 0.555/0.412
+ok  test_general_memory_niche
+    second barreau : décalage p1=1.000  re-cible p2=0.516 (avant 0.331)  échelle 1.499 > 1.000
+ok  test_general_second_rung_kept
+    démêlage : graine 2 + intron 0x79  m2=0.987 gelé=0.260 sans_récompense=0.266
+ok  test_general_unmix_at_birth
+    second étage : graine 2  m3=0.977 gelé=0.252 sans_récompense=0.255
+ok  test_general_deepen_at_birth
+ok  test_general_regs_push_peek
+ok  test_novelty_map_elites
+ok  test_soup_detector_controls
+
+40/40 tests OK
+./experiments/metabolic_order selftest
+selftest : déterminisme OK, génome inerte M=0.000000 → OK
+./experiments/mi_detector selftest
+selftest : déterminisme OK, génome inerte MI=0 MI_S=0 fuite=5.05e-07 → OK
+./experiments/terrarium_run selftest
+selftest codeur social : flux dépendant → excès 2.4446 bits/paire OK
+selftest codeur social : flux indépendant → excès 0.0027 bits/paire OK
+selftest reprise : hash 18547e045a455586 vs 18547e045a455586, series.tsv identiques → OK
+selftest reprise (copie+prédateurs) : hash a3a8de23aa3dde95 vs a3a8de23aa3dde95, series.tsv identiques → OK
+selftest copie réelle : 163 naissances par copie (soup_exec), pop finale 0 → OK
+./experiments/universe_search selftest
+selftest catalogue : 28 primitives, 2 écrivent (1 octet), 0 de bloc OK
+selftest anti-triche : 1800 univers (aléatoires/croisés/mutés), 3304156 pas exécutés, 0 instructions écrivant > 1 octet, 0 génomes hors catalogue OK
+selftest origine = soup b : 0 divergences sur 3000 bandes (1 où STORE a fabriqué un 0x13 NEURAL, écart documenté) ; copieur fait main reconnu 1/1 ; bruit copieur 0 OK
+selftest soupe : injection émerge=1 (copieurs 0.77, 763 naissances), déterministe=1, no-store naissances=0 OK
+universe_search selftest : OK
+./experiments/universe_search2 selftest
+selftest catalogue : 28 primitives, 2 écrivent (1 octet), 0 de bloc OK
+selftest anti-triche : 1800 univers (aléatoires/croisés/mutés), 3304156 pas exécutés, 0 instructions écrivant > 1 octet, 0 génomes hors catalogue OK
+selftest origine = soup b : 0 divergences sur 3000 bandes (1 où STORE a fabriqué un 0x13 NEURAL, écart documenté) ; copieur fait main reconnu 1/1 ; bruit copieur 0 OK
+selftest soupe : injection émerge=1 (copieurs 0.77, 763 naissances), déterministe=1, no-store naissances=0 OK
+universe_search selftest : OK
+selftest2 Fisher : 0.00274 (réf 0.00274), bilatéral 0.4857 (réf 0.4857) OK
+selftest2 dérive : 2000 pas, 0 violations (hors catalogue ou > 1 octet écrit) OK
+universe_search2 selftest : OK
+./experiments/k8_survivor selftest
+k8_survivor selftest : trace_run rejoue drift_run à l'identique OK
+./experiments/rebirth selftest
+rebirth selftest : life_run rejoue drift_run à l'identique OK
+rebirth selftest : phys_replay reconstruit la physique finale sans soupe OK
+rebirth selftest : bifurcation de dérive (hors fenêtre = neutre, dans la fenêtre = autre physique) OK
+rebirth selftest : statistiques de rang (Kendall stratifié, Spearman, AUC) OK
+./experiments/law_keepers selftest
+law_keepers selftest : VM sans primitive de loi == u_exec (3000 univers) OK
+law_keepers selftest : anti-triche (1500 univers, 680671 pas, 12954 lois réécrites) 0 instruction > 1 octet, valeurs < 30 : OK
+law_keepers selftest : 1 écriture max par jeton, A-jet et vérification n'écrivent jamais OK
+law_keepers selftest : dérive B (entrée sur-utilisée touchée 5 fois vs 678 uniforme, 732 permutée) OK
+law_keepers selftest : lx_copier == u_copier (400 univers) OK
+./experiments/incubation_stepback selftest
+incubation selftest : fondateur archivé 0 copieur sous soupe ET univers OK
+incubation selftest : fondateur archivé 1 copieur sous soupe ET univers OK
+incubation selftest : naissance causale et observation inerte OK
+incubation selftest : déterminisme OK
+incubation selftest : sans écritures, zéro descendance OK
