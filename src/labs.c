@@ -350,8 +350,8 @@ const LabDef LABS[N_LABS] = {
       "justesse des EMIT : le médicament est ((marque + 1) XOR 4) mod 8, la marque est le stimulus ; baseline = même pool, stimulus renversé",
       { "accuracy", "emits", "best_rate", "blind", "vs_blind" }, hl_dg_cfg, hl_dg_seeds, hl_dg_pre, hl_dg_post, hl_dg_fit, hl_rank_score, hl_dg_sel, hl_dg_init, 0, 0 },
     { "general", "Apprendre pendant sa vie, généraliser à des tâches jamais vues",
-      "justesse des essais 32..63 (2e moitié de vie) sur 32 tâches tenues à l'écart (tables réservées, bandits 0..3, famille mémoire jamais vue) ; la sélection ne voit que les tâches d'entraînement ; baseline = mêmes génomes, génome gelé",
-      { "heldout", "train", "frozen", "vs_frozen", "early", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, hl_gn_sel, hl_gn_init, 0, 1 },
+      "note affichée = justesse des essais 32..63 sur la mémoire 2 et la mémoire 3 (T[indice d'il y a 2 ou 3 essais], tables réservées) ; la sélection voit moitié curriculum, moitié ces mémoires sur d'autres tables ; known = familles déjà dans la seed ; baseline = mêmes génomes, génome gelé",
+      { "lag", "train", "frozen", "vs_frozen", "known", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, hl_gn_sel, hl_gn_init, 0, 1 },
 };
 
 int lab_index(const char *name) {

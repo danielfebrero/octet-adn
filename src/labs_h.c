@@ -691,17 +691,21 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
  * qu'il ne connaît pas à la naissance, et s'il le fait sur des tâches que la sélection n'a jamais vues.
  * Vie = 64 essais. Stimulus = indice c (bits 0-1) | récompense affichée de l'essai précédent (bit 2) | début de tâche (bit 3) ;
  * réponse = EMIT v (v & 3), silence = faux. La bonne réponse n'est jamais dans le stimulus et
- * l'historique est vidé à chaque tick : se souvenir de l'indice précédent (p1, p2) coûte un STORE.
+ * l'historique est vidé à chaque tick : se souvenir de l'indice précédent (p1, p2, p3) coûte un STORE.
  * Familles (table 2 bits / entrée) :
- *   0 association   T[c]                 4 renversement : T puis T' à l'essai 24 (ou 1-3 instants aléatoires)
- *   2 bandit        k (constant ou qui change)       3 mémoire-1  T[p1]   (TENUE À L'ÉCART ; cas particulier de 4)
- *   4 paire         T16[c + 4·p1]        5 XOR  c ^ p1 ^ k               6 mémoire-2  T[p2]   (TENUE À L'ÉCART, jamais vue)
+ *   0 association   T[c]                 1 renversement : T puis T' à l'essai 24 (ou 1-3 instants aléatoires)
+ *   2 bandit        k (constant ou qui change)       3 mémoire-1  T[p1]   (cas particulier de la paire)
+ *   4 paire         T16[c + 4·p1]        5 XOR  c ^ p1 ^ k
+ *   6 mémoire-2     T[p2]                7 mémoire-3  T[p3]
+ *   p1, p2, p3 = indice il y a 1, 2, 3 essais. Les familles 6 et 7 ne sont pas dans la seed :
+ *   une table sur c ou sur (c, p1) tombe au hasard si p2 (resp. p3) est indépendant.
  * Entraînement, curriculum de 4 niveaux (le niveau du monde = le premier où le pool reçu ne dépasse
  * pas 0.9) : L0 {0,1,2} ; L1 + paire, renversements multiples ; L2 + XOR, bandit non stationnaire,
- * récompense affichée bruitée 10 % ; L3 bruit 20 %. Tables des familles 0-2 : hachage non réservé.
- * Fitness de sélection = mélange fixe des 4 niveaux (comparable d'un pool à l'autre).
- * Jeu tenu à l'écart (40 tâches fixes, sans bruit) : familles 0,1,2 sur tables réservées, mémoire-1,
- * mémoire-2. Score d'une vie = justesse des essais 32..63. Budget : 96 instructions / tick (ce labo). */
+ * récompense affichée bruitée 10 % ; L3 bruit 20 %. Un quart des vies du monde est une mémoire 2 ou 3
+ * (tables non réservées). Fitness de sélection = moitié curriculum, moitié mémoire 2 et 3.
+ * Affichage (fitness et best) = mémoire 2 et 3 tenues à l'écart (tables réservées, sans bruit).
+ * Le mélange des familles déjà écrites dans la seed reste dans extra « known » : il ne sert plus de note.
+ * Score d'une vie = justesse des essais 32..63. Budget : 96 instructions / tick (ce labo). */
 #define GN_TRIALS 64
 #define GN_LATE   32
 #define GN_HELD_N 40
@@ -714,11 +718,13 @@ static int gn_held_code(int code) { return (((unsigned)code * 167u) >> 3 & 3u) =
 static int gn_draw_code(Rng *r, int held, int avoid) {
     for (;;) { int c = (int)rng_below(r, 256); if (gn_held_code(c) == held && c != avoid) return c; }
 }
-static GnTask gn_draw(Rng *r, int held, int level) {
+static GnTask gn_draw(Rng *r, int held, int level, int force) {
     static const int HF[5] = { 0, 1, 2, 3, 6 }, TF[GN_LEVELS] = { 3, 4, 5, 5 };   /* familles tirables */
     static const int TFAM[5] = { 0, 1, 2, 4, 5 };
     GnTask t; memset(&t, 0, sizeof t);
-    t.fam = held ? HF[rng_below(r, 5)] : TFAM[rng_below(r, (uint32_t)TF[level])];
+    /* force >= 0 : cette famille, avec les codes déjà réservés ou non selon held.
+     * Les familles 6 et 7 ne sont pas dans le tirage : on les impose. */
+    t.fam = force >= 0 ? force : held ? HF[rng_below(r, 5)] : TFAM[rng_below(r, (uint32_t)TF[level])];
     if (t.fam == 2) {
         int k = (int)rng_below(r, held ? 4 : 3), k2 = (k + 1 + (int)rng_below(r, 3)) & 3;
         if (!held) k2 = (k + 1 + (int)rng_below(r, 2)) % 3;
@@ -732,12 +738,13 @@ static GnTask gn_draw(Rng *r, int held, int level) {
     if (!held && level == 4 - 1) t.noise = 200; else if (!held && level == 2) t.noise = 100;
     return t;
 }
-static int gn_target(const GnTask *t, int trial, int c, int p1, int p2) {
+static int gn_target(const GnTask *t, int trial, int c, int p1, int p2, int p3) {
     int ph = 0; for (int i = 0; i < t->nsw; i++) ph += trial >= t->sw[i];
     int tab = (ph & 1) ? t->t2 : t->t1;
     switch (t->fam) {
     case 3: return (tab >> (2 * p1)) & 3;
     case 6: return (tab >> (2 * p2)) & 3;
+    case 7: return (tab >> (2 * p3)) & 3;
     case 4: return (int)(((ph & 1) ? t->q2 : t->q1) >> (2 * (c + 4 * p1))) & 3;
     case 5: return (c ^ p1 ^ (int)(t->q1 & 3)) & 3;
     default: return (tab >> (2 * c)) & 3;
@@ -759,9 +766,10 @@ static void gn_life(GnState *s, const PoolEntry *g, const GnTask *t, Rng *cues, 
     Creature *c = &s->tc; World *w = s->sb;
     memset(c, 0, sizeof *c);
     c->len = g->len; memcpy(c->dna, g->dna, (size_t)g->len); c->x = c->y = 2; c->emitted = -1;
-    int p1 = (int)rng_below(cues, 4), p2 = (int)rng_below(cues, 4), r = 0;
+    /* p3 initial dérivé : pas un tirage de plus, le flux de cues des familles 0-6 ne bouge pas. */
+    int p1 = (int)rng_below(cues, 4), p2 = (int)rng_below(cues, 4), p3 = (p1 + 2 * p2) & 3, r = 0;
     for (int i = 0; i < GN_TRIALS; i++) {
-        int cue = (int)rng_below(cues, 4), tgt = gn_target(t, i, cue, p1, p2), resp;
+        int cue = (int)rng_below(cues, 4), tgt = gn_target(t, i, cue, p1, p2, p3), resp;
         int flip = t->noise && (int)rng_below(cues, 1000) < t->noise;
         if (mode >= 3) resp = mode == 3 ? (int)rng_below(cues, 4) : mode - 4;
         else {
@@ -774,7 +782,7 @@ static void gn_life(GnState *s, const PoolEntry *g, const GnTask *t, Rng *cues, 
         int good = resp >= 0 && (resp & 3) == tgt;
         ok[i] += good;
         r = good ^ flip;
-        p2 = p1; p1 = cue;
+        p3 = p2; p2 = p1; p1 = cue;
     }
 }
 /* Justesse moyenne (essais 32..63) de n génomes. held : jeu tenu à l'écart (fixe) ; sinon tâches
@@ -785,8 +793,9 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     int ok[GN_TRIALS] = { 0 }; long lives = 0;
     for (int j = 0; j < ntask; j++) {
         Rng tr; rng_seed(&tr, held ? 0x6E6E0000ULL + (uint64_t)j : seed + (uint64_t)j * 0x9E3779B97F4A7C15ULL);
-        GnTask t = gn_draw(&tr, held, level);
-        if (fam >= 0 && t.fam != fam) continue;
+        int force = fam >= 6 ? fam : -1;                 /* 6 et 7 : toutes les tâches, pas un sous-échantillon */
+        GnTask t = gn_draw(&tr, held, level, force);
+        if (force < 0 && fam >= 0 && t.fam != fam) continue;
         for (int i = 0; i < n; i++) { Rng cu = tr; gn_life(s, &g[i], &t, &cu, mode, ok); lives++; }
     }
     gn_state_free(s);
@@ -797,17 +806,26 @@ double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, in
     if (curve) { curve[0] = a / (16.0 * lives); curve[1] = b / (16.0 * lives); }
     return late / ((double)(GN_TRIALS - GN_LATE) * lives);
 }
-/* fitness de sélection : mélange fixe des 4 niveaux, 8 tâches chacun */
+/* fitness de sélection : moitié curriculum (4 niveaux, 8 tâches), moitié mémoire 2 et 3
+ * (tables non réservées, donc distinctes du jeu tenu à l'écart). */
 double gn_train(const PoolEntry *g, int n, uint64_t seed) {
     double s = 0;
     for (int L = 0; L < GN_LEVELS; L++) s += gn_eval(g, n, 0, L, seed + (uint64_t)L * 7919, 8, 0, -1, NULL);
-    return s / GN_LEVELS;
+    s /= GN_LEVELS;
+    double lag = 0.5 * (gn_eval(g, n, 0, 0, seed ^ 0x6A6C0001ULL, 8, 0, 6, NULL)
+                      + gn_eval(g, n, 0, 0, seed ^ 0x6A6C0002ULL, 8, 0, 7, NULL));
+    return 0.5 * s + 0.5 * lag;
 }
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
  * curriculum ; un essai juste rapporte de l'énergie. lscore = justesse des essais 32..63, rétrécie.
  * ls[0] = graine de la tâche, ls[1] = essai, ls[2] = c | p1<<2 | p2<<4, ls[3]/ls[4] = justes/essais tardifs,
  * ls[5] = cible | bruit<<2 (bit de récompense inversé pour cet essai). */
-static GnTask gn_task_of(int seed, int level) { Rng r; rng_seed(&r, (uint64_t)seed); return gn_draw(&r, 0, level); }
+static GnTask gn_task_of(int seed, int level) {
+    Rng r; rng_seed(&r, (uint64_t)seed);
+    /* Un quart des vies : mémoire 2 ou 3, codes non réservés. Le curriculum reste le reste. */
+    int force = ((seed & 6) == 6) ? ((seed & 8) ? 7 : 6) : -1;
+    return gn_draw(&r, 0, level, force);
+}
 static void gn_before(World *w, Creature *c) {
     int level = ((GnLab *)w->lab->ext)->level, r = 0;
     if (!c->ls[0]) { c->ls[0] = (int)(rng_next(w->rng) & 0x7fffffff) | 1; c->ls[1] = 0; c->ls[2] = (int)rng_below(w->rng, 16) << 2; }
@@ -819,11 +837,11 @@ static void gn_before(World *w, Creature *c) {
         if (++c->ls[1] == GN_TRIALS) { c->ls[0] = (int)(rng_next(w->rng) & 0x7fffffff) | 1; c->ls[1] = 0; }
     }
     GnTask t = gn_task_of(c->ls[0], level);
-    int cue = (int)rng_below(w->rng, 4), p1 = c->ls[2] & 3, p2 = (c->ls[2] >> 2) & 3;
+    int cue = (int)rng_below(w->rng, 4), p1 = c->ls[2] & 3, p2 = (c->ls[2] >> 2) & 3, p3 = (c->ls[2] >> 4) & 3;
     int flip = t.noise && (int)rng_below(w->rng, 1000) < t.noise;
-    c->ls[5] = gn_target(&t, c->ls[1], cue, p1, p2) | flip << 2;
+    c->ls[5] = gn_target(&t, c->ls[1], cue, p1, p2, p3) | flip << 2;
     w->stimulus = cue | r << 2 | (c->ls[1] == 0) << 3;     /* bit 3 : premier essai d'une tâche */
-    c->ls[2] = cue | p1 << 2 | p2 << 4;
+    c->ls[2] = cue | p1 << 2 | p2 << 4 | p3 << 6;          /* p3 du prochain essai = p2 de celui-ci */
 }
 void hl_gn_cfg(WorldConfig *c) { c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS; c->mut_rate = 0.005; c->dup_rate = 0.01; }   /* génome long : charge de mutation réduite */
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
@@ -852,16 +870,20 @@ static uint64_t gn_cycle_seed(const Lab *l) { Rng t = l->rng0; return rng_next(&
 double hl_gn_fit(Lab *l, World *w, int ticks) {
     (void)ticks; (void)w;
     int n = l->npool0 < GN_TOP ? l->npool0 : GN_TOP;     /* les 8 premiers du pool (triés par la sélection) */
-    double curve[2] = { 0, 0 }, tr = 0;
+    double tr = 0;
     memset(l->extra, 0, sizeof l->extra);
     if (n > 0) {
         tr = gn_train(l->pool0, n, gn_cycle_seed(l));
         l->extra[1] = tr;
         if (l->eval_only) return tr;                    /* réévaluation appariée : pas besoin du held-out */
-        l->extra[0] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, curve);
-        l->extra[2] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, -1, NULL);
+        double l6 = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, 6, NULL);
+        double l7 = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, 7, NULL);
+        l->extra[0] = 0.5 * (l6 + l7);                  /* note affichée : mémoires jamais écrites dans la seed */
+        l->extra[2] = 0.5 * (gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, 6, NULL)
+                           + gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 1, 7, NULL));
+        l->extra[4] = gn_eval(l->pool0, n, 1, 0, 0, GN_HELD_N, 0, -1, NULL);   /* familles que la seed sait déjà */
     }
-    l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2]; l->extra[4] = curve[0];
+    l->extra[1] = tr; l->extra[3] = l->extra[0] - l->extra[2];
     l->extra[5] = ((GnLab *)l->ext)->level;
     return tr;                                          /* la sélection ne voit que l'entraînement */
 }

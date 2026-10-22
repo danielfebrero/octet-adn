@@ -577,22 +577,68 @@ TEST(test_diagnose_reads_and_computes) {
 
 double gn_eval(const PoolEntry *g, int n, int held, int level, uint64_t seed, int ntask, int mode, int fam, double *curve);
 double gn_train(const PoolEntry *g, int n, uint64_t seed);
-/* general : la seed APPREND (gelée ou sans récompense, elle retombe au hasard), le jeu tenu à l'écart
- * diffère de l'entraînement, une constante ne passe pas, et le runner affiche le held-out, pas le train. */
+/* Ligne à retard : confirme T[décalage] si la récompense est juste, sinon incrémente la conjecture.
+ * Absente de la seed. Données en 0x20 (introns). lag2 clé = p2, lag3 clé = p3. */
+static const uint8_t LAG2[172] = {
+    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 18, 21, 31, 8, 9, 27,
+    28, 32, 6, 0, 6, 1, 6, 2, 6, 3, 6, 4, 6, 5, 6, 6,
+    6, 7, 6, 8, 6, 9, 28, 0, 20, 8, 95, 7, 9, 31, 7, 9,
+    74, 2, 9, 71, 2, 9, 68, 22, 31, 4, 9, 22, 7, 2, 31, 3,
+    21, 28, 5, 23, 6, 79, 7, 4, 31, 3, 21, 28, 36, 23, 6, 0,
+    8, 41, 7, 2, 31, 3, 21, 28, 5, 23, 6, 93, 7, 0, 31, 4,
+    27, 25, 7, 4, 1, 31, 3, 21, 28, 32, 23, 6, 4, 7, 2, 31,
+    3, 21, 28, 5, 23, 6, 122, 7, 4, 6, 0, 7, 1, 31, 3, 21,
+    28, 5, 23, 6, 134, 7, 0, 31, 3, 20, 21, 28, 32, 23, 6, 4,
+    7, 2, 6, 3, 7, 1, 6, 2, 7, 0, 6, 1, 18, 31, 3, 21,
+    28, 32, 23, 6, 0, 7, 9, 1, 6, 9, 14, 15,
+};
+static const uint8_t LAG3[175] = {
+    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 18, 21, 31, 8, 9, 27,
+    28, 32, 6, 0, 6, 1, 6, 2, 6, 3, 6, 4, 6, 5, 6, 6,
+    6, 7, 6, 8, 6, 9, 28, 0, 20, 8, 98, 7, 9, 31, 7, 9,
+    77, 2, 9, 74, 2, 9, 71, 2, 9, 68, 22, 31, 4, 9, 22, 7,
+    3, 31, 3, 21, 28, 5, 23, 6, 82, 7, 4, 31, 3, 21, 28, 36,
+    23, 6, 0, 8, 41, 7, 3, 31, 3, 21, 28, 5, 23, 6, 96, 7,
+    0, 31, 4, 27, 25, 7, 4, 1, 31, 3, 21, 28, 32, 23, 6, 4,
+    7, 3, 31, 3, 21, 28, 5, 23, 6, 125, 7, 4, 6, 0, 7, 2,
+    31, 3, 21, 28, 5, 23, 6, 137, 7, 0, 31, 3, 20, 21, 28, 32,
+    23, 6, 4, 7, 2, 6, 3, 7, 1, 6, 2, 7, 0, 6, 1, 18,
+    31, 3, 21, 28, 32, 23, 6, 0, 7, 9, 1, 6, 9, 14, 15,
+};
+static PoolEntry gn_prog(const uint8_t *dna, int len) {
+    PoolEntry g; memset(&g, 0, sizeof g); g.len = len; memcpy(g.dna, dna, (size_t)len); return g;
+}
+/* general : la seed apprend les familles qu'elle sait écrire. La note affichée est la mémoire
+ * longue, absente de la seed. Une ligne à retard la résout et s'effondre gelée ou sans récompense. */
 TEST(test_general_learns_and_holds_out) {
     PoolEntry s[POOL_MAX]; int n = LABS[lab_index("general")].seeds(s);
     assert(n == 4 && lab_index("general") == N_CORE_LABS + 7 && LABS[lab_index("general")].show_extra == 1);
     double cv[2], h = gn_eval(s, 1, 1, 0, 0, 40, 0, -1, cv), fz = gn_eval(s, 1, 1, 0, 0, 40, 1, -1, NULL);
     double nr = gn_eval(s, 1, 1, 0, 0, 40, 2, -1, NULL), tr = gn_eval(s, 1, 0, 0, 7, 32, 0, -1, NULL), best_c = 0;
     for (int v = 0; v < 4; v++) { double c = gn_eval(s, 1, 1, 0, 0, 40, 4 + v, -1, NULL); if (c > best_c) best_c = c; }
-    double mem = gn_eval(s, 1, 1, 0, 0, 40, 0, 6, NULL), mix = gn_train(s, 1, 7);
-    printf("    general seed held=%.3f train=%.3f gelé=%.3f sans_récompense=%.3f constante_max=%.3f mémoire2=%.3f mix=%.3f début/fin=%.3f/%.3f\n", h, tr, fz, nr, best_c, mem, mix, cv[0], cv[1]);
-    assert(h > fz + 0.25 && h > best_c + 0.3 && nr < 0.3 && cv[1] > cv[0] + 0.1 && tr > 0.9 && mix < 0.8);   /* L0 saturé, mélange non */
+    double m2 = gn_eval(s, 1, 1, 0, 0, 40, 0, 6, NULL), m3 = gn_eval(s, 1, 1, 0, 0, 40, 0, 7, NULL);
+    double mix = gn_train(s, 1, 7);
+    PoolEntry p2 = gn_prog(LAG2, 172), p3 = gn_prog(LAG3, 175);
+    assert(memcmp(p2.dna, s[0].dna, 172) != 0);
+    double r2 = gn_eval(&p2, 1, 1, 0, 0, 40, 0, 6, NULL), r2f = gn_eval(&p2, 1, 1, 0, 0, 40, 1, 6, NULL);
+    double r2n = gn_eval(&p2, 1, 1, 0, 0, 40, 2, 6, NULL), r2x = gn_eval(&p2, 1, 1, 0, 0, 40, 0, 7, NULL);
+    double r3 = gn_eval(&p3, 1, 1, 0, 0, 40, 0, 7, NULL), r3f = gn_eval(&p3, 1, 1, 0, 0, 40, 1, 7, NULL);
+    double r3n = gn_eval(&p3, 1, 1, 0, 0, 40, 2, 7, NULL);
+    printf("    general seed known=%.3f L0=%.3f gelé=%.3f sans_récompense=%.3f cte=%.3f m2=%.3f m3=%.3f mix=%.3f début/fin=%.3f/%.3f\n",
+           h, tr, fz, nr, best_c, m2, m3, mix, cv[0], cv[1]);
+    printf("    general ligne2=%.3f gelé=%.3f sans_récompense=%.3f autre_lag=%.3f  ligne3=%.3f gelé=%.3f sans_récompense=%.3f\n",
+           r2, r2f, r2n, r2x, r3, r3f, r3n);
+    assert(h > fz + 0.25 && h > best_c + 0.3 && nr < 0.3 && cv[1] > cv[0] + 0.1 && tr > 0.9);
+    assert(m2 < 0.45 && m3 < 0.48 && mix > 0.45 && mix < 0.65);   /* la seed ne sait pas la mémoire longue */
+    assert(r2 > 0.90 && r2 > r2f + 0.50 && r2n < 0.40 && r2x < 0.55);
+    assert(r3 > 0.90 && r3 > r3f + 0.50 && r3n < 0.40);
     double ex[N_EXTRA]; double f = pool_eval_x(lab_index("general"), s, n, "gn-test", 100, NULL, 0, ex);
-    assert(f == ex[1] && fabs(f - gn_train(s, 4 < n ? 4 : n, 0) ) < 1 && f > 0.5 && f < 0.85);   /* sélection = train du pool, non saturé */
+    printf("    general sélection f=%.3f (train, non saturé)\n", f);
+    assert(f == ex[1] && fabs(f - gn_train(s, 4 < n ? 4 : n, 0)) < 1 && f > 0.40 && f < 0.65);
     RunOpts o = { .ticks = 60, .cycles = 1, .quiet = 1, .no_reload = 1, .dry_run = 1, .data_dir = "/tmp/unused-gn" };
     o.labs[o.nlabs++] = lab_index("general");
-    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0] && r.best_fitness == r.extra[0] && r.extra[1] != r.extra[0]);   /* affichage et best = held-out */
+    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0] && r.best_fitness == r.extra[0] && r.extra[1] != r.extra[0]);
+    assert(r.extra[0] < 0.55 && r.extra[4] > 0.55);               /* affiché = lag ; known reste haut */
 }
 
 int main(void) {
