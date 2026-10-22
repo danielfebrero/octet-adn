@@ -27,6 +27,10 @@ tests/test_vm: tests/test_vm.c $(CORE) include/octet.h
 experiments/general_transfer: experiments/general_transfer.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
+# Levier regs (branche feat/emergence-regs) : chemins à la main et mutants d'un octet.
+experiments/general_regs: experiments/general_regs.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
 test: tests/test_vm octet-adn no-python
 	./tests/test_vm
 
@@ -58,6 +62,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer
+	rm -f experiments/general_transfer experiments/general_regs
 
 .PHONY: all static test no-python run clean sanitize

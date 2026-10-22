@@ -44,6 +44,20 @@ int vm_run(Creature *c, World *w) {
             c->useful_stores++;
             w->st.useful_stores++;
         }
+        if (w->cfg.regs && (op == OPX_RPUSH || op == OPX_RPEEK)) {   /* levier general : pile de registres */
+            budget--;
+            k = imm8(c);
+            if (op == OPX_RPEEK) { c->a = c->r[k & 3]; continue; }
+            k %= L;
+            if (dna[k] != c->a) {
+                dna[k] = c->a;
+                c->stores++;
+                c->dirty[k >> 3] |= (uint8_t)(1u << (k & 7));
+                w->st.store_writes++;
+            }
+            c->r[3] = c->r[2]; c->r[2] = c->r[1]; c->r[1] = c->r[0]; c->r[0] = c->a;
+            continue;
+        }
         if (op == OP_NOP || !op_valid(op)) {           /* intron : gratuit, borné */
             if (++skips > L) break;
             continue;

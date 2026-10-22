@@ -818,6 +818,25 @@ TEST(test_general_deepen_at_birth) {
     printf("    second étage : graine 2  m3=%.3f gelé=%.3f sans_récompense=%.3f\n", v[1], v[3], v[5]);
 }
 
+TEST(test_general_regs_push_peek) {
+    /* LOADI 7 ; RPUSH 12 ; LOADI 9 ; RPUSH 13 ; RPEEK 1 ; STORE 14 ; YIELD. Avec cfg.regs, RPUSH écrit
+     * comme STORE et pousse A ; RPEEK 1 relit l'avant-dernier poussé. Sans cfg.regs, F0/F1 sont des introns. */
+    uint8_t g[16] = { 0x1c, 0x07, 0xf0, 0x0c, 0x1c, 0x09, 0xf0, 0x0d, 0xf1, 0x05, 0x06, 0x0e, 0x0f, 0, 0, 0 };
+    for (int regs = 0; regs <= 1; regs++) {
+        Rng r; rng_seed(&r, 0);
+        WorldConfig cfg = cfg_default(); cfg.regs = regs;
+        World *w = world_new(NULL, 0, &r, &cfg, NULL);
+        Creature *c = creature_new(5, 5, g, 16, 200, 0, 0, -1);
+        w->cs[w->ncs++] = c; w->occ[5][5]++;
+        vm_run(c, w);
+        if (regs) assert(c->dna[12] == 7 && c->dna[13] == 9 && c->dna[14] == 7 && c->r[0] == 9 && c->r[1] == 7);
+        else assert(c->dna[14] != 7 && c->r[0] == 0 && c->r[1] == 0);
+        world_free(w);
+    }
+    WorldConfig gc = cfg_default(); hl_gn_cfg(&gc);
+    assert(gc.regs == 1 && cfg_default().regs == 0);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -856,6 +875,7 @@ int main(void) {
     RUN(test_general_second_rung_kept);
     RUN(test_general_unmix_at_birth);
     RUN(test_general_deepen_at_birth);
-    printf("\n%d/%d tests OK\n", passed, 37);
+    RUN(test_general_regs_push_peek);
+    printf("\n%d/%d tests OK\n", passed, 38);
     return 0;
 }

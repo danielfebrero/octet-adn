@@ -72,6 +72,8 @@ typedef struct Creature {
     /* Lignée (general) : copie de naissance. STORE n'y écrit pas. 0 = les autres labos l'ignorent. */
     int germ_len;
     uint8_t germ[MAX_LEN];
+    /* general + regs : pile de 4 registres de vie (r[0] = dernier poussé). 0 ailleurs. */
+    uint8_t r[4];
 } Creature;
 
 typedef struct {
@@ -93,7 +95,13 @@ typedef struct {
     double delay_rate;    /* general : décaler une case à la naissance (0 = les autres labos, aucun tirage) */
     double unmix_rate;    /* general : la clé cesse d'ajouter l'indice courant à la case retardée (0 = aucun tirage) */
     double deepen_rate;   /* general : second étage du décalage, longueur fixe (0 = aucun tirage) */
+    int regs;             /* general : 1 = introns F0/F1 deviennent RPUSH/RPEEK (0 = introns, les autres labos) */
 } WorldConfig;
+/* Levier « regs » (general seul, cfg.regs) : deux octets de la plage des introns deviennent des
+ * instructions à imm8. RPUSH k : genome[k] = A comme STORE, puis A est poussé dans r[0..3].
+ * RPEEK k : A = r[k & 3]. Avec cfg.regs = 0, ce sont des introns comme avant. */
+#define OPX_RPUSH 0xF0
+#define OPX_RPEEK 0xF1
 WorldConfig cfg_default(void);
 
 typedef struct {
