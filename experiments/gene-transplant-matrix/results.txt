@@ -1,0 +1,210 @@
+# gene-transplant-matrix : gene-calling par transplantation (lab general)
+# effet = Δ m_t (justesse tenue à l'écart, 40 tâches, gn_check) après greffe du motif à sa position
+# positif : Δ ≥ +0.05 ; fond éligible pour t si m_t < 0.95 ; porteur (motif déjà présent) = non mesuré
+
+## Panel : 41 fonds (seed + 40 génomes de pool distincts, longueur 172)
+FOND seed       lignée=seed dist_seed= 0 m2=0.366 m3=0.401 known=0.726 
+FOND s0-p01     lignée=g0   dist_seed=31 m2=0.360 m3=0.335 known=0.621 
+FOND s0-p04     lignée=g0   dist_seed=18 m2=0.999 m3=0.352 known=0.727 PASSANT-m2
+FOND s0-p06     lignée=g0   dist_seed=26 m2=0.371 m3=0.999 known=0.512 PASSANT-m3
+FOND s0-p08     lignée=g0   dist_seed=27 m2=0.395 m3=0.886 known=0.632 
+FOND s0-p09     lignée=g0   dist_seed=30 m2=0.409 m3=0.890 known=0.629 
+FOND s1-p01     lignée=g1   dist_seed= 6 m2=0.346 m3=0.381 known=0.716 
+FOND s1-p05     lignée=g1   dist_seed=18 m2=0.415 m3=0.588 known=0.721 
+FOND s1-p06     lignée=g1   dist_seed=20 m2=0.367 m3=1.000 known=0.510 PASSANT-m3
+FOND s1-p08     lignée=g1   dist_seed=15 m2=0.352 m3=0.977 known=0.606 PASSANT-m3
+FOND s1-p11     lignée=g1   dist_seed=20 m2=0.406 m3=0.566 known=0.723 
+FOND s2-p02     lignée=g2   dist_seed=32 m2=0.332 m3=0.320 known=0.621 
+FOND s2-p04     lignée=g2   dist_seed=22 m2=0.863 m3=0.459 known=0.704 
+FOND s2-p07     lignée=g2   dist_seed=38 m2=0.370 m3=1.000 known=0.515 PASSANT-m3
+FOND s2-p09     lignée=g2   dist_seed=38 m2=0.370 m3=0.983 known=0.616 PASSANT-m3
+FOND s2-p13     lignée=g2   dist_seed=36 m2=0.362 m3=0.980 known=0.608 PASSANT-m3
+FOND s3-p00     lignée=g3   dist_seed=25 m2=0.363 m3=0.348 known=0.602 
+FOND s3-p04     lignée=g3   dist_seed=18 m2=0.999 m3=0.352 known=0.727 PASSANT-m2
+FOND s3-p07     lignée=g3   dist_seed=26 m2=0.367 m3=1.000 known=0.520 PASSANT-m3
+FOND s3-p12     lignée=g3   dist_seed=33 m2=0.354 m3=0.982 known=0.609 PASSANT-m3
+FOND s3-p15     lignée=g3   dist_seed=30 m2=0.370 m3=0.973 known=0.620 PASSANT-m3
+FOND s4-p02     lignée=g4   dist_seed=17 m2=0.384 m3=0.373 known=0.676 
+FOND s4-p03     lignée=g4   dist_seed=24 m2=1.000 m3=0.355 known=0.726 PASSANT-m2
+FOND s4-p05     lignée=g4   dist_seed=21 m2=0.999 m3=0.355 known=0.727 PASSANT-m2
+FOND s4-p06     lignée=g4   dist_seed=23 m2=0.367 m3=1.000 known=0.510 PASSANT-m3
+FOND s4-p12     lignée=g4   dist_seed=23 m2=0.987 m3=0.354 known=0.798 PASSANT-m2
+FOND s5-p00     lignée=g5   dist_seed=24 m2=0.338 m3=0.348 known=0.619 
+FOND s5-p04     lignée=g5   dist_seed=32 m2=1.000 m3=0.359 known=0.726 PASSANT-m2
+FOND s5-p06     lignée=g5   dist_seed=25 m2=0.376 m3=0.999 known=0.517 PASSANT-m3
+FOND s5-p11     lignée=g5   dist_seed=50 m2=0.936 m3=0.388 known=0.778 
+FOND s5-p15     lignée=g5   dist_seed=42 m2=0.907 m3=0.428 known=0.803 
+FOND s6-p01     lignée=g6   dist_seed=14 m2=0.377 m3=0.366 known=0.675 
+FOND s6-p05     lignée=g6   dist_seed=19 m2=1.000 m3=0.359 known=0.726 PASSANT-m2
+FOND s6-p06     lignée=g6   dist_seed=23 m2=0.368 m3=1.000 known=0.512 PASSANT-m3
+FOND s6-p11     lignée=g6   dist_seed=19 m2=0.971 m3=0.363 known=0.795 PASSANT-m2
+FOND s6-p16     lignée=g6   dist_seed= 5 m2=0.363 m3=0.405 known=0.688 
+FOND s7-p02     lignée=g7   dist_seed=23 m2=0.364 m3=0.331 known=0.622 
+FOND s7-p04     lignée=g7   dist_seed=22 m2=1.000 m3=0.365 known=0.730 PASSANT-m2
+FOND s7-p06     lignée=g7   dist_seed=31 m2=0.366 m3=1.000 known=0.518 PASSANT-m3
+FOND s7-p08     lignée=g7   dist_seed=33 m2=0.362 m3=0.973 known=0.609 PASSANT-m3
+FOND s7-p16     lignée=g7   dist_seed= 9 m2=0.377 m3=0.372 known=0.673 
+passants (donneurs) : 23 ; lignées du panel : 8
+
+## Contrôle positif (general-transfer/seed2-pool3, greffe 0x79:17>cf)
+avant m2=0.530 m3=0.360 code=0 ; après m2=0.987 m3=0.354 code=2 ; Δm2=+0.457 (retrouvé)
+
+## Candidats : 438 motifs réels (k=1 : 278, k=2 : 61, k=3 : 41, k=4 : 58) + 438 motifs nuls appariés
+cellules mesurées (gn_check) : 24551 sur 876 × 41
+
+## Définition opérationnelle (lignée = graine ; la seed est le fond « solo »)
+# GÈNE PORTABLE      : positif dans ≥ 3 lignées distinctes ET positif en solo sur la seed ET Δ médian > 0
+# portable non auto. : ≥ 3 lignées mais pas en solo (dépend d'un fond déjà modifié)
+# deux lignées       : positif dans exactement 2 lignées
+# HACK               : positif dans 1 seule lignée
+# solo seul / inerte : positif seulement sur la seed / nulle part
+
+## Classement : motifs réels vs nuls appariés (même position, allèle aléatoire)
+classe                 réels   nuls
+GÈNE PORTABLE              0      0
+portable non autonome      14      1
+deux lignées              10      9
+HACK (1 lignée)           49     50
+solo seul                   0      0
+inerte                    365    378
+gènes portables par k (réels) : k1=0 k2=0 k3=0 k4=0 ; (nuls) : k1=0 k2=0 k3=0 k4=0
+
+## Motifs réels positifs (≥ 1 lignée), classés : lignées positives, Δ médian, solo
+# lin+ : lignées où positif ; linE : lignées éligibles ; fond+/élig/fond- : fonds positifs/mesurés/négatifs ;
+# port : fonds éligibles porteurs (motif déjà présent, non mesurés) ; sauv : fonds qui deviennent passants ;
+# Δméd/Δmoy : sur les fonds mesurés ; solo : Δ sur la seed ; nul:méd : Δ médian du motif nul apparié ;
+# Δautre+ : Δ médian de l'AUTRE mémoire sur les fonds positifs ; ctx+ : fonds positifs dont l'autre mémoire ≥ 0,85
+motif                              classe         lin+ linE fond+ élig fond- port sauv  Δméd   Δmoy    solo nul:méd Δautre+  ctx+ donneur(s) / note
+m2@78:14>13                        portable non a    8    8    19    25    0    6   14  +0.613  +0.422  -0.035  -0.018  -0.623    16 s0-p04 ×8 (6 lignées)
+m2@78:14>13,17>cf                  portable non a    8    8    19    26    0    5   14  +0.605  +0.411  -0.001  -0.018  -0.623    16 s0-p04 ×4 (4 lignées)
+m2@78:14>13,17>51                  portable non a    8    8    19    30    0    1   14  +0.556  +0.356  -0.001  -0.041  -0.623    16 s4-p05 ×2 (1 lignées)
+m2@78:14>13,17>b6                  portable non a    8    8    19    31    0    0   14  +0.528  +0.344  -0.001  -0.015  -0.623    16 s6-p05 ×2 (1 lignées)
+m2@88:12>07,1f>14                  portable non a    8    8    19    31    3    0   13  +0.488  +0.278  -0.035  -0.020  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@89:1f>14                        portable non a    8    8    19    31   12    0   13  +0.488  +0.226  -0.131  -0.062  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@89:1f>14,03>06                  portable non a    8    8    19    31   12    0   13  +0.488  +0.228  -0.131  -0.018  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@89:1f>14,03>06,15>10            portable non a    8    8    19    31   12    0   13  +0.488  +0.223  -0.131  -0.018  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@88:12>07,1f>14,03>06            portable non a    8    8    19    31    6    0   13  +0.488  +0.266  -0.141  -0.018  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@88:12>07,1f>14,03>06,15>10      portable non a    8    8    19    31    6    0   13  +0.488  +0.263  -0.145  -0.129  -0.623    16 s4-p03 ×1 (1 lignées)
+m2@89:1f>14,03>06,15>10,17>1f      portable non a    8    8    18    31   12    0   12  +0.191  +0.204  -0.131  -0.152  -0.634    16 s4-p03 ×1 (1 lignées)
+m2@75:06>02,a6>a6,07>07,14>13      portable non a    8    8    16    31    4    0    8  +0.067  +0.239  -0.026  -0.022  -0.623    12 s0-p04 ×1 (1 lignées)
+m2@75:06>07,a6>a6,07>07,14>13      portable non a    8    8    16    31    4    0    8  +0.067  +0.239  -0.026  -0.039  -0.623    12 s5-p04 ×1 (1 lignées)
+m3@72:5b>08                        portable non a    3    8     5    25    0    1    1  +0.000  +0.022  -0.009  -0.091  -0.025     0 s7-p06 ×2 (1 lignées)
+m3@28:05>71                        deux lignées     2    8     3    25    2    1    1  +0.000  +0.005  -0.009  +0.000  -0.026     0 s0-p06 ×1 (1 lignées)
+m2@72:5b>08                        deux lignées     2    8     2    29    3    2    2  +0.000  +0.009  -0.011  -0.034  -0.007     0 s7-p04 ×1 (1 lignées)
+m3@5a:06>0c                        deux lignées     2    8     4    26    0    0    4  +0.000  +0.033  -0.020  +0.000  -0.048     0 s1-p08 ×1 (1 lignées)
+m3@5a:06>04                        deux lignées     2    8     4    26    0    0    4  +0.000  +0.033  -0.020  +0.000  -0.048     0 s2-p07 ×3 (1 lignées)
+m3@5a:06>02                        deux lignées     2    8     4    26    0    0    4  +0.000  +0.034  -0.020  +0.000  -0.048     0 s3-p07 ×3 (1 lignées)
+m3@5a:06>02,00>ff                  deux lignées     2    8     4    26    0    0    4  +0.000  +0.034  -0.020  +0.000  -0.048     0 s3-p07 ×3 (1 lignées)
+m3@5a:06>18                        deux lignées     2    8     4    24    1    2    4  +0.000  +0.034  -0.020  +0.000  -0.048     0 s7-p06 ×2 (1 lignées)
+m3@57:17>19,06>06,04>04,06>18      deux lignées     2    8     4    26    1    0    4  +0.000  +0.031  -0.020  -0.067  -0.048     0 s7-p06 ×1 (1 lignées)
+m3@72:5b>08,06>06,96>0f            deux lignées     2    8     3    26    3    0    1  +0.000  -0.011  -0.033  +0.000  -0.012     0 s7-p08 ×1 (1 lignées)
+m3@72:5b>00                        deux lignées     2    8     4    26    1    0    4  +0.000  +0.031  -0.035  -0.123  -0.036     0 s6-p06 ×1 (1 lignées)
+m2@8c:17>07                        HACK (1 ligné    1    5     1     6    0   25    1  +0.004  +0.106  +0.038  -0.071  +0.025     0 s0-p04 ×8 (6 lignées)
+m3@89:1f>13,03>06,15>10,17>07      HACK (1 ligné    1    8     1    21    1    5    1  +0.002  +0.026  +0.005  -0.125  -0.633     1 s0-p06 ×14 (8 lignées)
+m2@8c:17>07,15>14,17>06            HACK (1 ligné    1    6     1     7    0   24    1  +0.000  +0.085  +0.020  -0.018  +0.025     0 s0-p04 ×8 (6 lignées)
+m2@8c:17>07,15>14,17>06,15>13      HACK (1 ligné    1    6     1     7    0   24    1  +0.000  +0.085  +0.020  -0.017  +0.025     0 s0-p04 ×8 (6 lignées)
+m2@9d:1f>1c                        HACK (1 ligné    1    8     2    31    1    0    2  +0.000  -0.014  +0.011  +0.000  -0.047     0 s0-p04 ×1 (1 lignées)
+m2@9d:1f>09                        HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.016  +0.011  +0.000  -0.047     0 s3-p04 ×1 (1 lignées)
+m2@9f:09>11                        HACK (1 ligné    1    8     2    30    2    1    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s4-p03 ×1 (1 lignées)
+m2@9f:09>74                        HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s4-p05 ×1 (1 lignées)
+m2@9f:09>74,04>04,07>07,04>09      HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s4-p05 ×1 (1 lignées)
+m2@9f:09>ec                        HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s5-p04 ×1 (1 lignées)
+m2@9f:09>1f                        HACK (1 ligné    1    8     2    31    1    0    2  +0.000  -0.014  +0.011  +0.000  -0.047     0 s6-p05 ×1 (1 lignées)
+m2@9f:09>6e                        HACK (1 ligné    1    8     2    30    2    1    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s7-p04 ×1 (1 lignées)
+m2@9c:04>02,1f>1f,04>04,09>6e      HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.017  +0.011  +0.000  -0.047     0 s7-p04 ×1 (1 lignées)
+m3@99:1b>1c                        HACK (1 ligné    1    7     2    22    0    4    1  +0.000  +0.032  +0.009  +0.000  -0.021     0 s0-p06 ×1 (1 lignées)
+m3@97:1f>0a                        HACK (1 ligné    1    8     2    26    0    0    1  +0.000  +0.027  +0.009  -0.014  -0.021     0 s3-p07 ×3 (1 lignées)
+m3@99:1b>b1                        HACK (1 ligné    1    8     2    26    0    0    1  +0.000  +0.027  +0.009  +0.000  -0.021     0 s5-p06 ×1 (1 lignées)
+m3@99:1b>b1,0a>0a,07>07,04>11      HACK (1 ligné    1    8     2    26    0    0    1  +0.000  +0.028  +0.009  +0.000  -0.021     0 s5-p06 ×1 (1 lignées)
+m2@34:0b>1c                        HACK (1 ligné    1    7     1    27    2    4    0  +0.000  -0.010  +0.000  +0.000  +0.073     0 s0-p04 ×1 (1 lignées)
+m3@34:0b>1c                        HACK (1 ligné    1    7     1    22    1    4    0  +0.000  +0.001  +0.000  +0.000  +0.059     0 s0-p06 ×1 (1 lignées)
+m2@12:20>09                        HACK (1 ligné    1    8     2    31    5    0    1  +0.000  -0.031  +0.000  +0.000  -0.295     2 s3-p04 ×1 (1 lignées)
+m2@68:04>01                        HACK (1 ligné    1    8     1    31    1    0    0  +0.000  +0.000  +0.000  +0.000  -0.734     1 s4-p05 ×2 (1 lignées)
+m2@65:20>00,17>17,06>06,04>01      HACK (1 ligné    1    8     2    31    2    0    0  +0.000  -0.002  +0.000  -0.019  -0.691     2 s4-p05 ×1 (1 lignées)
+m2@68:04>01,06>06,00>1b            HACK (1 ligné    1    8     1    31    1    0    0  +0.000  +0.000  +0.000  +0.000  -0.696     1 s4-p12 ×1 (1 lignées)
+m2@9a:0a>00,07>07,04>04,1f>09      HACK (1 ligné    1    8     2    31    2    0    2  +0.000  -0.020  -0.020  +0.000  -0.047     0 s3-p04 ×1 (1 lignées)
+m2@5a:06>0b                        HACK (1 ligné    1    8     1    31    1    0    2  +0.000  -0.004  -0.020  +0.000  -0.042     0 s4-p05 ×2 (1 lignées)
+m2@5a:06>05                        HACK (1 ligné    1    8     1    29    1    2    2  +0.000  -0.003  -0.020  +0.000  -0.042     0 s6-p05 ×2 (1 lignées)
+m2@5a:06>18                        HACK (1 ligné    1    8     1    28    3    3    2  +0.000  -0.010  -0.020  +0.000  -0.042     0 s7-p04 ×1 (1 lignées)
+m3@9d:1f>00                        HACK (1 ligné    1    8     1    25    4    1    1  +0.000  -0.014  -0.022  +0.000  -0.039     0 s0-p06 ×1 (1 lignées)
+m3@9d:1f>01                        HACK (1 ligné    1    8     1    25    4    1    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s1-p06 ×1 (1 lignées)
+m3@9d:1f>0b                        HACK (1 ligné    1    8     1    26    4    0    1  +0.000  -0.014  -0.022  +0.000  -0.039     0 s2-p07 ×1 (1 lignées)
+m3@9f:09>19                        HACK (1 ligné    1    8     1    26    4    0    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s3-p07 ×1 (1 lignées)
+m3@9f:09>11                        HACK (1 ligné    1    8     1    25    4    1    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s4-p06 ×1 (1 lignées)
+m3@9f:09>c5                        HACK (1 ligné    1    8     1    26    4    0    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s5-p06 ×1 (1 lignées)
+m3@9c:04>11,1f>1f,04>04,09>c5      HACK (1 ligné    1    8     1    26    4    0    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s5-p06 ×1 (1 lignées)
+m3@9d:1f>20                        HACK (1 ligné    1    8     1    26    4    0    1  +0.000  -0.014  -0.022  +0.000  -0.039     0 s6-p06 ×1 (1 lignées)
+m3@9f:09>6e                        HACK (1 ligné    1    8     1    25    4    1    1  +0.000  -0.018  -0.022  +0.000  -0.039     0 s7-p06 ×1 (1 lignées)
+m3@95:07>4d                        HACK (1 ligné    1    8     2    25    0    1    1  +0.000  +0.024  -0.043  +0.000  -0.021     0 s4-p06 ×1 (1 lignées)
+m2@9a:0a>2d                        HACK (1 ligné    1    8     1    31    3    0    0  +0.000  -0.017  -0.366  +0.000  -0.668     1 s4-p12 ×1 (1 lignées)
+m2@75:06>02                        HACK (1 ligné    1    8     1    31    7    0    0  -0.002  -0.020  +0.010  -0.002  +0.017     0 s0-p04 ×1 (1 lignées)
+m2@75:06>07                        HACK (1 ligné    1    8     1    31    7    0    0  -0.002  -0.020  +0.010  -0.002  +0.017     0 s5-p04 ×1 (1 lignées)
+m2@5d:0d>0f                        HACK (1 ligné    1    8     1    31    2    0    0  -0.005  -0.016  +0.038  -0.093  +0.034     0 s0-p04 ×1 (1 lignées)
+m2@5d:0d>10                        HACK (1 ligné    1    8     1    31    2    0    0  -0.005  -0.016  +0.038  -0.368  +0.034     0 s5-p04 ×1 (1 lignées)
+m3@7c:15>01,1c>01                  HACK (1 ligné    1    8     1    20    1    6    0  -0.008  -0.016  -0.003  -0.025  +0.033     0 s0-p06 ×14 (8 lignées)
+m3@55:1c>1d                        HACK (1 ligné    1    8     1    26    8    0    1  -0.018  -0.058  -0.062  -0.169  -0.048     0 s1-p06 ×1 (1 lignées)
+m2@70:6a>69                        HACK (1 ligné    1    8     1    31   11    0    0  -0.020  -0.061  -0.067  -0.034  -0.161     0 s3-p04 ×1 (1 lignées)
+m2@69:06>ed                        HACK (1 ligné    1    8     1    31   12    0    0  -0.026  -0.067  -0.067  -0.026  -0.161     0 s5-p04 ×1 (1 lignées)
+m3@58:06>03                        HACK (1 ligné    1    8     1    26   12    0    0  -0.034  -0.074  -0.095  -0.034  -0.045     0 s5-p06 ×1 (1 lignées)
+m3@58:06>77                        HACK (1 ligné    1    8     1    25   12    1    0  -0.035  -0.077  -0.095  -0.034  -0.045     0 s4-p06 ×1 (1 lignées)
+m2@8c:17>07,15>14                  HACK (1 ligné    1    5     1     6    3   25    1  -0.043  +0.065  -0.013  -0.018  +0.025     0 s0-p04 ×8 (6 lignées)
+
+## Familles (Jaccard des fonds positifs ≥ 0,5, même mémoire ; familles d'au moins 2 motifs ou contenant un gène)
+FAMILLE 1 : m2, 5 motifs (0 gènes), positions 34..8f, cœur = 1 fonds / 1 lignées : s7-p02 
+    m2@8c:17>07                        lin+=1 fond+=1 Δméd=+0.004 solo=+0.038
+    m2@8c:17>07,15>14,17>06            lin+=1 fond+=1 Δméd=+0.000 solo=+0.020
+    m2@8c:17>07,15>14,17>06,15>13      lin+=1 fond+=1 Δméd=+0.000 solo=+0.020
+    m2@34:0b>1c                        lin+=1 fond+=1 Δméd=+0.000 solo=+0.000
+    m2@8c:17>07,15>14                  lin+=1 fond+=1 Δméd=-0.043 solo=-0.013
+FAMILLE 2 : m3, 2 motifs (0 gènes), positions 34..7d, cœur = 1 fonds / 1 lignées : s7-p02 
+    m3@34:0b>1c                        lin+=1 fond+=1 Δméd=+0.000 solo=+0.000
+    m3@7c:15>01,1c>01                  lin+=1 fond+=1 Δméd=-0.008 solo=-0.003
+FAMILLE 3 : m2, 5 motifs (0 gènes), positions 12..9a, cœur = 2 fonds / 1 lignées : s2-p09 s2-p13 
+    m2@12:20>09                        lin+=1 fond+=2 Δméd=+0.000 solo=+0.000
+    m2@68:04>01                        lin+=1 fond+=1 Δméd=+0.000 solo=+0.000
+    m2@65:20>00,17>17,06>06,04>01      lin+=1 fond+=2 Δméd=+0.000 solo=+0.000
+    m2@68:04>01,06>06,00>1b            lin+=1 fond+=1 Δméd=+0.000 solo=+0.000
+    m2@9a:0a>2d                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.366
+FAMILLE 4 : m2, 2 motifs (0 gènes), positions 5d..5d, cœur = 1 fonds / 1 lignées : s2-p02 
+    m2@5d:0d>0f                        lin+=1 fond+=1 Δméd=-0.005 solo=+0.038
+    m2@5d:0d>10                        lin+=1 fond+=1 Δméd=-0.005 solo=+0.038
+FAMILLE 5 : m2, 2 motifs (0 gènes), positions 69..70, cœur = 1 fonds / 1 lignées : s1-p05 
+    m2@70:6a>69                        lin+=1 fond+=1 Δméd=-0.020 solo=-0.067
+    m2@69:06>ed                        lin+=1 fond+=1 Δméd=-0.026 solo=-0.067
+FAMILLE 6 : m3, 18 motifs (0 gènes), positions 28..9c, cœur = 4 fonds / 2 lignées : s0-p08 s0-p09 s1-p05 s1-p11 
+    m3@72:5b>08                        lin+=3 fond+=5 Δméd=+0.000 solo=-0.009
+    m3@28:05>71                        lin+=2 fond+=3 Δméd=+0.000 solo=-0.009
+    m3@5a:06>0c                        lin+=2 fond+=4 Δméd=+0.000 solo=-0.020
+    m3@5a:06>04                        lin+=2 fond+=4 Δméd=+0.000 solo=-0.020
+    m3@5a:06>02                        lin+=2 fond+=4 Δméd=+0.000 solo=-0.020
+    m3@5a:06>02,00>ff                  lin+=2 fond+=4 Δméd=+0.000 solo=-0.020
+FAMILLE 7 : m2, 13 motifs (0 gènes), positions 75..8c, cœur = 18 fonds / 8 lignées : s0-p06 s0-p08 s0-p09 s1-p05 s1-p06 s1-p08 s1-p11 s2-p07 s2-p09 s2-p13 s3-p07 s3-p12 s3-p15 s4-p06 s5-p06 s6-p06 s7-p06 s7-p08 
+    m2@78:14>13                        lin+=8 fond+=19 Δméd=+0.613 solo=-0.035
+    m2@78:14>13,17>cf                  lin+=8 fond+=19 Δméd=+0.605 solo=-0.001
+    m2@78:14>13,17>51                  lin+=8 fond+=19 Δméd=+0.556 solo=-0.001
+    m2@78:14>13,17>b6                  lin+=8 fond+=19 Δméd=+0.528 solo=-0.001
+    m2@88:12>07,1f>14                  lin+=8 fond+=19 Δméd=+0.488 solo=-0.035
+    m2@89:1f>14                        lin+=8 fond+=19 Δméd=+0.488 solo=-0.131
+FAMILLE 8 : m2, 16 motifs (0 gènes), positions 5a..a2, cœur = 2 fonds / 1 lignées : s5-p11 s5-p15 
+    m2@72:5b>08                        lin+=2 fond+=2 Δméd=+0.000 solo=-0.011
+    m2@9d:1f>1c                        lin+=1 fond+=2 Δméd=+0.000 solo=+0.011
+    m2@9d:1f>09                        lin+=1 fond+=2 Δméd=+0.000 solo=+0.011
+    m2@9f:09>11                        lin+=1 fond+=2 Δméd=+0.000 solo=+0.011
+    m2@9f:09>74                        lin+=1 fond+=2 Δméd=+0.000 solo=+0.011
+    m2@9f:09>74,04>04,07>07,04>09      lin+=1 fond+=2 Δméd=+0.000 solo=+0.011
+FAMILLE 9 : m3, 9 motifs (0 gènes), positions 9c..9f, cœur = 1 fonds / 1 lignées : s0-p09 
+    m3@9d:1f>00                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+    m3@9d:1f>01                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+    m3@9d:1f>0b                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+    m3@9f:09>19                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+    m3@9f:09>11                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+    m3@9f:09>c5                        lin+=1 fond+=1 Δméd=+0.000 solo=-0.022
+
+## Verdict
+gènes portables (réels) : 0, dont 0 non emboîtés (sans gène plus court dans leur fenêtre) ; nuls classés gène : 0 sur 438
+hacks (1 lignée) : 49 réels / 50 nuls ; inertes : 365 réels / 378 nuls
+portables (≥ 3 lignées, autonomes ou non) : 14 réels / 1 nuls ; locus k=1 distincts : 3 ; antagonistes (Δautre+ ≤ −0.05) : 13
+aucun gène portable : TOP = meilleurs motifs réels k=1, toutes classes (même classement)
+TOP 1 : m2@78:14>13 [portable non autonome] positif dans 8/8 lignées, 19/25 fonds (6 porteurs), Δ médian +0.613, Δ moyen +0.422, solo -0.035 (autre mémoire -0.062), sauvetages 14, Δautre+ -0.623, fonds+ à autre mémoire ≥ 0,85 : 16/19, nul apparié Δméd -0.018
+TOP 2 : m2@89:1f>14 [portable non autonome] positif dans 8/8 lignées, 19/31 fonds (0 porteurs), Δ médian +0.488, Δ moyen +0.226, solo -0.131 (autre mémoire -0.156), sauvetages 13, Δautre+ -0.623, fonds+ à autre mémoire ≥ 0,85 : 16/19, nul apparié Δméd -0.062
+TOP 3 : m3@72:5b>08 [portable non autonome] positif dans 3/8 lignées, 5/25 fonds (1 porteurs), Δ médian +0.000, Δ moyen +0.022, solo -0.009 (autre mémoire -0.011), sauvetages 1, Δautre+ -0.025, fonds+ à autre mémoire ≥ 0,85 : 0/5, nul apparié Δméd -0.091
