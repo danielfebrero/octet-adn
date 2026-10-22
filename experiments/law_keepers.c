@@ -462,6 +462,7 @@ static int lk_selftest(void) {
     return fail;
 }
 
+#ifndef LK_NO_MAIN   /* local_laws.c inclut ce fichier sans son main */
 int main(int argc, char **argv) {
     const char *load = NULL;
     (void)selftest2; (void)cmd_drift; (void)cmd_origin; (void)cmd_race; (void)selftest3; (void)cmd_replay; (void)cmd_trace; (void)cmd_robust; (void)cmd_fresh; (void)cmd_fertile; (void)cmd_knock; (void)run_traces;
@@ -478,3 +479,4 @@ int main(int argc, char **argv) {
     if (argc < 2 || strcmp(argv[1], "run") || load_sources(load)) { fprintf(stderr, "usage : law_keepers selftest | run --load fin2.bin [--edrift 16384] [--seeds 8] [--fert 1]\n"); return 2; }
     return lk_run();
 }
+#endif

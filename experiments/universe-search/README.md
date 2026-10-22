@@ -215,3 +215,12 @@ Rendre les univers *robustement* fertiles, et pas seulement chanceux :
   auto-destructions. Le seul réparateur trouvé n'est pas un gardien : son ablation améliore la survie.
 - **L'inertie par l'usage (B, mécanisme posé) protège :** 0.476 contre 0.150 (p<5e-5) et contre 0.227 avec l'usage
   permuté (p=1e-4). Fertilité en fin : 8/32 contre 1/32. Continuité stricte : 0/32 partout.
+
+## 10. Suite : lois locales héritées (voir `local-laws/README.md` et `local-laws/results.txt`)
+- **Protection émergente par sélection de lignée.** Chaque individu porte sa table, qu'il transmet à la copie, et
+  la dérive frappe chaque individu séparément. Sans `WRITE_LAW`, la part vivante passe de 0.150 (v2) à 0.568
+  (p<5e-5). La continuité stricte passe de 0/32 à 7/32, la fertilité finale de 1/32 à 7/32.
+  Les entrées utilisées restent intactes à 0.80, contre 0.65 pour les autres.
+- **`WRITE_LAW` n'ajoute rien** : 0.574 avec les écritures, contre 0.563 quand elles sont jetées (p=0.89).
+  Les écritures cassent l'écrivain 614 fois et le réparent 147 fois. Le gardien candidat échoue à l'ablation
+  (p=0.94).

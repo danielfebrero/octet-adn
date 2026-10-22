@@ -1,0 +1,51 @@
+# 128 runs locaux (4 sources × 8 graines × 4 bras) + 64 runs globaux (v2, A global) ; établissement 512 + dérive 8192 (1024 pas de dérive par lignée) ; N=1024 ; 273 s
+# continuité stricte = établi et jamais 0 copieur (pop entière, contrôle /64 ép.) ; vivant = part des contrôles de dérive vivants ; fertile = émergence depuis le bruit (2048 ép.) sous la table du dernier dominant (local) / table finale (global)
+bras            établis  continuité  vivant  morts  naiss.  morte-fin  stéril.(méd.)  fertile  dist-table-dom(neutre)  tables≠/64  dist-entre-lignées  héritages/ép  écr/ép
+A-local          32/32     3/32      0.574   2.22   1.75    15/32      2432         5/32    378.5 (457.3)           39.92        156.7               142.8          7.17
+A-local-jet      32/32     6/32      0.563   1.62   1.06    18/32      4352         4/32    368.9 (457.3)           37.02        165.1               117.8          0.00
+A-local-redir    32/32     7/32      0.562   1.41   0.88    17/32      1408         3/32    377.6 (457.3)           42.37        172.5               108.8          9.35
+local-sans-W     32/32     7/32      0.568   1.53   1.16    12/32      1088         7/32    380.1 (457.3)           39.06        167.9               109.1          0.00
+v2 (global)      32/32     0/32      0.150   1.66   0.69    31/32      1152         1/32    455.3 (table unique)    1            0                    —          0.00
+A global         32/32     0/32      0.079   1.38   0.41    31/32       256         0/32    463.4 (table unique)    1            0                    —          0.11
+
+# par source : part vivante moyenne
+S#0   A-local 0.70  A-local-jet 0.63  A-local-redir 0.76  local-sans-W 0.69  v2 0.13  A-glob 0.01
+S#1   A-local 0.81  A-local-jet 0.89  A-local-redir 0.86  local-sans-W 0.94  v2 0.16  A-glob 0.03
+T#0   A-local 0.20  A-local-jet 0.15  A-local-redir 0.09  local-sans-W 0.10  v2 0.06  A-glob 0.04
+T#1   A-local 0.58  A-local-jet 0.58  A-local-redir 0.53  local-sans-W 0.54  v2 0.25  A-glob 0.23
+
+# comparaisons appariées sur la part vivante (mêmes graines ; les bras locaux partagent la même suite de dérive), permutation à signes
+  A-local       vs A-local-jet   : 0.574 vs 0.563 (meilleur 16, pire 14)  p=0.8857
+  A-local       vs A-local-redir : 0.574 vs 0.562 (meilleur 14, pire 15)  p=0.8370
+  A-local       vs local-sans-W  : 0.574 vs 0.568 (meilleur 13, pire 12)  p=0.9312
+  local-sans-W  vs v2            : 0.568 vs 0.150 (meilleur 26, pire 6)  p=0.0000
+  A-local       vs A global      : 0.574 vs 0.079 (meilleur 30, pire 2)  p=0.0000
+  A-local-jet   vs local-sans-W  : 0.563 vs 0.568 (meilleur 14, pire 11)  p=0.9396
+
+# sélection entre tables héritées : conservation des entrées que le dominant UTILISE vs celles qu'il n'utilise pas (part restée égale à la table de départ, contrôles vivants)
+  A-local       utilisées 0.757 (16593) ; non utilisées 0.648 (1929519) ; distance à la table de départ : copieurs 226.4, individus tirés au hasard 226.3
+  A-local-jet   utilisées 0.748 (18047) ; non utilisées 0.659 (1919873) ; distance à la table de départ : copieurs 219.0, individus tirés au hasard 219.1
+  A-local-redir utilisées 0.805 (16537) ; non utilisées 0.648 (1987175) ; distance à la table de départ : copieurs 228.2, individus tirés au hasard 228.9
+  local-sans-W  utilisées 0.803 (16806) ; non utilisées 0.653 (1998426) ; distance à la table de départ : copieurs 222.9, individus tirés au hasard 223.0
+
+# ciblage de WRITE_LAW (écritures échantillonnées 1/8, écrivain copieur avant ou après) : nul uniforme = Σ nused/n ; nul composition = cible (phase, octet présent dans l'écrivain)
+  A-local       écritures 250025 (sans effet 159058, retour à la loi de départ 2648) ; par un copieur 69777 : sur entrée utilisée 17992 (uniforme 1546.6, ×11.63)
+                composition : 39084 cibles, utilisées 17984 (attendu 12787.1, ×1.41, z=46.0) ; EFFECTIVES 6254 : utilisées 1426 (uniforme 160.1) ; dans la composition 2913 : utilisées 1419 (attendu 1056.5, ×1.34, z=11.2)
+                cassent l'écrivain 614, le réparent 147
+  A-local-redir écritures 325035 (sans effet 23603, retour à la loi de départ 5105) ; par un copieur 42386 : sur entrée utilisée 971 (uniforme 938.2, ×1.03)
+                composition : 3353 cibles, utilisées 961 (attendu 936.9, ×1.03, z=0.8) ; EFFECTIVES 38813 : utilisées 920 (uniforme 862.6) ; dans la composition 3093 : utilisées 910 (attendu 867.6, ×1.05, z=1.4)
+                cassent l'écrivain 520, le réparent 3
+
+# score de réparation des dominants (sémantique A, 1 jeton, 1 auto-exécution après casse d'une entrée utilisée) : réparées / cassées
+  A-local       25 / 12920 = 0.0019
+  A-local-jet   50 / 13023 = 0.0038
+  A-local-redir 19 / 13105 = 0.0014
+  local-sans-W  18 / 12589 = 0.0014
+  A-local vs A-local-jet (par run, apparié) p=0.0751 ; A-local vs local-sans-W p=0.7748
+
+# gardien : écriture (A-local) qui rend l'écrivain de nouveau copieur, puis ablation sur le même génome
+  S#0 graine 0, époque 670 (dérive 158) : sa loi [2][00] WRITE_H → NOP (entrée utilisée=1) ; génome 357897ae00f100000000f100ae970035
+  score de réparation du génome (sa table réparée, écritures actives) : 1/19 ; écritures retirées : 0/19 par construction
+  ablation (soupe ensemencée par ce génome et sa table, 8 graines, 512 + 4096 ép.) : écritures actives établi 8/8, part vivante 0.791, vivant en fin 6/8 ; écritures jetées établi 8/8, 0.773, 5/8 ; p apparié=0.9437
+
+temps total 284 s

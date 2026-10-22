@@ -1,0 +1,36 @@
+LOIS LOCALES HÉRITÉES — résultats (run complet : run.txt ; 4 sources × 8 graines, dérive 8192 ép. = 1024 pas/lignée)
+
+bras            continuité  vivant  fertile  morte-fin  dist-dom (neutre 457)
+A-local           3/32      0.574    5/32     15/32      378.5
+A-local-jet       6/32      0.563    4/32     18/32      368.9
+A-local-redir     7/32      0.562    3/32     17/32      377.6
+local-sans-W      7/32      0.568    7/32     12/32      380.1
+v2 (global)       0/32      0.150    1/32     31/32      455.3
+A global          0/32      0.079    0/32     31/32      463.4
+
+VERDICT
+1. Les lois locales héritées suffisent à protéger la vie, de façon ÉMERGENTE, par la seule sélection entre lignées.
+   Aucun mécanisme n'est posé. local-sans-W atteint 0.568 contre 0.150 en v2 (26 meilleurs / 6 pires, p<5e-5).
+   La continuité stricte passe à 7/32 (0/32 en global) et la fertilité finale à 7/32 (1/32).
+   Signature de la sélection : les entrées que le dominant utilise restent intactes à 0.803, contre 0.653 pour les
+   autres. Le dominant est plus proche de la table de départ que l'attendu neutre (380 contre 457).
+   Il n'y a pas de gel de la physique : la table continue de dériver (distance moyenne 223 entrées, en hausse).
+   Les lignées divergent : 39 tables distinctes sur 64 copieurs tirés, 168 entrées de distance entre lignées.
+   Ce sont des « espèces » à physique propre, mais un continuum plutôt que des grappes nettes.
+2. WRITE_LAW n'ajoute RIEN : A-local 0.574 contre jet 0.563 (p=0.89), contre redir 0.562 (p=0.84) et contre
+   sans-W 0.568 (p=0.93).
+   Le ciblage existe mais il est faible et nuisible. Contre le nul composition, il vaut ×1.41 (z=46), et ×1.34
+   pour les écritures effectives (z=11).
+   Les écritures cassent l'écrivain 614 fois et le réparent 147 fois (échantillon 1/8).
+   Les écritures abîment même les entrées utilisées : 0.757 restent intactes contre 0.803 sans W.
+   Le score de réparation des dominants est d'environ 0.2 % pour tous les bras (A-local 0.0019 contre jet 0.0038,
+   p=0.075, dans le mauvais sens).
+3. Gardien : aucun n'est prouvé. Le meilleur candidat (S#0 g0, réparation [2][00] WRITE_H→NOP, génome
+   357897ae00f100000000f100ae970035) ne gagne rien à l'ablation : 0.791 avec ses écritures contre 0.773 sans,
+   p=0.94.
+
+CONCLUSION : la protection émergente des lois existe dès que les lois sont héritées. Elle vient de la sélection
+entre lignées, pas d'un comportement de réparation.
+PROCHAINE EXPÉRIENCE : transfert horizontal de lois entre lignées (une copie lit/greffe une entrée de la table du
+voisin), pour tester si des lois « utiles » envahissent et si la coopération/parasitisme de physique émerge ;
+et coût d'héritage (table partielle) pour mesurer le seuil où la sélection de lignée ne suffit plus.
