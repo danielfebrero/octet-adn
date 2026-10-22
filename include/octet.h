@@ -90,6 +90,7 @@ typedef struct {
     int eat_guard;        /* commons : 1 = manger une case < 8 ou la vider baisse lscore (0 ailleurs) */
     int ops_per_tick;     /* general : budget d'instructions par tick (0 = OPS_PER_TICK) */
     int germline;         /* general : 1 = SPLIT et la sélection copient germ, pas le soma */
+    double delay_rate;    /* general : décaler une case à la naissance (0 = les autres labos, aucun tirage) */
 } WorldConfig;
 WorldConfig cfg_default(void);
 
@@ -145,6 +146,11 @@ int crossover(const uint8_t *a, int la, const uint8_t *b, int lb, Rng *r, uint8_
 typedef struct { double mut, indel; int xover, prot; } EvoParams;
 EvoParams evo_params(const uint8_t *dna, int len);
 int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *out);
+/* general : garder l'ancienne valeur d'une case que l'idiome « 32 + indice » écrase.
+ * Longueur inchangée (les adresses absolues du génome ne bougent pas). 1 si réécrit. */
+int stagger_cell(uint8_t *dna, int n);
+/* general : un LOAD de cette case, plus haut dans le génome, lit désormais la case précédente. */
+int retarget_prev(uint8_t *dna, int n);
 
 /* ---------------- Labos ---------------- */
 typedef struct Lab Lab;

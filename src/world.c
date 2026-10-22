@@ -122,6 +122,11 @@ void world_split(World *w, Creature *c) {
     int m;
     if (w->cfg.self_evo) m = mutate_evo(tmp, n, w->rng, &ep, child);
     else m = mutate(tmp, n, w->rng, w->cfg.mut_rate, w->cfg.dup_rate, child);
+    /* general seulement. delay_rate à 0 : aucun tirage, les labos historiques ne bougent pas. */
+    if (w->cfg.delay_rate > 0) {
+        if (rng_double(w->rng) < w->cfg.delay_rate) stagger_cell(child, m);
+        if (rng_double(w->rng) < w->cfg.delay_rate) retarget_prev(child, m);
+    }
     int d = (c->d + 1) & 3, give = c->e / 3;
     int born_before = w->nnb;
     add(w, creature_new((c->x + DX[d] + w->cfg.w) % w->cfg.w, (c->y + DY[d] + w->cfg.h) % w->cfg.h,

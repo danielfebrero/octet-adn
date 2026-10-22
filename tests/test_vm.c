@@ -727,6 +727,49 @@ TEST(test_general_memory_niche) {
     w->ncs = 0; free(a); free(b); world_free(w);
 }
 
+int stagger_cell(uint8_t *dna, int n);
+int retarget_prev(uint8_t *dna, int n);
+/* Le second registre est une réécriture de même longueur, puis un LOAD qui lit la case d'avant.
+ * Mémoire-1 du décalage seul = 1. Mémoire-2 du re-ciblage monte, mémoire-1 tombe : l'échelle
+ * le garde, la moyenne des trois barreaux le jetterait. */
+TEST(test_general_second_rung_kept) {
+    PoolEntry s; seed_entry(&s, "general", 0);
+    PoolEntry reg = s; reg.dna[0x6b] = OP_LOAD; reg.dna[0x6c] = 20;
+    PoolEntry stag = reg;
+    assert(stagger_cell(stag.dna, stag.len) == 1);
+    assert(stagger_cell(stag.dna, stag.len) == 0);          /* déjà décalé : rien à refaire */
+    assert(stag.dna[0x8b] == OP_MOV_BA && stag.dna[0x8c] == OP_LOAD && stag.dna[0x8d] == 20);
+    assert(stag.dna[0x8e] == OP_STORE && stag.dna[0x8f] == 19);
+    double p1 = gn_eval(&stag, 1, 1, 0, 0, 16, 0, 3, NULL);
+    PoolEntry prev = stag;
+    assert(retarget_prev(prev.dna, prev.len) == 1);
+    assert(prev.dna[0x6c] == 19 && prev.dna[0x78] == 20 && prev.dna[0x8d] == 20);
+    PoolEntry both = prev;                                  /* un second passage re-cible l'autre LOAD */
+    assert(retarget_prev(both.dna, both.len) == 1 && both.dna[0x78] == 19);
+    assert(retarget_prev(both.dna, both.len) == 0);
+    double p2s = gn_eval(&stag, 1, 1, 0, 0, 24, 0, 6, NULL);
+    double p2r = gn_eval(&prev, 1, 1, 0, 0, 24, 0, 6, NULL);
+    double ms = 0, mr = 0;
+    for (int i = 0; i < 4; i++) { ms += gn_mem(&stag, 1, (uint64_t)i); mr += gn_mem(&prev, 1, (uint64_t)i); }
+    printf("    second barreau : décalage p1=%.3f  re-cible p2=%.3f (avant %.3f)  échelle %.3f > %.3f\n",
+           p1, p2r, p2s, mr / 4, ms / 4);
+    assert(p1 > 0.95 && p2r > p2s + 0.08 && mr > ms + 0.8);
+    WorldConfig c = cfg_default(); c.germline = 1; c.max_pop = 4;
+    Rng rg; rng_seed(&rg, 4);
+    World *w = world_new(NULL, 0, &rg, &c, NULL);
+    Creature *a = creature_new(1, 1, stag.dna, stag.len, 200, 1, 0, -1);
+    Creature *b = creature_new(3, 3, prev.dna, prev.len, 200, 2, 0, -1);
+    a->lscore = 1; b->lscore = 0;                           /* le monde préfère le registre parfait */
+    w->cs[0] = a; w->cs[1] = b; w->ncs = 2;
+    Lab l; memset(&l, 0, sizeof l);
+    l.pool0 = &stag; l.npool0 = 1; rng_seed(&l.rng0, 3);
+    PoolEntry out[POOL_MAX]; int k = hl_gn_sel(&l, w, out);
+    int kept = 0;
+    for (int i = 0; i < k; i++) if (out[i].len == prev.len && !memcmp(out[i].dna, prev.dna, (size_t)prev.len)) kept = 1;
+    assert(k >= 2 && kept);
+    w->ncs = 0; free(a); free(b); world_free(w);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -762,6 +805,7 @@ int main(void) {
     RUN(test_general_germline_not_soma);
     RUN(test_general_check_needs_learning);
     RUN(test_general_memory_niche);
-    printf("\n%d/%d tests OK\n", passed, 34);
+    RUN(test_general_second_rung_kept);
+    printf("\n%d/%d tests OK\n", passed, 35);
     return 0;
 }

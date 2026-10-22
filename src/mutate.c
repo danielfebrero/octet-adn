@@ -97,3 +97,40 @@ int mutate_evo(const uint8_t *in, int n, Rng *r, const EvoParams *p, uint8_t *ou
     }
     return n;
 }
+
+/* Idiome « MOV_BA ; ADD ; MOV_BA ; ADD ; MOV_BA ; LOADI k ; ADD ; STORE case ».
+ * On le réécrit, à la même place : la case précédente reçoit l'ancienne valeur,
+ * la case reçoit 32 + le registre B. Aucune insertion : un octet de plus décalerait
+ * les STORE absolus et casserait la table. */
+int stagger_cell(uint8_t *dna, int n) {
+    if (n < 10) return 0;
+    for (int i = 0; i + 10 <= n; i++) {
+        if (dna[i] != 0x15 || dna[i + 1] != 0x17 || dna[i + 2] != 0x15 || dna[i + 3] != 0x17
+            || dna[i + 4] != 0x15 || dna[i + 5] != 0x1c || dna[i + 7] != 0x17 || dna[i + 8] != 0x06)
+            continue;
+        uint8_t cell = dna[i + 9];
+        if (cell == 0) return 0;
+        dna[i + 1] = 0x07; dna[i + 2] = cell; dna[i + 3] = 0x06; dna[i + 4] = (uint8_t)(cell - 1);
+        dna[i + 5] = 0x1c; dna[i + 6] = 32; dna[i + 7] = 0x17; dna[i + 8] = 0x06; dna[i + 9] = cell;
+        return 1;
+    }
+    return 0;
+}
+
+/* Le LOAD de la case décalée qui se trouve avant la copie. Pas le LOAD interne de la copie :
+ * celui-là doit continuer à lire la case qu'on est en train d'écraser. */
+int retarget_prev(uint8_t *dna, int n) {
+    if (n < 10) return 0;
+    for (int i = 0; i + 10 <= n; i++) {
+        uint8_t cell = dna[i + 2], prev = dna[i + 4];
+        if (dna[i] != 0x15 || dna[i + 1] != 0x07 || dna[i + 3] != 0x06 || dna[i + 5] != 0x1c
+            || dna[i + 6] != 32 || dna[i + 7] != 0x17 || dna[i + 8] != 0x06 || dna[i + 9] != cell
+            || prev != (uint8_t)(cell - 1) || cell == 0)
+            continue;
+        for (int j = 0; j + 1 < i; j++) {
+            if (dna[j] == 0x07 && dna[j + 1] == cell) { dna[j + 1] = prev; return 1; }
+        }
+        return 0;
+    }
+    return 0;
+}

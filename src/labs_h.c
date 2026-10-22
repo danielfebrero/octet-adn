@@ -723,12 +723,13 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
  * Score d'une vie = justesse des essais 32..63. Budget : 192 instructions / tick (ce labo).
  * Hérédité (ce labo seul) : l'enfant et le pool reçoivent le génome de naissance. Les STORE
  * de la vie restent dans le soma. Les clones de la même lignée ne remplissent pas les 32 places.
- * Niche mémoire : le pool a deux moitiés. Places 0-7 = les meilleurs sur l'échelle mémoire 1, 2, 3
+ * Niche mémoire : le pool a deux moitiés. Places 0-2 = T[p1], 3-5 = T[p2], 6-7 = T[p3]
  * (tables non réservées) ; places 8-15 = les meilleurs en sélection (curriculum + mémoire 2 et 3).
- * L'échelle donne un barreau à chaque maillon : la seed apprend mal T[p1] (0.53), un registre de
- * plus le tient (≈ 1), un second donne T[p2]. L'association ne pèse pas sur la niche : c'est elle qui
- * rendait chaque maillon perdant. La réévaluation appariée note les deux moitiés ; la note affichée
- * et le champion viennent de la niche. Un pool de 8 génomes ou moins est sa propre niche. */
+ * L'échelle ne moyenne plus les trois barreaux : un barreau qui dépasse 0.42 et le barreau d'avant
+ * vaut 1 ou 2 de plus que sa justesse. Moyennés, le re-ciblage de la case précédente (mémoire-2
+ * 0.51, mémoire-1 tombée à 0.43) perdait contre le registre parfait sur T[p1] seul. La réévaluation
+ * appariée note les deux moitiés ; la note affichée et le champion viennent de la niche.
+ * Un pool de 8 génomes ou moins est sa propre niche. */
 #define GN_TRIALS 64
 #define GN_LATE   32
 #define GN_HELD_N 40
@@ -853,12 +854,25 @@ double gn_train(const PoolEntry *g, int n, uint64_t seed) {
                       + gn_eval(g, n, 0, 0, seed ^ 0x6A6C0002ULL, 8, 0, 7, NULL));
     return 0.5 * s + 0.5 * lag;
 }
-/* Échelle mémoire de la niche : T[p1], T[p2], T[p3] à parts égales (tables non réservées).
- * Chaque barreau demande un registre de plus ; le premier est à deux octets de la seed. */
+/* Un barreau compte à part entière seulement s'il dépasse 0.42 (au-dessus du hasard et des
+ * génomes sans second registre, mémoire-2 ≤ 0.39 sur 40 tâches) et le barreau précédent.
+ * Sinon il ne sert qu'à départager. Moyenne des échelles, pas échelle de la moyenne :
+ * un génome à mémoire-2 dans un pool qui sait encore T[p1] doit rester visible. */
+static double gn_scale(double p1, double p2, double p3) {
+    if (p3 >= 0.42 && p3 > p2 && p3 > p1) return 2.0 + p3;
+    if (p2 >= 0.42 && p2 > p1) return 1.0 + p2;
+    return p1;
+}
 double gn_mem(const PoolEntry *g, int n, uint64_t seed) {
+    if (n <= 0) return 0;
     double s = 0;
-    for (int f = 0; f < 3; f++) s += gn_eval(g, n, 0, 0, seed ^ (0x6A6C0003ULL + (uint64_t)f), 8, 0, f ? 5 + f : 3, NULL);
-    return s / 3;
+    for (int i = 0; i < n; i++) {
+        double p1 = gn_eval(g + i, 1, 0, 0, seed ^ 0x6A6C0003ULL, 8, 0, 3, NULL);
+        double p2 = gn_eval(g + i, 1, 0, 0, seed ^ 0x6A6C0004ULL, 8, 0, 6, NULL);
+        double p3 = gn_eval(g + i, 1, 0, 0, seed ^ 0x6A6C0005ULL, 8, 0, 7, NULL);
+        s += gn_scale(p1, p2, p3);
+    }
+    return s / n;
 }
 /* Dans le monde : épisodes de 64 essais (1 par tick) sur des tâches d'entraînement au niveau du
  * curriculum ; un essai juste rapporte de l'énergie. lscore = justesse des essais 32..63, rétrécie.
@@ -890,6 +904,7 @@ static void gn_before(World *w, Creature *c) {
 void hl_gn_cfg(WorldConfig *c) {
     c->food_density = 0.15; c->food_regrow = 2; c->ops_per_tick = GN_OPS;
     c->mut_rate = 0.005; c->dup_rate = 0.01; c->germline = 1;   /* génome long : mutation réduite ; lignée ≠ soma */
+    c->delay_rate = 0.12;   /* décaler la case, puis relire la case d'avant. 0 chez les autres labos */
 }
 int hl_gn_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "general", 0); return 4; }
 /* curriculum : le niveau monte tant que le pool reçu sature (> 0.9) le niveau courant */
@@ -989,10 +1004,19 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     }
     for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
     uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
-    for (int i = 0; i < m; i++) { sm[i] = gn_mem(&cand[i], 1, seed); st[i] = gn_train(&cand[i], 1, seed); }
+    double *s1 = sm, *s2 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *s3 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    for (int i = 0; i < m; i++) {
+        s1[i] = gn_eval(&cand[i], 1, 0, 0, seed ^ 0x6A6C0003ULL, 8, 0, 3, NULL);
+        s2[i] = gn_eval(&cand[i], 1, 0, 0, seed ^ 0x6A6C0004ULL, 8, 0, 6, NULL);
+        s3[i] = gn_eval(&cand[i], 1, 0, 0, seed ^ 0x6A6C0005ULL, 8, 0, 7, NULL);
+        st[i] = gn_train(&cand[i], 1, seed);
+    }
     int k = 0;
-    gn_take(cand, sm, m, GN_TOP, out, &k);
-    gn_take(cand, st, m, POOL_SIZE - GN_TOP, out, &k);
-    free(cand); free(sm); free(st); free(v);
+    gn_take(cand, s1, m, 3, out, &k);                 /* T[p1] */
+    gn_take(cand, s2, m, 3, out, &k);                 /* T[p2], même si T[p1] est tombé */
+    gn_take(cand, s3, m, 2, out, &k);                 /* T[p3] */
+    gn_take(cand, st, m, POOL_SIZE - k, out, &k);     /* le reste : curriculum */
+    free(cand); free(sm); free(st); free(s2); free(s3); free(v);
     return k;
 }
