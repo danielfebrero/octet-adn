@@ -240,6 +240,11 @@ int soup_run(const SoupRun *r, FILE *out, SoupResult *res) {
             }
         }
     }
+    if (r->dump) {                           /* experiments/soup-terrarium : la soupe finale, octets bruts */
+        FILE *f = fopen(r->dump, "wb");
+        if (!f || fwrite(s, SOUP_PROG, (size_t)n, f) != (size_t)n) { if (f) fclose(f); free(s); free(perm); free(ord); free(u); return -1; }
+        fclose(f);
+    }
     res->births = births;
     res->hash = fnv1a(s, (size_t)n * SOUP_PROG, FNV_INIT);
     free(s); free(perm); free(ord); free(u);

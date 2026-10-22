@@ -322,6 +322,7 @@ typedef struct {
     uint64_t seed;
     double mut;                          /* mutation de fond par octet et par époque */
     SoupCfg vm;
+    const char *dump;                    /* non NULL : écrire la soupe finale (N × 64 octets bruts) dans ce fichier */
 } SoupRun;
 typedef struct { long t_first, t_half, births; int min_ess, copiers_final; uint64_t hash; } SoupResult;
 int soup_run(const SoupRun *r, FILE *out, SoupResult *res);
