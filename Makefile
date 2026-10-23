@@ -94,11 +94,15 @@ experiments/seul: experiments/seul.c $(CORE) include/octet.h
 experiments/motif_artefact: experiments/motif_artefact.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
+# Sonde de phase : le détecteur de réparation, contrôlé (jumeaux, lésion à une phase).
+experiments/sonde_phase: experiments/sonde_phase.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
 # Lois locales figées, sans ISA : un ensemble partagé naît-il du bruit ?
 experiments/univers_innovant: experiments/univers_innovant.c
 	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul experiments/motif_artefact
+test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul experiments/motif_artefact experiments/sonde_phase
 	./tests/test_vm
 	./experiments/metabolic_order selftest
 	./experiments/mi_detector selftest
@@ -117,6 +121,7 @@ test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/
 	./experiments/soupe_spatiale selftest
 	./experiments/seul selftest
 	./experiments/motif_artefact
+	./experiments/sonde_phase selftest
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
@@ -146,6 +151,6 @@ run: octet-adn
 
 clean:
 	rm -f src/*.o octet-adn octet-adn-static octet-adn-san tests/test_vm tests/test_vm_san
-	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul experiments/motif_artefact experiments/univers_innovant
+	rm -f experiments/general_transfer experiments/general_regs experiments/metabolic_order experiments/gene_transplant experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul experiments/motif_artefact experiments/univers_innovant experiments/sonde_phase
 
 .PHONY: all static test no-python run clean sanitize
