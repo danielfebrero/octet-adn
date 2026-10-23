@@ -1,0 +1,30 @@
+base, sonde de seul
+  motif : ok=1 réglé=1 actif=1 dist=14 réparées=48 létales=15
+  restaurateur : ok=1 réglé=1 actif=1 dist=28 réparées=12 létales=52
+  copieur fait main : ok=0 réglé=1 actif=1 dist=13 réparées=0 létales=64
+  cristal : ok=0 réglé=1 actif=0 dist=1 réparées=0 létales=0
+  bruit graine 1 : ok=0 réglé=1 actif=0 dist=54 réparées=0 létales=0
+carte, capteurs nuls, sonde normale (motif ok=1 réparées=48 létales=15)
+  retours : 3 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+  réparées 0..15=1 16..63=47 ; létales 0..15=14 16..63=1 ; carte ratée
+période : STORE étouffé si la valeur est déjà 16 cases en amont
+  motif 0x90 : ok=0 réglé=1 actif=0 dist=14 réparées=0 létales=0
+  motif 0x10 : ok=0 réglé=1 actif=0 dist=14 réparées=0 létales=0
+  restaurateur : ok=1 réglé=1 actif=1 dist=28 réparées=12 létales=52
+  écho : le motif tombe
+wrap : LOAD/STORE sans modulo
+  motif 0x90 : ok=0 réglé=1 actif=0 dist=14 réparées=0 létales=0
+  motif 0x10 : ok=1 réglé=1 actif=1 dist=14 réparées=48 létales=16
+  restaurateur : ok=1 réglé=1 actif=1 dist=28 réparées=12 létales=52
+  écho : 0x90 tombe, 0x10 tient
+tours : LOOP s'arrête, budget 8192
+  motif 0x90 : ok=0 réglé=1 actif=1 dist=14 réparées=1 létales=63
+  motif 0x10 : ok=0 réglé=1 actif=1 dist=14 réparées=1 létales=63
+  restaurateur : ok=1 réglé=1 actif=1 dist=28 réparées=12 létales=52
+  écho : le motif tombe
+tours : LOOP intact, budget 48
+  motif 0x90 : ok=0 réglé=1 actif=1 dist=14 réparées=4 létales=60
+  motif 0x10 : ok=0 réglé=1 actif=1 dist=14 réparées=4 létales=60
+  restaurateur : ok=1 réglé=1 actif=1 dist=28 réparées=12 létales=52
+  écho : le motif tombe
+verdict : pas un écho
