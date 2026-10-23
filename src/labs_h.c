@@ -1207,7 +1207,10 @@ double hl_dm_fit(Lab *l, World *w, int ticks) {
  * (garder une valeur 2 ticks → moitié s_{t-1}, moitié s_{t-2}) retombe à 0. Seule une lignée qui
  * tient DEUX valeurs à la fois (A et B, A et un octet du génome via STORE/LOAD, deux quartets dans
  * un octet…) dépasse 0 ; optimum = 1 − 0,2875 = 0,7125. Seed-amorce = seed emit-dialog.
+ * Taxe de silence : une créature-tick sans EMIT coûte 0,1, sinon se taire (0) égale le plafond et
+ * l'évolution perd EMIT (mesuré : fitness 0, eval 0/0 dès ~2000 cycles sans la taxe).
  * Baseline : même pool, même graine, s_{t-2} remplacé par un faux tiré au hasard (pénalité inchangée). */
+#define D2_SILENCE 0.1
 typedef struct { int prev, prev2, fake, s; double credit, emits, exact2, hit1; } D2State;
 static double d2_c(int v, int want) {
     int b = (v ^ want) & 15;
@@ -1241,6 +1244,10 @@ void hl_d2_post(Lab *l, World *w) {
         cap_e(a);
         s->credit += c; s->emits += 1;
         s->exact2 += v == want2 && v != want1; s->hit1 += v == want1;
+    }
+    for (int i = 0; i < w->ncs; i++) {                    /* taxe de silence : se taire ne vaut pas 0 */
+        Creature *c = w->cs[i];
+        if (c->species == 0 && c->emitted < 0) { c->lscore -= D2_SILENCE; s->credit -= D2_SILENCE; }
     }
 }
 double hl_d2_fit(Lab *l, World *w, int ticks) {

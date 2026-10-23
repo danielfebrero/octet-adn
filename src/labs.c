@@ -358,7 +358,7 @@ const LabDef LABS[N_LABS] = {
       "réponse = (s_{t-1} + 1) mod 16 (le message d'avant, + 1), un symbole neuf par tick, historique vidé ; crédit gradué (Hamming 4 bits) / créature-tick ; plafond sans mémoire = 0,2875 de crédit, 1/16 exact ; seed-amorce = seed emit-dialog (s_t + 1, sans mémoire) ; baseline = même pool, faux s_{t-1}",
       { "accuracy", "exact", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_dm_pre, hl_dm_post, hl_dm_fit, hl_dm_rank, NULL, hl_dm_init, 0, 0 },
     { "dialog-lag2", "Dialogue à deux cases mémoire : répondre au message d'il y a deux tours",
-      "crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming 4 bits, / créature-tick ; répondre au message d'avant est pénalisé ; plafond sans deux cases = 0 (sans mémoire, mémoire d'un tick, couverture 50 %) ; optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-2}",
+      "crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming 4 bits, / créature-tick ; répondre au message d'avant est pénalisé ; créature-tick sans EMIT = −0,1 ; plafond sans deux cases = 0 (sans mémoire, mémoire d'un tick, couverture 50 %) ; optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-2}",
       { "accuracy", "exact2", "hit1", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_d2_pre, hl_d2_post, hl_d2_fit, hl_dm_rank, NULL, hl_d2_init, 0, 0 },
 };
 
