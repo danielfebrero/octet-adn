@@ -933,6 +933,27 @@ TEST(test_dialog_lag2_needs_two_slots) {
     assert(f2 > fg + 0.10 && f2 > fp + 0.30);             /* deux cases battent une case (+ phase ou + q) */
 }
 
+/* dialog-lag2, curriculum : q ≡ 1 en phase 1 (exact_q2 sans question = 0, la mémoire d'un tick
+ * y gagne), transition linéaire, puis q uniforme (phase 3 = régime final, hors runner aussi). */
+TEST(test_dialog_lag2_curriculum) {
+    assert(d2_q2_prob(1) == 0 && d2_q2_prob(D2_N1) == 0);
+    double mid = d2_q2_prob((D2_N1 + D2_N2) / 2);
+    assert(mid > 0.24 && mid < 0.26 && d2_q2_prob(D2_N1 + 1) > 0 && d2_q2_prob(D2_N2 - 1) < 0.5);
+    assert(d2_q2_prob(D2_N2) == 0.5 && d2_q2_prob(D2_N2 + 12345) == 0.5 && d2_q2_prob(LAB_CYCLE_FINAL) == 0.5);
+    assert(g_lab_cycle == LAB_CYCLE_FINAL);
+    PoolEntry one[4]; double e[N_EXTRA];
+    raw_pool(one, "0d1412010e0f1e");                       /* mémoire d'un tick : EMIT s_{t-1}+1 */
+    g_lab_cycle = 1;               double f1 = ev4("dialog-lag2", one, 4, e); double q2a = e[2], q1a = e[1];
+    g_lab_cycle = (D2_N1 + D2_N2) / 2; double fm = ev4("dialog-lag2", one, 4, e);
+    g_lab_cycle = D2_N2;           double f3 = ev4("dialog-lag2", one, 4, e); double q2c = e[2];
+    g_lab_cycle = LAB_CYCLE_FINAL; double ff = ev4("dialog-lag2", one, 4, NULL);
+    printf("    dialog-lag2 curriculum (mémoire d'un tick) : phase 1 %.3f (q1 %.3f, q2 %.3f)  transition %.3f  phase 3 %.3f  final %.3f\n",
+           f1, q1a, q2a, fm, f3, ff); fflush(stdout);
+    assert(q2a == 0 && q1a > 0.70 && f1 > 0.50);           /* phase 1 : jamais q = 2, une case suffit */
+    assert(fm < f1 - 0.15 && fm > f3 + 0.15);               /* transition : entre les deux */
+    assert(f3 == ff && f3 < 0.15 && q2c < 0.10);            /* phase 3 = régime final, à l'octet près */
+}
+
 /* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */
 TEST(test_reseed_rule_sign_and_noise) {
     double o1[4] = {-1, -1, -1, -1}, s1[4] = {-0.9, -0.9, -0.9, -0.9}, s1b[4] = {-1.04, -1.04, -1.04, -1.04};
@@ -1016,6 +1037,7 @@ int main(void) {
     RUN(test_reseed_rule_sign_and_noise);
     RUN(test_best_only_from_accepted);
     RUN(test_dialog_lag2_needs_two_slots);
-    printf("\n%d/%d tests OK\n", passed, 44);
+    RUN(test_dialog_lag2_curriculum);
+    printf("\n%d/%d tests OK\n", passed, 45);
     return 0;
 }

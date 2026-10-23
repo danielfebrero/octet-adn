@@ -123,6 +123,7 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
         ck.npool = LABS[id].seeds(ck.pool);
         ck.best_fitness = -INFINITY;               /* pas de champion tant que rien n'est accepté (fitness < 0 possible) */
     }
+    g_lab_cycle = ck.cycle + 1;                    /* curriculum : le cycle ET ses réévaluations voient la même étape */
     uint64_t eng = engine_version();
     if (persist && ck.engine && ck.engine != eng && !o->quiet)
         printf("[popote] %s : moteur %010llx → %010llx (amélioration appliquée)\n", LABS[id].name,
@@ -192,6 +193,7 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
     r.elapsed_s = now_s() - t0;
     memcpy(r.extra, lab.extra, sizeof r.extra);
     world_free(w); lab_free(&lab);
+    g_lab_cycle = LAB_CYCLE_FINAL;
 
     if (persist) {
         snprintf(p, sizeof p, "%s/checkpoints", dir);

@@ -207,9 +207,18 @@ struct Lab {
     void (*ext_free)(struct Lab *l);     /* libère ce que ext contient (appelé avant free(ext)) */
     double acc[16];
     int eval_only;                       /* 1 = monde jetable de pool_eval (rien n'est sélectionné) */
+    uint32_t cycle;                      /* cycle du labo (curriculum) ; LAB_CYCLE_FINAL = régime final */
 };
 
 extern const LabDef LABS[N_LABS];
+/* Cycle du labo en cours, recopié dans Lab.cycle par lab_init (le runner le pose pour le cycle ET
+ * ses réévaluations ; hors runner : eval, tests = régime final). Sert au curriculum de dialog-lag2. */
+#define LAB_CYCLE_FINAL 0xffffffffu
+extern uint32_t g_lab_cycle;
+/* dialog-lag2 : probabilité que la question soit q = 2 au cycle donné (curriculum) */
+double d2_q2_prob(uint32_t cycle);
+#define D2_N1 1500u   /* fin de la phase 1 (q ≡ 1) */
+#define D2_N2 4000u   /* fin de la transition : q uniforme ensuite */
 int  lab_index(const char *name);
 /* general : un génome rejoué seul sur la mémoire 2 et 3 tenues à l'écart (voir labs_h.c) */
 #define GN_CHECK_N 8

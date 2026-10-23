@@ -1216,6 +1216,20 @@ double hl_dm_fit(Lab *l, World *w, int ticks) {
  * Baseline : même pool, même graine, s_{t-q} remplacé par un faux tiré au hasard (pénalité inchangée). */
 #define D2_SILENCE 0.1
 #define D2_QBIT    0x20
+/* Curriculum (fonction du cycle du labo, déterministe) : cycles 1..D2_N1 q ≡ 1 (une case suffit,
+ * gradient net vers la mémoire d'un tick) ; D2_N1..D2_N2 P(q = 2) monte linéairement de 0 à 1/2 ;
+ * après D2_N2 (et hors runner : eval tenue à l'écart, tests) q uniforme = barème final ci-dessus,
+ * plafonds inchangés (0,5 une case, 0,7125 deux cases). */
+double d2_q2_prob(uint32_t cycle) {
+    if (cycle == LAB_CYCLE_FINAL || cycle >= D2_N2) return 0.5;
+    if (cycle <= D2_N1) return 0.0;
+    return 0.5 * (double)(cycle - D2_N1) / (double)(D2_N2 - D2_N1);
+}
+static int d2_draw_q(const Lab *l, World *w) {
+    double p = d2_q2_prob(l->cycle);
+    if (p == 0.5) return 1 + (int)rng_below(w->rng, 2);           /* régime final : même tirage qu'avant */
+    return (int)rng_below(w->rng, 1000) < (int)(p * 1000) ? 2 : 1;   /* un tirage dans tous les cas */
+}
 typedef struct { int prev, prev2, fake, s, q, qn; double credit, emits, ex[3], n[3]; } D2State;
 static double d2_c(int v, int want) {
     int b = (v ^ want) & 15;
@@ -1225,7 +1239,7 @@ static double d2_c(int v, int want) {
 void hl_d2_init(Lab *l, World *w) {
     D2State *s = xcalloc(1, sizeof *s);
     s->prev = (int)rng_below(w->rng, 16); s->prev2 = (int)rng_below(w->rng, 16);
-    s->qn = 1 + (int)rng_below(w->rng, 2);               /* question du tick 0 */
+    s->qn = d2_draw_q(l, w);               /* question du tick 0 */
     l->ext = s;
 }
 void hl_d2_pre(Lab *l, World *w) {
@@ -1234,7 +1248,7 @@ void hl_d2_pre(Lab *l, World *w) {
     s->q = s->qn;                                        /* annoncée au tick d'avant */
     s->s = (int)rng_below(w->rng, 16);
     s->fake = (int)rng_below(w->rng, 16);                /* tiré dans les deux modes : rejeu apparié */
-    s->qn = 1 + (int)rng_below(w->rng, 2);               /* question du tick suivant, annoncée maintenant */
+    s->qn = d2_draw_q(l, w);               /* question du tick suivant, annoncée maintenant */
     w->stimulus = s->s | (s->qn == 2 ? D2_QBIT : 0);
     w->hist_n = 0;
 }
