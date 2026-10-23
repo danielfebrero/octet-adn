@@ -462,11 +462,11 @@ TEST(test_foreign_admits_only_positive_gap) {
     snprintf(cmd, sizeof cmd, "mkdir -p %s/max-pop/checkpoints %s/fold/checkpoints %s/code-repair/checkpoints", d, d, d);
     assert(system(cmd) == 0);
     Checkpoint ck; memset(&ck, 0, sizeof ck); ck.has_best = 1; ck.cycle = 1;
-    seed_entry(&ck.best, "forager", 0); ck.lab_id = lab_index("max-pop");
+    seed_entry(&ck.best, "forager", 0); ck.pool[0] = ck.best; ck.npool = 1; ck.lab_id = lab_index("max-pop");
     char p[512]; snprintf(p, sizeof p, "%s/max-pop/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
-    seed_entry(&ck.best, "fold", 0); ck.lab_id = lab_index("fold");
+    seed_entry(&ck.best, "fold", 0); ck.pool[0] = ck.best; ck.npool = 1; ck.lab_id = lab_index("fold");
     snprintf(p, sizeof p, "%s/fold/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
-    seed_entry(&ck.best, "repair", 0); ck.lab_id = lab_index("code-repair");
+    seed_entry(&ck.best, "repair", 0); ck.pool[0] = ck.best; ck.npool = 1; ck.lab_id = lab_index("code-repair");
     snprintf(p, sizeof p, "%s/code-repair/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
     MetricRec rec; memset(&rec, 0, sizeof rec);
     rec.lab_id = (uint8_t)lab_index("fold"); rec.extra[3] = -0.4;
@@ -488,6 +488,12 @@ TEST(test_foreign_admits_only_positive_gap) {
     n = collect_foreign(d, out);
     assert(n == 2 && !memcmp(out[1].dna, repair.dna, (size_t)repair.len));
     assert(memcmp(out[1].dna, fora.dna, 8));
+    /* Labo historique : idem, c'est le pool en place (pas best) qui est exporté. */
+    seed_entry(&ck.best, "repair", 0); seed_entry(&ck.pool[0], "forager", 0); ck.npool = 1; ck.lab_id = lab_index("max-pop");
+    snprintf(p, sizeof p, "%s/max-pop/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    n = collect_foreign(d, out);
+    assert(n == 2 && !memcmp(out[0].dna, fora.dna, (size_t)fora.len));
+    ck.lab_id = lab_index("code-repair");
     /* écart négatif : le champion humanité reste dehors */
     rec.extra[5] = -0.05; snprintf(p, sizeof p, "%s/code-repair/metrics.bin", d); unlink(p); assert(met_append(p, &rec) == 0);
     n = collect_foreign(d, out);
@@ -637,7 +643,8 @@ TEST(test_general_learns_and_holds_out) {
     assert(f == ex[1] && fabs(f - gn_train(s, 4 < n ? 4 : n, 0)) < 1 && f > 0.40 && f < 0.65);
     RunOpts o = { .ticks = 60, .cycles = 1, .quiet = 1, .no_reload = 1, .dry_run = 1, .data_dir = "/tmp/unused-gn" };
     o.labs[o.nlabs++] = lab_index("general");
-    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0] && r.best_fitness == r.extra[0] && r.extra[1] != r.extra[0]);
+    MetricRec r; assert(runner(&o, &r, 1) == 1 && r.fitness == r.extra[0] && r.extra[1] != r.extra[0]);
+    assert(r.accepted ? r.best_fitness == r.extra[0] : r.best_fitness == -INFINITY);   /* best = mémoire longue, d'un pool accepté seulement */
     assert(r.extra[0] < 0.55 && r.extra[4] > 0.55);               /* affiché = lag ; known reste haut */
 }
 
@@ -906,6 +913,30 @@ TEST(test_reseed_rule_sign_and_noise) {
     assert(!reseed_wins(o2, o2, 4));
 }
 
+/* best : remis à -inf au changement de moteur, jamais mis à jour par un pool rejeté. */
+TEST(test_best_only_from_accepted) {
+    char d[] = "/tmp/oadn-best-XXXXXX"; assert(mkdtemp(d));
+    int id = lab_index("predict-stock");
+    static Checkpoint ck; memset(&ck, 0, sizeof ck);
+    ck.lab_id = id; ck.cycle = 7; ck.engine = 1;            /* moteur « ancien » factice */
+    ck.npool = LABS[id].seeds(ck.pool); ck.best = ck.pool[0]; ck.has_best = 1; ck.best_fitness = 99;
+    char p[512];
+    snprintf(p, sizeof p, "%s/predict-stock", d); mkdir(p, 0755);
+    snprintf(p, sizeof p, "%s/predict-stock/checkpoints", d); mkdir(p, 0755);
+    snprintf(p, sizeof p, "%s/predict-stock/checkpoints/latest.ck", d); assert(ck_save(p, &ck) == 0);
+    RunOpts o = { .ticks = 100, .cycles = 8, .quiet = 1, .no_reload = 1, .data_dir = d };
+    o.labs[o.nlabs++] = id;
+    MetricRec r[8]; assert(runner(&o, r, 8) == 8);
+    double prev = -INFINITY; int acc = 0, rej = 0;   /* le best 99 de l'ancien moteur est oublié */
+    for (int i = 0; i < 8; i++) {
+        double want = r[i].accepted && r[i].fitness > prev ? r[i].fitness : prev;
+        assert(r[i].best_fitness == want); prev = want; acc += r[i].accepted; rej += !r[i].accepted;
+    }
+    printf("    best : %d acceptés, %d rejetés, best final %.4f\n", acc, rej, prev);
+    assert(ck_load(p, &ck) == 0 && ck.has_best == (acc > 0) && ck.best_fitness == prev);
+    char cmd[600]; snprintf(cmd, sizeof cmd, "rm -rf %s", d); assert(system(cmd) == 0);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -949,6 +980,7 @@ int main(void) {
     RUN(test_soup_detector_controls);
     RUN(test_dialog_mem_needs_memory);
     RUN(test_reseed_rule_sign_and_noise);
-    printf("\n%d/%d tests OK\n", passed, 42);
+    RUN(test_best_only_from_accepted);
+    printf("\n%d/%d tests OK\n", passed, 43);
     return 0;
 }
