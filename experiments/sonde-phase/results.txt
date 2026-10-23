@@ -1,143 +1,147 @@
-# sonde de phase : zone 16..31, phase tirée dans 0..4095, budget 8192, adressage B, capteurs nuls
+# sonde de phase v2 : une case, prochain STORE, phase 0..4095, budget 8192, graines 0x504C, adressage B
 classe	indice	graine	phase	store_possible	blessure	zone_egale	ecritures	ecritures_zone	reparation
-inerte	0	0x50480000	3418	0	1	0	0	0	0
-inerte	1	0x50480001	1889	0	1	0	0	0	0
-inerte	2	0x50480002	2645	0	1	0	0	0	0
-inerte	3	0x50480003	2489	0	1	0	0	1	0
-inerte	4	0x50480004	413	0	1	0	0	0	0
-inerte	5	0x50480005	3476	0	1	0	0	0	0
-inerte	6	0x50480006	4018	0	1	0	0	0	0
-inerte	7	0x50480007	924	0	1	0	0	0	0
-inerte	8	0x50480008	1973	0	1	0	0	0	0
-inerte	9	0x50480009	2938	0	1	0	0	0	0
-inerte	10	0x5048000a	1678	0	1	0	0	0	0
-inerte	11	0x5048000b	2469	0	1	0	0	0	0
-inerte	12	0x5048000c	1636	0	1	0	0	0	0
-inerte	13	0x5048000d	84	0	1	0	0	0	0
-inerte	14	0x5048000e	178	0	1	0	0	0	0
-inerte	15	0x5048000f	2158	0	1	0	0	0	0
-inerte	16	0x50480010	2153	0	1	0	0	0	0
-inerte	17	0x50480011	2235	0	1	0	0	0	0
-inerte	18	0x50480012	3652	0	1	0	0	0	0
-inerte	19	0x50480013	838	0	1	0	0	0	0
-inerte	20	0x50480014	539	0	1	0	0	0	0
-inerte	21	0x50480015	3547	0	1	0	0	0	0
-inerte	22	0x50480016	991	0	1	0	0	0	0
-inerte	23	0x50480017	3946	0	1	0	0	0	0
-inerte	24	0x50480018	3490	0	1	0	0	0	0
-inerte	25	0x50480019	3362	0	1	0	0	0	0
-inerte	26	0x5048001a	3797	0	1	0	0	0	0
-inerte	27	0x5048001b	2851	0	1	0	0	0	0
-inerte	28	0x5048001c	3965	0	1	0	0	0	0
-inerte	29	0x5048001d	2761	0	1	0	0	0	0
-inerte	30	0x5048001e	1699	0	1	0	0	0	0
-inerte	31	0x5048001f	961	0	1	0	0	0	0
-aleatoire	0	0x50480100	133	1	1	0	0	0	0
-aleatoire	1	0x50480101	2138	1	1	0	0	0	0
-aleatoire	2	0x50480102	3508	0	1	0	0	0	0
-aleatoire	3	0x50480103	791	0	1	0	0	0	0
-aleatoire	4	0x50480104	3497	0	1	0	0	0	0
-aleatoire	5	0x50480105	1651	0	1	0	0	0	0
-aleatoire	6	0x50480106	69	0	1	0	0	0	0
-aleatoire	7	0x50480107	844	0	1	0	0	0	0
-aleatoire	8	0x50480108	4043	0	1	0	0	0	0
-aleatoire	9	0x50480109	1017	1	1	0	0	0	0
-aleatoire	10	0x5048010a	573	0	1	0	0	0	0
-aleatoire	11	0x5048010b	2651	0	1	0	0	0	0
-aleatoire	12	0x5048010c	2301	0	1	0	0	0	0
-aleatoire	13	0x5048010d	2715	0	1	0	0	0	0
-aleatoire	14	0x5048010e	1369	0	1	0	0	0	0
-aleatoire	15	0x5048010f	3493	0	1	0	0	0	0
-aleatoire	16	0x50480110	2294	0	1	0	0	0	0
-aleatoire	17	0x50480111	3321	0	1	0	0	0	0
-aleatoire	18	0x50480112	3448	0	1	0	0	0	0
-aleatoire	19	0x50480113	49	0	1	0	0	0	0
-aleatoire	20	0x50480114	231	0	1	0	0	0	0
-aleatoire	21	0x50480115	871	0	1	0	0	0	0
-aleatoire	22	0x50480116	355	0	1	0	0	0	0
-aleatoire	23	0x50480117	1328	0	1	0	0	0	0
-aleatoire	24	0x50480118	724	0	1	0	0	0	0
-aleatoire	25	0x50480119	1165	0	1	0	0	0	0
-aleatoire	26	0x5048011a	2718	1	1	0	0	0	0
-aleatoire	27	0x5048011b	1885	0	1	0	0	0	0
-aleatoire	28	0x5048011c	2555	0	1	0	0	0	0
-aleatoire	29	0x5048011d	3406	1	1	0	0	0	0
-aleatoire	30	0x5048011e	1444	0	1	0	0	0	0
-aleatoire	31	0x5048011f	1682	1	1	0	0	0	0
-cristal	0	0x50480200	928	0	1	0	0	0	0
-cristal	1	0x50480201	891	0	1	0	0	0	0
-cristal	2	0x50480202	2463	0	1	0	0	0	0
-cristal	3	0x50480203	3966	0	1	0	0	0	0
-cristal	4	0x50480204	42	0	1	0	0	0	0
-cristal	5	0x50480205	2529	0	1	0	0	0	0
-cristal	6	0x50480206	3148	0	1	0	0	0	0
-cristal	7	0x50480207	297	0	1	0	0	0	0
-cristal	8	0x50480208	1652	0	1	0	0	0	0
-cristal	9	0x50480209	3580	0	1	0	0	0	0
-cristal	10	0x5048020a	6	0	1	0	0	0	0
-cristal	11	0x5048020b	3472	0	1	0	0	0	0
-cristal	12	0x5048020c	1239	0	1	0	0	0	0
-cristal	13	0x5048020d	3526	0	1	0	0	0	0
-cristal	14	0x5048020e	785	0	1	0	0	0	0
-cristal	15	0x5048020f	1287	0	1	0	0	0	0
-cristal	16	0x50480210	16	0	1	0	0	0	0
-cristal	17	0x50480211	1386	0	1	0	0	0	0
-cristal	18	0x50480212	1209	0	1	0	0	0	0
-cristal	19	0x50480213	4030	0	1	0	0	0	0
-cristal	20	0x50480214	618	0	1	0	0	0	0
-cristal	21	0x50480215	2062	0	1	0	0	0	0
-cristal	22	0x50480216	1656	0	1	0	0	0	0
-cristal	23	0x50480217	3583	0	1	0	0	0	0
-cristal	24	0x50480218	840	0	1	0	0	0	0
-cristal	25	0x50480219	367	0	1	0	0	0	0
-cristal	26	0x5048021a	287	0	1	0	0	0	0
-cristal	27	0x5048021b	1222	0	1	0	0	0	0
-cristal	28	0x5048021c	1195	0	1	0	0	0	0
-cristal	29	0x5048021d	3215	0	1	0	0	0	0
-cristal	30	0x5048021e	826	0	1	0	0	0	0
-cristal	31	0x5048021f	2722	0	1	0	0	0	0
+inerte	0	0x504c0000	1437	0	0	0	0	0	0
+inerte	1	0x504c0001	3105	0	0	0	0	0	0
+inerte	2	0x504c0002	3332	0	0	0	0	0	0
+inerte	3	0x504c0003	3857	0	0	0	0	0	0
+inerte	4	0x504c0004	675	0	0	0	0	0	0
+inerte	5	0x504c0005	1044	0	0	0	0	0	0
+inerte	6	0x504c0006	1646	0	0	0	0	0	0
+inerte	7	0x504c0007	628	0	0	0	0	0	0
+inerte	8	0x504c0008	2837	0	0	0	0	0	0
+inerte	9	0x504c0009	276	0	0	0	0	0	0
+inerte	10	0x504c000a	2155	0	0	0	0	0	0
+inerte	11	0x504c000b	1794	0	0	0	0	0	0
+inerte	12	0x504c000c	1500	0	0	0	0	0	0
+inerte	13	0x504c000d	668	0	0	0	0	0	0
+inerte	14	0x504c000e	3951	0	0	0	0	0	0
+inerte	15	0x504c000f	474	0	0	0	0	0	0
+inerte	16	0x504c0010	930	0	0	0	0	0	0
+inerte	17	0x504c0011	3747	0	0	0	0	0	0
+inerte	18	0x504c0012	1572	0	0	0	0	0	0
+inerte	19	0x504c0013	1663	0	0	0	0	0	0
+inerte	20	0x504c0014	1533	0	0	0	0	0	0
+inerte	21	0x504c0015	784	0	0	0	0	0	0
+inerte	22	0x504c0016	2870	0	0	0	0	0	0
+inerte	23	0x504c0017	680	0	0	0	0	0	0
+inerte	24	0x504c0018	451	0	0	0	0	0	0
+inerte	25	0x504c0019	1153	0	0	0	0	0	0
+inerte	26	0x504c001a	1151	0	0	0	0	0	0
+inerte	27	0x504c001b	2791	0	0	0	0	0	0
+inerte	28	0x504c001c	3393	0	0	0	0	0	0
+inerte	29	0x504c001d	1946	0	0	0	0	0	0
+inerte	30	0x504c001e	1789	0	0	0	0	0	0
+inerte	31	0x504c001f	1330	0	0	0	0	0	0
+aleatoire	0	0x504c0100	1879	0	0	0	0	0	0
+aleatoire	1	0x504c0101	745	0	0	0	0	0	0
+aleatoire	2	0x504c0102	1020	1	0	0	0	0	0
+aleatoire	3	0x504c0103	3404	0	0	0	0	0	0
+aleatoire	4	0x504c0104	4049	0	0	0	0	0	0
+aleatoire	5	0x504c0105	1851	1	0	0	0	0	0
+aleatoire	6	0x504c0106	3579	0	0	0	0	0	0
+aleatoire	7	0x504c0107	1236	0	0	0	0	0	0
+aleatoire	8	0x504c0108	2466	0	0	0	0	0	0
+aleatoire	9	0x504c0109	3886	0	0	0	0	0	0
+aleatoire	10	0x504c010a	1259	0	0	0	0	0	0
+aleatoire	11	0x504c010b	3900	0	0	0	0	0	0
+aleatoire	12	0x504c010c	136	0	0	0	0	0	0
+aleatoire	13	0x504c010d	1149	0	0	0	0	0	0
+aleatoire	14	0x504c010e	2925	0	0	0	0	0	0
+aleatoire	15	0x504c010f	3018	0	0	0	0	0	0
+aleatoire	16	0x504c0110	3016	0	0	0	0	0	0
+aleatoire	17	0x504c0111	3279	0	0	0	0	0	0
+aleatoire	18	0x504c0112	3084	0	0	0	0	0	0
+aleatoire	19	0x504c0113	966	0	0	0	0	0	0
+aleatoire	20	0x504c0114	469	0	0	0	0	0	0
+aleatoire	21	0x504c0115	3897	0	0	0	0	0	0
+aleatoire	22	0x504c0116	3125	0	0	0	0	0	0
+aleatoire	23	0x504c0117	1000	0	0	0	0	0	0
+aleatoire	24	0x504c0118	1634	0	0	0	0	0	0
+aleatoire	25	0x504c0119	2674	0	0	0	0	0	0
+aleatoire	26	0x504c011a	2324	0	0	0	0	0	0
+aleatoire	27	0x504c011b	1772	0	0	0	0	0	0
+aleatoire	28	0x504c011c	1863	0	0	0	0	0	0
+aleatoire	29	0x504c011d	469	0	0	0	0	0	0
+aleatoire	30	0x504c011e	268	0	0	0	0	0	0
+aleatoire	31	0x504c011f	707	0	0	0	0	0	0
+cristal	0	0x504c0200	1129	0	0	0	0	0	0
+cristal	1	0x504c0201	589	0	0	0	0	0	0
+cristal	2	0x504c0202	2676	0	0	0	0	0	0
+cristal	3	0x504c0203	2200	0	0	0	0	0	0
+cristal	4	0x504c0204	1174	0	0	0	0	0	0
+cristal	5	0x504c0205	2126	0	0	0	0	0	0
+cristal	6	0x504c0206	478	0	0	0	0	0	0
+cristal	7	0x504c0207	2837	0	0	0	0	0	0
+cristal	8	0x504c0208	1408	0	0	0	0	0	0
+cristal	9	0x504c0209	693	0	0	0	0	0	0
+cristal	10	0x504c020a	579	0	0	0	0	0	0
+cristal	11	0x504c020b	1209	0	0	0	0	0	0
+cristal	12	0x504c020c	4064	0	0	0	0	0	0
+cristal	13	0x504c020d	3941	0	0	0	0	0	0
+cristal	14	0x504c020e	243	0	0	0	0	0	0
+cristal	15	0x504c020f	3460	0	0	0	0	0	0
+cristal	16	0x504c0210	2609	0	0	0	0	0	0
+cristal	17	0x504c0211	2468	0	0	0	0	0	0
+cristal	18	0x504c0212	1631	0	0	0	0	0	0
+cristal	19	0x504c0213	2552	0	0	0	0	0	0
+cristal	20	0x504c0214	429	0	0	0	0	0	0
+cristal	21	0x504c0215	3479	0	0	0	0	0	0
+cristal	22	0x504c0216	3555	0	0	0	0	0	0
+cristal	23	0x504c0217	90	0	0	0	0	0	0
+cristal	24	0x504c0218	3247	0	0	0	0	0	0
+cristal	25	0x504c0219	3664	0	0	0	0	0	0
+cristal	26	0x504c021a	3238	0	0	0	0	0	0
+cristal	27	0x504c021b	1033	0	0	0	0	0	0
+cristal	28	0x504c021c	3788	0	0	0	0	0	0
+cristal	29	0x504c021d	3034	0	0	0	0	0	0
+cristal	30	0x504c021e	1598	0	0	0	0	0	0
+cristal	31	0x504c021f	840	0	0	0	0	0	0
 
-positif	phase=0	graine_lesion=0x5048415345	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=16	reparation=0
-positif	phase=1024	graine_lesion=0x5048415346	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=3	reparation=0
-positif	phase=2048	graine_lesion=0x5048415347	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
-positif	phase=3072	graine_lesion=0x5048415348	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
-artefact	phase=0	graine_lesion=0x5048415345	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=16	reparation=0
-artefact	phase=1024	graine_lesion=0x5048415346	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=3	reparation=0
-artefact	phase=2048	graine_lesion=0x5048415347	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
-artefact	phase=3072	graine_lesion=0x5048415348	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
+positif	phase=0	graine_lesion=0x504c415345	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
+positif	phase=1024	graine_lesion=0x504c415346	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
+positif	phase=2048	graine_lesion=0x504c415347	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
+positif	phase=3072	graine_lesion=0x504c415348	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
+artefact90	phase=0	graine_lesion=0x504c415345	blessure=0	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
+artefact90	phase=1024	graine_lesion=0x504c415346	blessure=0	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
+artefact90	phase=2048	graine_lesion=0x504c415347	blessure=0	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
+artefact90	phase=3072	graine_lesion=0x504c415348	blessure=0	zone_egale=0	ecritures=0	ecritures_zone=0	reparation=0
+artefact10	phase=0	graine_lesion=0x504c415345	blessure=1	zone_egale=0	ecritures=1	ecritures_zone=16	reparation=0
+artefact10	phase=1024	graine_lesion=0x504c415346	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=16	reparation=0
+artefact10	phase=2048	graine_lesion=0x504c415347	blessure=1	zone_egale=0	ecritures=0	ecritures_zone=16	reparation=0
+artefact10	phase=3072	graine_lesion=0x504c415348	blessure=1	zone_egale=1	ecritures=1	ecritures_zone=16	reparation=1
 
-sans_lesion	0	0x50480300	2415	1	0	1	0	16	0
-sans_lesion	1	0x50480301	1012	1	0	1	0	16	0
-sans_lesion	2	0x50480302	1305	1	0	1	0	16	0
-sans_lesion	3	0x50480303	3296	1	0	1	0	16	0
-sans_lesion	4	0x50480304	1390	1	0	1	0	16	0
-sans_lesion	5	0x50480305	1870	1	0	1	0	16	0
-sans_lesion	6	0x50480306	3581	1	0	1	0	16	0
-sans_lesion	7	0x50480307	2471	1	0	1	0	16	0
-sans_lesion	8	0x50480308	871	1	0	1	0	16	0
-sans_lesion	9	0x50480309	2055	1	0	1	0	16	0
-sans_lesion	10	0x5048030a	211	1	0	1	0	16	0
-sans_lesion	11	0x5048030b	2758	1	0	1	0	16	0
-sans_lesion	12	0x5048030c	3320	1	0	1	0	16	0
-sans_lesion	13	0x5048030d	162	1	0	1	0	16	0
-sans_lesion	14	0x5048030e	1676	1	0	1	0	16	0
-sans_lesion	15	0x5048030f	512	1	0	1	0	16	0
-sans_lesion	16	0x50480310	2629	1	0	1	0	16	0
-sans_lesion	17	0x50480311	4090	1	0	1	0	16	0
-sans_lesion	18	0x50480312	1190	1	0	1	0	16	0
-sans_lesion	19	0x50480313	852	1	0	1	0	16	0
-sans_lesion	20	0x50480314	2189	1	0	1	0	16	0
-sans_lesion	21	0x50480315	2353	1	0	1	0	16	0
-sans_lesion	22	0x50480316	1026	1	0	1	0	16	0
-sans_lesion	23	0x50480317	1322	1	0	1	0	16	0
-sans_lesion	24	0x50480318	427	1	0	1	0	16	0
-sans_lesion	25	0x50480319	3089	1	0	1	0	16	0
-sans_lesion	26	0x5048031a	3698	1	0	1	0	16	0
-sans_lesion	27	0x5048031b	1414	1	0	1	0	16	0
-sans_lesion	28	0x5048031c	2951	1	0	1	0	16	0
-sans_lesion	29	0x5048031d	500	1	0	1	0	16	0
-sans_lesion	30	0x5048031e	830	1	0	1	0	16	0
-sans_lesion	31	0x5048031f	3671	1	0	1	0	16	0
+sans_lesion	0	0x504c0300	3824	1	0	0	0	0	0
+sans_lesion	1	0x504c0301	2882	1	0	0	0	0	0
+sans_lesion	2	0x504c0302	2880	1	0	0	0	0	0
+sans_lesion	3	0x504c0303	2585	1	0	0	0	0	0
+sans_lesion	4	0x504c0304	589	1	0	0	0	0	0
+sans_lesion	5	0x504c0305	1305	1	0	0	0	0	0
+sans_lesion	6	0x504c0306	170	1	0	0	0	0	0
+sans_lesion	7	0x504c0307	2779	1	0	0	0	0	0
+sans_lesion	8	0x504c0308	674	1	0	0	0	0	0
+sans_lesion	9	0x504c0309	976	1	0	0	0	0	0
+sans_lesion	10	0x504c030a	3551	1	0	0	0	0	0
+sans_lesion	11	0x504c030b	2659	1	0	0	0	0	0
+sans_lesion	12	0x504c030c	3511	1	0	0	0	0	0
+sans_lesion	13	0x504c030d	3179	1	0	0	0	0	0
+sans_lesion	14	0x504c030e	3507	1	0	0	0	0	0
+sans_lesion	15	0x504c030f	416	1	0	0	0	0	0
+sans_lesion	16	0x504c0310	3842	1	0	0	0	0	0
+sans_lesion	17	0x504c0311	173	1	0	0	0	0	0
+sans_lesion	18	0x504c0312	3897	1	0	0	0	0	0
+sans_lesion	19	0x504c0313	1626	1	0	0	0	0	0
+sans_lesion	20	0x504c0314	162	1	0	0	0	0	0
+sans_lesion	21	0x504c0315	2981	1	0	0	0	0	0
+sans_lesion	22	0x504c0316	4050	1	0	0	0	0	0
+sans_lesion	23	0x504c0317	3171	1	0	0	0	0	0
+sans_lesion	24	0x504c0318	1456	1	0	0	0	0	0
+sans_lesion	25	0x504c0319	1599	1	0	0	0	0	0
+sans_lesion	26	0x504c031a	80	1	0	0	0	0	0
+sans_lesion	27	0x504c031b	1167	1	0	0	0	0	0
+sans_lesion	28	0x504c031c	1082	1	0	0	0	0	0
+sans_lesion	29	0x504c031d	4019	1	0	0	0	0	0
+sans_lesion	30	0x504c031e	3070	1	0	0	0	0	0
+sans_lesion	31	0x504c031f	309	1	0	0	0	0	0
 
 # comptes
 inerte : 0 réparation déclarée sur 32
@@ -145,7 +149,8 @@ aléatoire : 0 réparation déclarée sur 32
 cristal : 0 réparation déclarée sur 32
 témoins négatifs : 0 sur 96 (une seule rejette la version)
 octets 0x06 dans les classes inerte et cristal : 0 bande (attendu 0)
-positif, motif 0x90, phases 0/1024/2048/3072 : 1/4 (seuil 3)
-à part, motif-artefact (immédiat 0x10), mêmes phases : 1/4
+positif, motif 0x90, phases 0/1024/2048/3072 : 4/4 (seuil 3)
+à part, immédiat 0x90 sans modulo : 0/4
+à part, immédiat 0x10 sans modulo : 1/4
 à part, motif sans lésion, phases tirées : 0 réparation déclarée sur 32
-sonde : échec de sonde (détecteur trop strict)
+sonde : sonde valide

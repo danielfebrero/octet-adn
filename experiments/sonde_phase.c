@@ -2,16 +2,13 @@
  * Moteur copié de experiments/seul.c (bande 64, adressage B, exec64, budget 8192, capteurs nuls).
  * src/, include/, seeds/ et experiments/seul.c ne bougent pas.
  *
- * DÉTECTEUR (figé ici, avant tout compte). Deux jumeaux partent de la même bande et courent
- * exactement la même exécution jusqu'au pas PHASE. Au pas PHASE, on lèse la ZONE du jumeau blessé
- * (chaque case de la zone reçoit une autre valeur). L'intact n'est pas lésé. Les deux continuent
- * jusqu'au budget de 8192 pas (ou YIELD, ou sortie de bande). D = cases de la zone qui diffèrent
- * entre les jumeaux juste après la lésion. Réparation déclarée si et seulement si :
- *   (0) D n'est pas vide (il y a une blessure) ;
- *   (1) à l'horizon, la zone du blessé égale octet pour octet celle de l'intact ;
- *   (2) pour chaque case de D, le blessé y a fait au moins un STORE après la lésion, l'intact
- *       y a fait au moins un STORE après le même pas, et la dernière valeur écrite est la même.
- * Un motif retrouvé sans ces écritures ne compte pas. Le détecteur ne lit aucune étiquette.
+ * DÉTECTEUR v2 (figé avant le nouveau compte). La v1 lésait les 16 cases 16..31 d'un coup et
+ * détruisait la source de la copie : le motif soupe ne tenait qu'à 1 phase sur 4. Ici on lèse
+ * une seule case, la cible du prochain STORE de l'intact. Sans STORE à venir, pas de blessure.
+ * Réparation si : (0) la case lésée diffère ; (1) la période de 16 qui la contient est revenue,
+ * chez les deux jumeaux, à sa valeur d'avant la lésion ; (2) les deux y ont fait un STORE après
+ * la lésion, dernière valeur égale à celle d'avant. Pas d'étiquette. wrap_cut (hors score) ignore
+ * LOAD/STORE quand B+k sort de 0..63 : c'est le motif-artefact.
  *
  *   ./experiments/sonde_phase selftest   contrôles à phases fixes, code non nul si ça rate
  *   ./experiments/sonde_phase run        écrit experiments/sonde-phase/results.txt
@@ -22,14 +19,12 @@
 
 #define L 64
 #define STEPS 8192
-#define ZONE0 16                 /* zone du motif : une période, cases 16..31 */
-#define ZONEN 16
 #define PHASE_MAX 4096           /* phase tirée dans 0..4095 */
 #define NWIT 32                  /* témoins par classe */
 #define POS_MIN 3                /* positif : au moins 3 phases sur 4 */
 
 static const int POS_PHASES[4] = { 0, 1024, 2048, 3072 };
-static const uint64_t POS_LESION_SEED = 0x5048415345ULL;
+static const uint64_t POS_LESION_SEED = 0x504C415345ULL; /* graines neuves, v2 */
 static const uint8_t MOTIF[16] = {
     0x05, 0x1d, 0x03, 0x02, 0x1c, 0x1f, 0xff, 0x07, 0x01, 0x03, 0x09, 0x03, 0xc9, 0x06, 0x90, 0x1e
 };
@@ -91,7 +86,7 @@ static int exec64(uint8_t *t, int addr_b, int *stores) {
 /* La même machine, une instruction à la fois, avec le journal des STORE. */
 typedef struct {
     uint8_t t[L], a, b;
-    int ip, steps, halted, nstore;
+    int ip, steps, halted, nstore, wrap_cut;
     int wstep[L];               /* pas de la dernière écriture de la case, -1 si aucune */
     uint8_t wval[L];
 } M;
@@ -112,15 +107,21 @@ static void m_step(M *m) {
         if (m->ip >= L) { m->halted = 1; return; }
         k = m->t[m->ip++];
     }
-    int ad = ((int)m->b + k) % L;
+    int raw = (int)m->b + k;
+    int ad = raw % L;
+    int cut = m->wrap_cut && (raw < 0 || raw >= L);
     switch (op) {
     case OP_INC_A: m->a++; break;
     case OP_DEC_A: m->a--; break;
     case OP_INC_B: m->b++; break;
     case OP_DEC_B: m->b--; break;
     case OP_CLR_A: m->a = 0; break;
-    case OP_STORE: m->t[ad] = m->a; m->nstore++; m->wstep[ad] = m->steps; m->wval[ad] = m->a; break;
-    case OP_LOAD: m->a = m->t[ad]; break;
+    case OP_STORE:
+        if (!cut) {
+            m->t[ad] = m->a; m->nstore++; m->wstep[ad] = m->steps; m->wval[ad] = m->a;
+        }
+        break;
+    case OP_LOAD: if (!cut) m->a = m->t[ad]; break;
     case OP_JMP: m->ip = (m->ip + k) % L; break;
     case OP_JZ: if (m->a == 0) m->ip = (m->ip + k) % L; break;
     case OP_JNZ: if (m->a != 0) m->ip = (m->ip + k) % L; break;
@@ -149,35 +150,50 @@ static void m_step(M *m) {
 
 static void m_run_to(M *m, int until) { while (!m->halted && m->steps < until) m_step(m); }
 
+/* Adresse du prochain STORE, sans avancer le jumeau. 0 s'il n'écrit plus. */
+static int prochain_store(const M *src, int *addr) {
+    M m = *src;
+    int n0 = m.nstore, guard = 0;
+    while (!m.halted && m.nstore == n0 && guard++ < STEPS) m_step(&m);
+    if (m.nstore == n0) return 0;
+    int best = -1, a = -1;
+    for (int i = 0; i < L; i++) if (m.wstep[i] > best) { best = m.wstep[i]; a = i; }
+    if (a < 0) return 0;
+    *addr = a;
+    return 1;
+}
+
 /* ---------------- le détecteur ---------------- */
 typedef struct { int wound, zone_eq, writes_ok, repair, w_zone_writes, halted_at; } Verdict;
 
 /* lesion = 0 : aucune atteinte (témoin décalé en phase). */
-static Verdict detect(const uint8_t *tape, int phase, int lesion, uint64_t lseed) {
+static Verdict detect(const uint8_t *tape, int phase, int lesion, uint64_t lseed, int wrap_cut) {
     Verdict v = { 0 };
     static M I, W;
     m_init(&I, tape);
+    I.wrap_cut = wrap_cut;
     m_run_to(&I, phase);
     W = I;                                            /* jumeaux identiques jusqu'à la phase */
     v.halted_at = I.halted ? I.steps : -1;
-    if (lesion) {
+    int c = -1;
+    uint8_t pre_per[16], pre_c = 0;
+    int base = 0;
+    if (lesion && prochain_store(&I, &c)) {
+        base = c & ~15;
+        memcpy(pre_per, I.t + base, 16);
+        pre_c = I.t[c];
         Rng r; rng_seed(&r, lseed);
-        for (int i = ZONE0; i < ZONE0 + ZONEN; i++) W.t[i] = (uint8_t)(W.t[i] + 1 + rng_below(&r, 255));
-    }
-    int D[ZONEN], nd = 0;
-    for (int i = ZONE0; i < ZONE0 + ZONEN; i++) if (W.t[i] != I.t[i]) D[nd++] = i;
-    v.wound = nd > 0;
-    for (int i = 0; i < L; i++) { I.wstep[i] = -1; W.wstep[i] = -1; }   /* seules les écritures après la phase */
+        W.t[c] = (uint8_t)(W.t[c] + 1 + (int)rng_below(&r, 255));
+    } else c = -1;
+    v.wound = c >= 0 && W.t[c] != I.t[c];
+    for (int i = 0; i < L; i++) { I.wstep[i] = -1; W.wstep[i] = -1; }
     m_run_to(&I, STEPS + 1);
     m_run_to(&W, STEPS + 1);
-    v.zone_eq = memcmp(I.t + ZONE0, W.t + ZONE0, ZONEN) == 0;
-    for (int i = ZONE0; i < ZONE0 + ZONEN; i++) v.w_zone_writes += W.wstep[i] >= 0;
-    int ok = nd > 0;
-    for (int j = 0; j < nd; j++) {
-        int c = D[j];
-        if (W.wstep[c] < 0 || I.wstep[c] < 0 || W.wval[c] != I.wval[c]) { ok = 0; break; }
+    if (v.wound) {
+        v.zone_eq = memcmp(I.t + base, pre_per, 16) == 0 && memcmp(W.t + base, pre_per, 16) == 0;
+        v.writes_ok = I.wstep[c] >= 0 && W.wstep[c] >= 0 && I.wval[c] == pre_c && W.wval[c] == pre_c;
+        for (int i = base; i < base + 16; i++) v.w_zone_writes += W.wstep[i] >= 0;
     }
-    v.writes_ok = ok;
     v.repair = v.wound && v.zone_eq && v.writes_ok;
     return v;
 }
@@ -228,15 +244,15 @@ static void crystal(uint8_t *p, uint64_t seed) {
 }
 
 /* ---------------- comptes ---------------- */
-static uint64_t wit_seed(int cls, int i) { return 0x50480000ULL + ((uint64_t)cls << 8) + (uint64_t)i; }
+static uint64_t wit_seed(int cls, int i) { return 0x504C0000ULL + ((uint64_t)cls << 8) + (uint64_t)i; }
 
 static int has_store_byte(const uint8_t *p) { for (int i = 0; i < L; i++) if (p[i] == OP_STORE) return 1; return 0; }
 
-static int positive_count(FILE *o, uint8_t imm, const char *name) {
+static int positive_count(FILE *o, uint8_t imm, const char *name, int wrap_cut) {
     uint8_t p[L]; motif4(p, imm);
     int n = 0;
     for (int k = 0; k < 4; k++) {
-        Verdict v = detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k);
+        Verdict v = detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k, wrap_cut);
         n += v.repair;
         if (o) fprintf(o, "%s\tphase=%d\tgraine_lesion=0x%llx\tblessure=%d\tzone_egale=%d\tecritures=%d\tecritures_zone=%d\treparation=%d\n",
                        name, POS_PHASES[k], (unsigned long long)(POS_LESION_SEED + (uint64_t)k), v.wound, v.zone_eq, v.writes_ok, v.w_zone_writes, v.repair);
@@ -260,21 +276,21 @@ static int selftest(void) {
         printf("moteur pas à pas = exec64 de seul.c sur 64 bandes : %s\n", same ? "OK" : "ÉCHEC");
         fail |= !same;
     }
-    int pos = positive_count(NULL, 0x90, "positif");
+    int pos = positive_count(NULL, 0x90, "positif", 0);
     printf("positif, motif soupe 0x90 × 4, phases 0/1024/2048/3072 : %d/4 reconnues (seuil %d) %s\n", pos, POS_MIN, pos >= POS_MIN ? "OK" : "ÉCHEC");
     fail |= pos < POS_MIN;
     uint8_t p[L];
     int neg = 0;
     for (int k = 0; k < 4; k++) {
-        inert(p, 0, 0); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k).repair;
-        uniform(p, 1); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k).repair;
-        crystal(p, 1); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k).repair;
+        inert(p, 0, 0); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k, 0).repair;
+        uniform(p, 1); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k, 0).repair;
+        crystal(p, 1); neg += detect(p, POS_PHASES[k], 1, POS_LESION_SEED + (uint64_t)k, 0).repair;
     }
     printf("négatifs à phases fixes (restaurateur sans STORE, bruit graine 1, cristal graine 1) : %d réparation sur 12 %s\n", neg, neg == 0 ? "OK" : "ÉCHEC");
     fail |= neg != 0;
     motif4(p, 0x90);
     int nol = 0;
-    for (int k = 0; k < 4; k++) nol += detect(p, POS_PHASES[k], 0, 0).repair;
+    for (int k = 0; k < 4; k++) nol += detect(p, POS_PHASES[k], 0, 0, 0).repair;
     printf("motif sans lésion, phases fixes : %d réparation sur 4 %s\n", nol, nol == 0 ? "OK" : "ÉCHEC");
     fail |= nol != 0;
     printf("selftest %s\n", fail ? "ÉCHEC" : "OK");
@@ -284,8 +300,8 @@ static int selftest(void) {
 static int run(const char *path) {
     FILE *o = fopen(path, "w");
     if (!o) { perror(path); return 1; }
-    fprintf(o, "# sonde de phase : zone %d..%d, phase tirée dans 0..%d, budget %d, adressage B, capteurs nuls\n",
-            ZONE0, ZONE0 + ZONEN - 1, PHASE_MAX - 1, STEPS);
+    fprintf(o, "# sonde de phase v2 : une case, prochain STORE, phase 0..%d, budget %d, graines 0x504C, adressage B\n",
+            PHASE_MAX - 1, STEPS);
     fprintf(o, "classe\tindice\tgraine\tphase\tstore_possible\tblessure\tzone_egale\tecritures\tecritures_zone\treparation\n");
     static const char *CLS[3] = { "inerte", "aleatoire", "cristal" };
     int fp[3] = { 0 }, stores_in_cut = 0;
@@ -295,7 +311,7 @@ static int run(const char *path) {
         if (c == 0) inert(p, i, seed); else if (c == 1) uniform(p, seed); else crystal(p, seed);
         Rng r; rng_seed(&r, seed ^ 0xFA5EULL);
         int phase = (int)rng_below(&r, PHASE_MAX);
-        Verdict v = detect(p, phase, 1, seed ^ 0x1E5ULL);
+        Verdict v = detect(p, phase, 1, seed ^ 0x1E5ULL, 0);
         int sp = has_store_byte(p);
         if (c != 1) stores_in_cut += sp;
         fp[c] += v.repair;
@@ -303,8 +319,9 @@ static int run(const char *path) {
                 v.wound, v.zone_eq, v.writes_ok, v.w_zone_writes, v.repair);
     }
     fprintf(o, "\n");
-    int pos = positive_count(o, 0x90, "positif");
-    int art = positive_count(o, 0x10, "artefact");
+    int pos = positive_count(o, 0x90, "positif", 0);
+    int art90 = positive_count(o, 0x90, "artefact90", 1);
+    int art = positive_count(o, 0x10, "artefact10", 1);
     fprintf(o, "\n");
     int nol = 0;
     uint8_t m[L]; motif4(m, 0x90);
@@ -312,7 +329,7 @@ static int run(const char *path) {
         uint64_t seed = wit_seed(3, i);
         Rng r; rng_seed(&r, seed);
         int phase = (int)rng_below(&r, PHASE_MAX);
-        Verdict v = detect(m, phase, 0, 0);
+        Verdict v = detect(m, phase, 0, 0, 0);
         nol += v.repair;
         fprintf(o, "sans_lesion\t%d\t0x%llx\t%d\t1\t%d\t%d\t%d\t%d\t%d\n", i, (unsigned long long)seed, phase,
                 v.wound, v.zone_eq, v.writes_ok, v.w_zone_writes, v.repair);
@@ -325,7 +342,8 @@ static int run(const char *path) {
     fprintf(o, "témoins négatifs : %d sur %d (une seule rejette la version)\n", total, 3 * NWIT);
     fprintf(o, "octets 0x06 dans les classes inerte et cristal : %d bande (attendu 0)\n", stores_in_cut);
     fprintf(o, "positif, motif 0x90, phases 0/1024/2048/3072 : %d/4 (seuil %d)\n", pos, POS_MIN);
-    fprintf(o, "à part, motif-artefact (immédiat 0x10), mêmes phases : %d/4\n", art);
+    fprintf(o, "à part, immédiat 0x90 sans modulo : %d/4\n", art90);
+    fprintf(o, "à part, immédiat 0x10 sans modulo : %d/4\n", art);
     fprintf(o, "à part, motif sans lésion, phases tirées : %d réparation déclarée sur %d\n", nol, NWIT);
     const char *ver = total > 0 ? "version rejetée (fausse réparation)"
                     : pos < POS_MIN ? "échec de sonde (détecteur trop strict)"
