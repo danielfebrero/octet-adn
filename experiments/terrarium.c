@@ -64,7 +64,7 @@ typedef struct {               /* paramètres (sauvés dans le checkpoint) */
     int osmo;                   /* pont métabolique : absorbe ≤ osmo unités de nourriture de sa case par tick (sans EAT) */
     char ffile[256];            /* --founders soup:FICHIER */
     /* OADNTER4 : 0 = terrarium d'origine (mêmes tirages). Un checkpoint OADNTER3 se relit, ces champs valent 0. */
-    int forces;                 /* 1 = espèce = (germen contient l'opcode ATTACK) ; 0 = héritage */
+    int forces;                 /* 0 = héritage ; 1 = espèce = ATTACK dans le germen ; 2 = + causes (YIELD/AND/ADD/XOR/SUB) */
     int expand_every;           /* 0 = K fixe ; N = +1 île vide tous les N ticks (multiple de --sample), jusqu'à KMAX */
 } Params;
 enum { F_SEEDS, F_RANDOM, F_SOUP, F_HANDMADE };
@@ -109,20 +109,41 @@ typedef struct {
     Rng rr;                                           /* copie réelle + prédateurs (jamais tiré dans le mode d'origine) */
     int npred, px[16], py[16];
     long rep_try, rep_ok, pred_hits;
+    long cause_yield, cause_attr, cause_rep, cause_drain;
     const Params *P;
     long t_end;
 } Island;
 
 static __thread Island *cur;
 
-/* un opcode ATTACK dans le germen (pas un immédiat d'un autre op) : la force naît de la seed */
-static int tape_has_attack(const uint8_t *g, int len) {
+/* opcodes du germen (pas un immédiat) : la force naît de la seed */
+static int tape_scan(const uint8_t *g, int len, int has[OP_COUNT]) {
+    memset(has, 0, sizeof(int) * OP_COUNT);
     for (int i = 0; i < len; i++) {
         uint8_t op = g[i];
-        if (op == OP_ATTACK) return 1;
+        if (op < OP_COUNT) has[op] = 1;
         if (op_has_imm(op) && i + 1 < len) i++;
     }
-    return 0;
+    return has[OP_ATTACK];
+}
+static int tape_has_attack(const uint8_t *g, int len) {
+    int has[OP_COUNT];
+    return tape_scan(g, len, has);
+}
+static int ham_bytes(const uint8_t *a, int na, const uint8_t *b, int nb) {
+    int n = na < nb ? na : nb, d = na > nb ? na - nb : nb - na;
+    for (int i = 0; i < n; i++) d += a[i] != b[i];
+    return d;
+}
+/* N=0 E=1 S=2 W=3 — tore */
+static int dir_to(int x0, int y0, int x1, int y1, int W, int H) {
+    int dx = x1 - x0, dy = y1 - y0;
+    if (dx >  W / 2) dx -= W;
+    if (dx < -W / 2) dx += W;
+    if (dy >  H / 2) dy -= H;
+    if (dy < -H / 2) dy += H;
+    if (abs(dx) >= abs(dy)) return dx > 0 ? 1 : dx < 0 ? 3 : (dy > 0 ? 2 : 0);
+    return dy > 0 ? 2 : 0;
 }
 
 /* champs de travail de la créature (labo-libres : win_len = 0, la VM ne les lit pas) */
@@ -160,6 +181,31 @@ static void hook(World *w, Creature *c) {
     if (I->P->osmo) {                                 /* osmotrophie : avant le relevé, donc « a mangé » = EAT exécuté */
         int f = w->food[c->y][c->x], take = f < I->P->osmo ? f : I->P->osmo;
         if (take) { w->food[c->y][c->x] = (uint8_t)(f - take); c->e = c->e + take * 5 > 220 ? 220 : c->e + take * 5; }
+    }
+    if (I->P->forces >= 2) {                          /* causes : l'octet du germen fait un effet au monde */
+        int has[OP_COUNT]; tape_scan(c->germ, c->germ_len, has);
+        int W = w->cfg.w, H = w->cfg.h;
+        Creature *sim = NULL, *dif = NULL; int best_s = 1 << 20, best_d = -1;
+        for (int i = 0; i < w->ncs; i++) {
+            Creature *o = w->cs[i];
+            if (o == c || o->e <= 0) continue;
+            int dx = abs(o->x - c->x), dy = abs(o->y - c->y);
+            if (dx > W - dx) dx = W - dx;
+            if (dy > H - dy) dy = H - dy;
+            if (dx > 1 || dy > 1) continue;
+            int h = ham_bytes(c->germ, c->germ_len, o->germ, o->germ_len);
+            if (h < best_s) { best_s = h; sim = o; }
+            if (h > best_d) { best_d = h; dif = o; }
+        }
+        if (has[OP_YIELD] && c->e > 10) {
+            uint8_t *f = &w->food[c->y][c->x];
+            if (*f < 14) { (*f)++; c->e -= 1; I->cause_yield++; }
+        }
+        if ((has[OP_AND] || has[OP_ADD]) && sim) { c->d = dir_to(c->x, c->y, sim->x, sim->y, W, H); I->cause_attr++; }
+        if (has[OP_XOR] && dif) { c->d = (dir_to(c->x, c->y, dif->x, dif->y, W, H) + 2) & 3; I->cause_rep++; }
+        if (has[OP_SUB] && dif && dif->e > 1) {
+            dif->e -= 1; c->e = c->e + 1 > 220 ? 220 : c->e + 1; I->cause_drain++;
+        }
     }
     c->ls[0] = c->steps; c->ls[1] = c->eaten; c->ls[2] = c->splits; c->ls[3] = c->d; c->ls[5] = (int)w->t;
     int cand_v[36], m = 0, W = w->cfg.w, H = w->cfg.h;
@@ -546,7 +592,16 @@ static void sample(Terra *T) {
             for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species) sp1++;
             for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) food += w->food[y][x];
         }
-        fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\n", T->t, N, sp1, attacks, P->K, isles, food);
+        long yld = 0, attr = 0, rep = 0, drn = 0;
+        for (int k = 0; k < P->K; k++) {
+            yld += T->I[k].cause_yield; attr += T->I[k].cause_attr; rep += T->I[k].cause_rep; drn += T->I[k].cause_drain;
+            T->I[k].cause_yield = T->I[k].cause_attr = T->I[k].cause_rep = T->I[k].cause_drain = 0;
+        }
+        if (P->forces >= 2)
+            fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\t%ld\t%ld\t%ld\t%ld\n",
+                    T->t, N, sp1, attacks, P->K, isles, food, yld, attr, rep, drn);
+        else
+            fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\n", T->t, N, sp1, attacks, P->K, isles, food);
         fflush(T->forces_out);
         if (sp1 && !T->saw_sp1) { T->saw_sp1 = 1; event(T, "forces", "sp1=%d pop=%d attacks=%ld K=%d", sp1, N, attacks, P->K); }
     }
@@ -829,7 +884,9 @@ static int open_outputs(Terra *T, int resumed) {
         int fresh = access(p, F_OK) != 0;
         T->forces_out = fopen(p, resumed && !fresh ? "a" : "w");
         if (!T->forces_out) return 0;
-        if (!resumed || fresh) fputs("tick\tpop\tsp1\tattacks\tK\tisles\tfood\n", T->forces_out);
+        if (!resumed || fresh)
+            fputs(T->P.forces >= 2 ? "tick\tpop\tsp1\tattacks\tK\tisles\tfood\tyield\tattr\trep\tdrain\n"
+                                   : "tick\tpop\tsp1\tattacks\tK\tisles\tfood\n", T->forces_out);
     }
     return 1;
 }
@@ -850,8 +907,9 @@ static int usage(void) {
                     "                       [--repro split|copy] [--rep-steps N] [--rep-cost E] [--rep-energy E] [--rep-p p] [--rep-mut x]\n"
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
-                    "                       [--forces 0|1] [--expand-every T (0 = K fixe, multiple de --sample)]\n"
+                    "                       [--forces 0|1|2] [--expand-every T (0 = K fixe, multiple de --sample)]\n"
                     "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every\n"
+                    "        terrarium_run dump DIR              (germens d'un checkpoint : opcodes, consensus)\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
     return 2;
@@ -907,7 +965,7 @@ static int cmd_run(int argc, char **argv) {
     if (!dir || P.K < 1 || P.K > KMAX || P.sample < 1 || P.ck_every % P.sample || P.w < 4 || P.h < 4 || P.w > GRID_W || P.h > GRID_H ||
         P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
         (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1 ||
-        (P.forces != 0 && P.forces != 1) || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
+        P.forces < 0 || P.forces > 2 || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
     if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
     static Terra T; char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
@@ -1003,8 +1061,13 @@ static int selftest(void) {
     {
         uint8_t a[] = { OP_NOP, OP_ATTACK }, b[] = { OP_STORE, OP_ATTACK };
         int ha = tape_has_attack(a, 2), hb = tape_has_attack(b, 2);
-        printf("selftest forces : opcode ATTACK %s, immédiat %s\n", ha ? "détecté" : "MANQUE", hb ? "FAUX POSITIF" : "ignoré");
-        ok &= ha && !hb;
+        int hy[OP_COUNT], hz[OP_COUNT];
+        uint8_t y[] = { OP_YIELD, OP_XOR }, z[] = { OP_LOAD, OP_YIELD };
+        tape_scan(y, 2, hy); tape_scan(z, 2, hz);
+        printf("selftest forces : opcode ATTACK %s, immédiat %s ; YIELD opcode %s immédiat %s\n",
+               ha ? "détecté" : "MANQUE", hb ? "FAUX POSITIF" : "ignoré",
+               hy[OP_YIELD] ? "détecté" : "MANQUE", hz[OP_YIELD] ? "FAUX POSITIF" : "ignoré");
+        ok &= ha && !hb && hy[OP_YIELD] && hy[OP_XOR] && !hz[OP_YIELD];
     }
     return ok ? 0 : 1;
 }
@@ -1136,9 +1199,57 @@ static int resume_check(const Params *P, long t1, long t2, const char *label, in
     return same;
 }
 
+static int cmd_dump(int argc, char **argv) {
+    if (argc < 3) return usage();
+    static Terra T; memset(&T, 0, sizeof T);
+    char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", argv[2]);
+    if (!load(&T, ck)) { fprintf(stderr, "%s illisible\n", ck); return 1; }
+    int N = total_pop(&T), has_n[OP_COUNT] = {0}, att = 0, n64 = 0;
+    int cons_n[SOUP_PROG][256]; memset(cons_n, 0, sizeof cons_n);
+    printf("t=%ld K=%d pop=%d forces=%d expand_every=%d regrow=%d\n",
+           T.t, T.P.K, N, T.P.forces, T.P.expand_every, T.P.regrow);
+    for (int k = 0; k < T.P.K; k++) {
+        World *w = T.I[k].w;
+        int sp1 = 0; long atk = w->st.attacks;
+        for (int i = 0; i < w->ncs; i++) {
+            Creature *c = w->cs[i];
+            int has[OP_COUNT]; tape_scan(c->germ, c->germ_len, has);
+            for (int o = 0; o < OP_COUNT; o++) has_n[o] += has[o];
+            if (has[OP_ATTACK]) att++;
+            if (c->species) sp1++;
+            if (c->germ_len == SOUP_PROG) {
+                n64++;
+                for (int b = 0; b < SOUP_PROG; b++) cons_n[b][c->germ[b]]++;
+            }
+        }
+        printf("  ile %d ncs=%d sp1=%d attacks_cum=%ld\n", k, w->ncs, sp1, atk);
+    }
+    printf("porteurs d'opcode (sur %d) :\n", N);
+    for (int o = 1; o < OP_COUNT; o++)
+        if (has_n[o]) printf("  %-12s %5d  %5.1f%%\n", op_name(o), has_n[o], N ? 100.0 * has_n[o] / N : 0);
+    printf("ATTACK porteurs %d (%.2f%%)\n", att, N ? 100.0 * att / N : 0);
+    if (n64) {
+        int conserved = 0;
+        printf("consensus 64o (%d individus), positions ≥ 50 %% :\n", n64);
+        for (int b = 0; b < SOUP_PROG; b++) {
+            int best = 0, bv = 0;
+            for (int v = 0; v < 256; v++) if (cons_n[b][v] > bv) { bv = cons_n[b][v]; best = v; }
+            double f = (double)bv / n64;
+            if (f >= 0.5) {
+                conserved++;
+                printf("  [%02d] %02x %-12s %5.1f%%\n", b, best, op_valid((uint8_t)best) ? op_name((uint8_t)best) : "INTRON", 100 * f);
+            }
+        }
+        printf("positions majoritaires ≥50%% : %d / 64\n", conserved);
+    }
+    terra_free(&T);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "run")) return cmd_run(argc, argv);
     if (argc >= 2 && !strcmp(argv[1], "selftest")) return selftest();
     if (argc >= 2 && !strcmp(argv[1], "report")) return cmd_report(argc, argv);
+    if (argc >= 2 && !strcmp(argv[1], "dump")) return cmd_dump(argc, argv);
     return usage();
 }
