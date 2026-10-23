@@ -300,6 +300,7 @@ void hl_se_post(Lab *l, World *w); double hl_se_fit(Lab *l, World *w, int t);
 void hl_dg_cfg(WorldConfig *c); int hl_dg_seeds(PoolEntry *o); void hl_dg_init(Lab *l, World *w); void hl_dg_pre(Lab *l, World *w);
 void hl_dg_post(Lab *l, World *w); double hl_dg_fit(Lab *l, World *w, int t); int hl_dg_sel(Lab *l, World *w, PoolEntry *out);
 void hl_gn_cfg(WorldConfig *c); int hl_gn_seeds(PoolEntry *o); void hl_gn_init(Lab *l, World *w); void hl_gn_pre(Lab *l, World *w); double hl_gn_fit(Lab *l, World *w, int t); int hl_gn_sel(Lab *l, World *w, PoolEntry *out);
+int hl_dm_seeds(PoolEntry *o); void hl_dm_init(Lab *l, World *w); void hl_dm_rank(const Creature *c, double k[2]); void hl_dm_pre(Lab *l, World *w); void hl_dm_post(Lab *l, World *w); double hl_dm_fit(Lab *l, World *w, int t);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -352,6 +353,9 @@ const LabDef LABS[N_LABS] = {
     { "general", "Apprendre pendant sa vie, généraliser à des tâches jamais vues",
       "note affichée = justesse des essais 32..63 sur la mémoire 2 et la mémoire 3 (T[indice d'il y a 2 ou 3 essais], tables réservées) ; pool en deux moitiés : niche mémoire (3 places T[p1], 3 places T[p2], 2 places T[p3], autres tables ; note et champion) et curriculum (la suite, jusqu'à 16) ; la réévaluation appariée note les deux ; le pool garde le génome de naissance, pas les STORE de la vie ; known = familles déjà dans la seed ; baseline = mêmes génomes, génome gelé",
       { "lag", "train", "frozen", "vs_frozen", "known", "level" }, hl_gn_cfg, hl_gn_seeds, hl_gn_pre, NULL, hl_gn_fit, hl_rank_score, hl_gn_sel, hl_gn_init, 0, 1 },
+    { "dialog-mem", "Dialogue avec mémoire : répondre au message d'avant",
+      "réponse = (s_{t-1} + 1) mod 16 (le message d'avant, + 1), un symbole neuf par tick, historique vidé ; crédit gradué (Hamming 4 bits) / créature-tick ; plafond sans mémoire = 0,2875 de crédit, 1/16 exact ; seed-amorce = seed emit-dialog (s_t + 1, sans mémoire) ; baseline = même pool, faux s_{t-1}",
+      { "accuracy", "exact", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_dm_pre, hl_dm_post, hl_dm_fit, hl_dm_rank, NULL, hl_dm_init, 0, 0 },
 };
 
 int lab_index(const char *name) {

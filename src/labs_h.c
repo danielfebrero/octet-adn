@@ -1128,3 +1128,59 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     return k;
 #endif
 }
+
+/* ======================= dialog-mem : un dialogue qui exige une mémoire =======================
+ * Un symbole s_t (0..15) neuf à chaque tick ; la bonne réponse est (s_{t-1} + 1) mod 16 :
+ * elle dépend du message d'avant, que le monde ne redonne pas (historique vidé, SENSE_HIST = 0).
+ * Comme s_{t-1} est uniforme et indépendant de s_t, toute politique sans mémoire a la même
+ * espérance : 1/16 de réponses exactes et 0,2875 de crédit, quelle qu'elle soit. Seul un état
+ * interne (registres A/B qui survivent au tick, ou un STORE dans le génome) dépasse ce plafond.
+ * Crédit gradué sur les 4 bits bas (distance de Hamming 0/1/2/3/4 → 1/0,55/0,2/0,05/0).
+ * Seed-amorce = la seed d'emit-dialog (répond s_t + 1 au message courant) : au plafond sans
+ * mémoire, aucune mémoire écrite. Pour passer, la lignée doit répondre au message d'AVANT : garder
+ * s_{t-1} + 1 dans A d'un tick à l'autre et l'émettre avant de relire le stimulus.
+ * Baseline : même pool, même graine, cible calculée avec un faux s_{t-1} tiré au
+ * hasard ; un génome qui se souvient y retombe au plafond sans mémoire, un génome sans mémoire non. */
+typedef struct { int prev, fake, s; double credit, emits, exact; } DmState;
+static double pop_ticks_h(const Lab *l) { long n = 0; for (int i = 0; i < l->npops; i++) n += l->pops[i]; return n > 0 ? (double)n : 1.0; }
+int hl_dm_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "dialog", 0); return 4; }
+void hl_dm_init(Lab *l, World *w) { DmState *s = calloc(1, sizeof *s); s->prev = (int)rng_below(w->rng, 16); l->ext = s; }
+void hl_dm_rank(const Creature *c, double k[2]) { k[0] = c->age > 0 ? c->lscore / c->age : 0; k[1] = c->e; }
+void hl_dm_pre(Lab *l, World *w) {
+    DmState *s = l->ext;
+    if (w->t > 0) s->prev = s->s;
+    s->s = (int)rng_below(w->rng, 16);
+    s->fake = (int)rng_below(w->rng, 16);                /* tiré dans les deux modes : rejeu apparié */
+    w->stimulus = s->s;
+    w->hist_n = 0;
+}
+void hl_dm_post(Lab *l, World *w) {
+    DmState *s = l->ext;
+    int pv = l->counterfactual ? s->fake : s->prev;
+    int want = (pv + 1) & 15;
+    for (int i = 0; i < w->nem; i++) {
+        Creature *a = w->em[i].c;
+        if (!a || a->species != 0) continue;
+        int b = (w->em[i].v ^ want) & 15;
+        b = (b & 1) + ((b >> 1) & 1) + ((b >> 2) & 1) + ((b >> 3) & 1);
+        double c = b == 0 ? 1.0 : b == 1 ? 0.55 : b == 2 ? 0.20 : b == 3 ? 0.05 : 0.0;
+        a->lscore += c;
+        a->e += (b == 0 ? 4 : b == 1 ? 2 : b == 2 ? 1 : 0) - 1;
+        cap_e(a);
+        s->credit += c; s->emits += 1; s->exact += b == 0;
+    }
+}
+double hl_dm_fit(Lab *l, World *w, int ticks) {
+    (void)w;
+    DmState *s = l->ext;
+    double f = s->credit / pop_ticks_h(l);
+    l->extra[0] = s->emits > 0 ? s->credit / s->emits : 0;
+    l->extra[1] = s->emits > 0 ? s->exact / s->emits : 0;
+    l->extra[2] = s->emits;
+    if (!l->counterfactual) {
+        double b = replay(l, ticks, NULL);
+        l->extra[3] = b;
+        l->extra[4] = f - b;
+    }
+    return f;
+}
