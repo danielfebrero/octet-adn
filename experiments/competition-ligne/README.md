@@ -28,3 +28,30 @@ make experiments/competition
 
 Le mélange n'entre pas dans `make test`. Le selftest vérifie seulement que les six fondateurs
 sont encore des copieurs, et qu'ils restent distincts.
+
+## Résultats
+
+Course unique, après le commit `d2999b3`. Selftest : 6 fondateurs encore copieurs, distincts.
+Sortie brute : `mix.txt`.
+
+| | |
+|---|---:|
+| copieurs à la fin | 16 317 |
+| naissances | 31 912 653 |
+| min. essentiels (échantillon) | 6 |
+| verdict | **coexistence** |
+
+Trois lignées restent au-dessus de 10 %. Aucune ne passe 50 %.
+
+| lignée | copieurs | part |
+|---:|---:|---:|
+| 0 | 5 976 | 0,366 |
+| 2 | 5 229 | 0,320 |
+| 24 | 4 542 | 0,278 |
+| 13 | 526 | 0,032 |
+| 29 | 42 | 0,003 |
+| 17 | 2 | 0,000 |
+
+Le dominant de la fin est une descendance de la graine 0 : 388 copies, distance 24 du fondateur, 6 octets essentiels. Aucun copieur n'est plus proche d'un autre fondateur que du sien (`autre` = 0 à chaque report).
+
+Les trois qui tiennent (0, 2, 24) sont celles qui avaient envahi leur bocal le plus tôt. Les trois tardives (13, 17, 29) passent sous 10 % et y restent.
