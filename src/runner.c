@@ -4,6 +4,7 @@
  * régénère status.md. Si le binaire est recompilé pendant que le runner tourne, il se
  * ré-exécute (execv) : la nouvelle « popote » s'applique à tous les labos au cycle suivant. */
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,16 @@ double pool_eval(int id, const PoolEntry *pool, int n, const char *key, int tick
     return pool_eval_x(id, pool, n, key, ticks, foreign, nf, NULL);
 }
 
+/* Règle de reseed : la seed (s) remplace le pool (o), évalués sur les mêmes n graines, si
+ *  - la moyenne gagne d'au moins 5 % en relatif, marge indépendante du signe (fitness < 0 : pandemic) ;
+ *  - ET la différence appariée dépasse 2 erreurs standard (pas de reseed à pile ou face sur du bruit). */
+int reseed_wins(const double *s, const double *o, int n) {
+    double fs = 0, fo = 0, md = 0, vd = 0;
+    for (int j = 0; j < n; j++) { fs += s[j] / n; fo += o[j] / n; md += (s[j] - o[j]) / n; }
+    for (int j = 0; j < n; j++) { double e = s[j] - o[j] - md; vd += e * e / (n - 1); }
+    return fs - fo > 0.05 * fabs(fo) && md > 2 * sqrt(vd / n);
+}
+
 static double g_eval_new, g_eval_old;   /* dernière réévaluation (affichage) */
 
 static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int nforeign, int persist) {
@@ -120,13 +131,13 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
          * nouvelle popote) bat le pool en place sur les mêmes SEL_EVALS graines, elle le remplace.
          * Sinon une seed corrigée ne profiterait jamais aux labos qui tournent déjà. */
         static PoolEntry sp[POOL_MAX]; int ns = LABS[id].seeds(sp);
-        double fs = 0, fo = 0;
+        double fs = 0, fo = 0, vs[SEL_EVALS], vo[SEL_EVALS];
         for (int j = 0; j < SEL_EVALS; j++) {
             char rk[300]; snprintf(rk, sizeof rk, "%s:reseed:%010llx:%d", LABS[id].name, (unsigned long long)(eng & 0xffffffffffULL), j);
-            fs += pool_eval(id, sp, ns, rk, o->ticks, foreign, nforeign) / SEL_EVALS;
-            fo += pool_eval(id, ck.pool, ck.npool, rk, o->ticks, foreign, nforeign) / SEL_EVALS;
+            vs[j] = pool_eval(id, sp, ns, rk, o->ticks, foreign, nforeign); fs += vs[j] / SEL_EVALS;
+            vo[j] = pool_eval(id, ck.pool, ck.npool, rk, o->ticks, foreign, nforeign); fo += vo[j] / SEL_EVALS;
         }
-        if (fs > 1.05 * fo) {                          /* marge : pas de reset sur du bruit */
+        if (reseed_wins(vs, vo, SEL_EVALS)) {
             memcpy(ck.pool, sp, sizeof(PoolEntry) * (size_t)ns); ck.npool = ns;
             if (!o->quiet) printf("[popote] %s : réensemencé (seed %.4g > pool en place %.4g)\n", LABS[id].name, fs, fo);
         }

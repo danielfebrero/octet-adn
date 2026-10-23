@@ -277,6 +277,7 @@ uint64_t engine_version(void);
 int runner(RunOpts *o, MetricRec *rows_out, int rows_cap);   /* retourne nb de lignes */
 /* fitness d'un pool sur la graine dérivée de key (monde jetable, rien n'est écrit) */
 double pool_eval(int lab_id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nforeign);
+int reseed_wins(const double *seed_fit, const double *pool_fit, int n);   /* règle B du reseed */
 /* idem, et copie les extras du labo (N_EXTRA) dans extra si non NULL */
 double pool_eval_x(int lab_id, const PoolEntry *pool, int n, const char *key, int ticks, PoolEntry *foreign, int nforeign, double *extra);
 /* champions des 9 autres labos (checkpoints de dir), pour org-seeds ; retourne leur nombre */

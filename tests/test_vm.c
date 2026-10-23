@@ -892,6 +892,20 @@ TEST(test_dialog_mem_needs_memory) {
     assert(fm > 0.90 && em[1] > 0.90 && em[3] < 0.40);
 }
 
+/* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */
+TEST(test_reseed_rule_sign_and_noise) {
+    double o1[4] = {-1, -1, -1, -1}, s1[4] = {-0.9, -0.9, -0.9, -0.9}, s1b[4] = {-1.04, -1.04, -1.04, -1.04};
+    assert(reseed_wins(s1, o1, 4));            /* fitness négative : -0.9 bat nettement -1 */
+    assert(!reseed_wins(s1b, o1, 4));          /* l'ancienne règle fs > 1.05*fo prenait -1.04 > -1.05 pour un gain */
+    double o0[4] = {0, 0, 0, 0}, s0[4] = {1e-9, 1e-9, 1e-9, 1e-9};
+    assert(reseed_wins(s0, o0, 4));            /* fo = 0 : gain net et sans bruit, accepté */
+    double o2[4] = {0.5, 0.5, 0.5, 0.5}, s2[4] = {0.2, 0.9, 0.3, 1.0};   /* +20 % en moyenne mais bruité */
+    assert(!reseed_wins(s2, o2, 4));
+    double s3[4] = {0.60, 0.62, 0.61, 0.63};  /* +23 %, différence nette */
+    assert(reseed_wins(s3, o2, 4));
+    assert(!reseed_wins(o2, o2, 4));
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -934,6 +948,7 @@ int main(void) {
     RUN(test_novelty_map_elites);
     RUN(test_soup_detector_controls);
     RUN(test_dialog_mem_needs_memory);
-    printf("\n%d/%d tests OK\n", passed, 41);
+    RUN(test_reseed_rule_sign_and_noise);
+    printf("\n%d/%d tests OK\n", passed, 42);
     return 0;
 }
