@@ -90,7 +90,11 @@ experiments/soupe_spatiale: experiments/soupe_spatiale.c experiments/universe_se
 experiments/seul: experiments/seul.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
 
-test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul
+# Le 48/15 du motif seul est-il l'écho d'une période de 16 ?
+experiments/motif_artefact: experiments/motif_artefact.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
+
+test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/mi_detector experiments/terrarium_run experiments/universe_search experiments/universe_search2 experiments/k8_survivor experiments/rebirth experiments/law_keepers experiments/local_laws experiments/incubation_stepback experiments/join_wheel experiments/monde_v0 experiments/ensembles experiments/dispers experiments/soupe_spatiale experiments/seul experiments/motif_artefact
 	./tests/test_vm
 	./experiments/metabolic_order selftest
 	./experiments/mi_detector selftest
@@ -108,6 +112,7 @@ test: tests/test_vm octet-adn no-python experiments/metabolic_order experiments/
 	./experiments/dispers selftest
 	./experiments/soupe_spatiale selftest
 	./experiments/seul selftest
+	./experiments/motif_artefact
 
 # garde-fou « octet only » : aucun source interprété versionné
 no-python:
