@@ -13,6 +13,7 @@
  *   ./experiments/sonde_phase selftest   contrôles à phases fixes, code non nul si ça rate
  *   ./experiments/sonde_phase run        écrit experiments/sonde-phase/results.txt
  *   ./experiments/sonde_phase barre      32 phases neuves, seuil 28, détecteur inchangé
+ *   ./experiments/sonde_phase fuzz       substitutions d'un octet, formes qui restent et repassent 28/32
  */
 #include <stdio.h>
 #include <string.h>
@@ -357,6 +358,97 @@ static int run(const char *path) {
     return 0;
 }
 
+/* Deux exécutions. 1 si la bande se fixe et reste active. La bande sort fixée. */
+static int se_fixe(uint8_t *t, int *stores) {
+    int s1 = 0, s2 = 0;
+    exec64(t, 1, &s1);
+    uint8_t b[L];
+    memcpy(b, t, L);
+    exec64(b, 1, &s2);
+    if (memcmp(b, t, L)) return 0;
+    if (stores) *stores = s2;
+    return 1;
+}
+
+static void phases_barre(int *ph, uint64_t *ls) {
+    Rng r;
+    rng_seed(&r, BARRE_SEED);
+    for (int i = 0; i < NWIT; i++) {
+        ph[i] = (int)rng_below(&r, PHASE_MAX);
+        ls[i] = BARRE_SEED ^ (0x9E3779B97F4A7C15ULL * (uint64_t)(i + 1));
+    }
+}
+
+static int score_phases(const uint8_t *t, const int *ph, const uint64_t *ls, int n) {
+    int k = 0;
+    for (int i = 0; i < n; i++) k += detect(t, ph[i], 1, ls[i], 0).repair;
+    return k;
+}
+
+/* Fuzz. Détecteur v2 inchangé. Chaque octet du motif fixé est substitué.
+ * Une forme est héritable si elle se fixe, diffère du parent, et repasse
+ * la barre 28/32 sur les mêmes 32 phases. Seuil écrit avant le compte : ≥ 2 formes. */
+static int fuzz(const char *path) {
+    FILE *o = fopen(path, "w");
+    if (!o) { perror(path); return 1; }
+    uint8_t parent[L];
+    motif4(parent, 0x90);
+    int pst = 0;
+    if (!se_fixe(parent, &pst) || pst <= 0) {
+        fprintf(o, "parent non fixé\n");
+        fclose(o);
+        printf("fuzz : parent non fixé\n");
+        return 1;
+    }
+    int ph[NWIT];
+    uint64_t ls[NWIT];
+    phases_barre(ph, ls);
+    int healed = 0, unfixed = 0, quiet = 0, alleles[L];
+    uint8_t exempl[L][L];
+    int exempl_b[L];
+    memset(alleles, 0, sizeof alleles);
+    memset(exempl_b, 0, sizeof exempl_b);
+    for (int i = 0; i < L; i++) for (int b = 0; b < 256; b++) {
+        if ((uint8_t)b == parent[i]) continue;
+        uint8_t q[L];
+        memcpy(q, parent, L);
+        q[i] = (uint8_t)b;
+        int st = 0;
+        if (!se_fixe(q, &st)) { unfixed++; continue; }
+        if (st <= 0) { quiet++; continue; }
+        if (!memcmp(q, parent, L)) { healed++; continue; }
+        if (alleles[i] == 0) {
+            memcpy(exempl[i], q, L);
+            exempl_b[i] = b;
+        }
+        alleles[i]++;
+    }
+    int sites = 0, herit = 0;
+    fprintf(o, "# fuzz du motif fixé, 64×255 substitutions, détecteur v2 figé, barre graine 0x%llx\n",
+            (unsigned long long)BARRE_SEED);
+    fprintf(o, "parent stores=%d\n", pst);
+    fprintf(o, "guéries (reviennent au parent) : %d\n", healed);
+    fprintf(o, "non fixées : %d\n", unfixed);
+    fprintf(o, "fixées sans STORE : %d\n", quiet);
+    fprintf(o, "case\talleles\texemple\tbarre\theritable\n");
+    for (int i = 0; i < L; i++) {
+        if (!alleles[i]) continue;
+        sites++;
+        int sc = score_phases(exempl[i], ph, ls, NWIT);
+        int ok = sc >= BARRE_MIN;
+        herit += ok;
+        fprintf(o, "%d\t%d\t0x%02x\t%d/%d\t%d\n", i, alleles[i], exempl_b[i], sc, NWIT, ok);
+    }
+    const char *ver = herit >= 2 ? "au moins deux formes héritables"
+                    : herit == 1 ? "une seule forme héritable"
+                    : "aucune forme héritable";
+    fprintf(o, "cases qui gardent une mutation : %d\n", sites);
+    fprintf(o, "cases dont l'exemple passe ≥%d/32 : %d\nverdict : %s\n", BARRE_MIN, herit, ver);
+    fclose(o);
+    printf("fuzz : guéries %d, cases %d, héritables %d — %s\n", healed, sites, herit, ver);
+    return 0;
+}
+
 /* Barre 28/32. Détecteur v2 inchangé. 32 phases neuves, graine figée avant le compte. */
 static int barre(const char *path) {
     FILE *o = fopen(path, "w");
@@ -388,6 +480,7 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "selftest") == 0) return selftest();
     if (argc > 1 && strcmp(argv[1], "run") == 0) return run(argc > 2 ? argv[2] : "experiments/sonde-phase/results.txt");
     if (argc > 1 && strcmp(argv[1], "barre") == 0) return barre(argc > 2 ? argv[2] : "experiments/sonde-phase/barre.txt");
-    fprintf(stderr, "usage : %s selftest | run [results.txt] | barre [barre.txt]\n", argv[0]);
+    if (argc > 1 && strcmp(argv[1], "fuzz") == 0) return fuzz(argc > 2 ? argv[2] : "experiments/sonde-phase/fuzz.txt");
+    fprintf(stderr, "usage : %s selftest | run [results.txt] | barre [barre.txt] | fuzz [fuzz.txt]\n", argv[0]);
     return 2;
 }
