@@ -49,7 +49,7 @@ static double mean_pop(const Lab *l) {
 }
 static void rank_default(const Creature *c, double k[2]) { k[0] = c->e; k[1] = c->age; }
 static void sort_by_rank(Creature **v, int n, void (*rank)(const Creature *, double[2])) {
-    double (*key)[2] = malloc(sizeof(double[2]) * (size_t)(n ? n : 1));
+    double (*key)[2] = xmalloc(sizeof(double[2]) * (size_t)(n ? n : 1));
     for (int i = 0; i < n; i++) rank(v[i], key[i]);
     for (int i = 1; i < n; i++) {               /* tri par insertion stable, décroissant */
         Creature *c = v[i]; double k0 = key[i][0], k1 = key[i][1]; int j = i - 1;
@@ -110,7 +110,7 @@ static double f_survival(Lab *l, World *w, int ticks) {
     double alive_frac = fmin(1.0, (double)l->npops / (ticks > 0 ? ticks : 1));
     double med = 0; long age_alive = 0;
     if (w->ncs) {
-        int *ages = malloc(sizeof(int) * (size_t)w->ncs);
+        int *ages = xmalloc(sizeof(int) * (size_t)w->ncs);
         for (int i = 0; i < w->ncs; i++) { ages[i] = w->cs[i]->age; age_alive += ages[i]; }
         qsort(ages, (size_t)w->ncs, sizeof(int), cmp_int);
         med = w->ncs & 1 ? ages[w->ncs / 2] : (ages[w->ncs / 2 - 1] + ages[w->ncs / 2]) / 2.0;
@@ -366,9 +366,9 @@ void lab_init(Lab *l, int id, int max_ticks) {
     memset(l, 0, sizeof *l);
     l->id = id; l->def = &LABS[id];
     if (LABS[id].ticks_mult > 1) max_ticks *= LABS[id].ticks_mult;
-    l->pops = calloc((size_t)max_ticks + 1, sizeof(int));
-    l->prey = calloc((size_t)max_ticks + 1, sizeof(int));
-    l->pred = calloc((size_t)max_ticks + 1, sizeof(int));
+    l->pops = xcalloc((size_t)max_ticks + 1, sizeof(int));
+    l->prey = xcalloc((size_t)max_ticks + 1, sizeof(int));
+    l->pred = xcalloc((size_t)max_ticks + 1, sizeof(int));
 }
 void lab_free(Lab *l) { if (l->ext_free) l->ext_free(l); free(l->ext); l->ext = NULL; free(l->pops); free(l->prey); free(l->pred); l->pops = l->prey = l->pred = NULL; }
 void lab_pre(Lab *l, World *w) { if (l->def->pre) l->def->pre(l, w); }
@@ -377,7 +377,7 @@ void lab_post(Lab *l, World *w) { if (l->def->post) l->def->post(l, w); }
 void run_cycle(Lab *l, const PoolEntry *pool, int n, Rng *rng, int ticks, CycleResult *res) {
     if (l->def->ticks_mult > 1) ticks *= l->def->ticks_mult;
     l->pool0 = pool; l->npool0 = n; l->rng0 = *rng;      /* pour les rejeux contrefactuels */
-    PoolEntry *g = malloc(sizeof(PoolEntry) * (POOL_MAX + 8 + POOL_SIZE));
+    PoolEntry *g = xmalloc(sizeof(PoolEntry) * (POOL_MAX + 8 + POOL_SIZE));
     int k = 0;
     for (int i = 0; i < n && k < POOL_MAX; i++) g[k++] = pool[i];
     if (l->id == 0)                                    /* org-seeds : + 8 champions étrangers */

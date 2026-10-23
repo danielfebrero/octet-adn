@@ -39,7 +39,7 @@ static uint8_t *slurp(const char *path, long *n) {
     FILE *f = fopen(path, "rb");
     if (!f) { perror(path); return NULL; }
     fseek(f, 0, SEEK_END); *n = ftell(f); fseek(f, 0, SEEK_SET);
-    uint8_t *b = malloc((size_t)*n + 1);
+    uint8_t *b = xmalloc((size_t)*n + 1);
     if (fread(b, 1, (size_t)*n, f) != (size_t)*n) { fclose(f); free(b); return NULL; }
     fclose(f); b[*n] = 0;
     return b;
@@ -49,7 +49,7 @@ static double *load_csv(const char *path, int *n) {
     long len; char *s = (char *)slurp(path, &len);
     if (!s) return NULL;
     int col = -1, c = 0, cap = 1024; *n = 0;
-    double *v = malloc(sizeof(double) * (size_t)cap);
+    double *v = xmalloc(sizeof(double) * (size_t)cap);
     char *save = NULL;
     for (char *line = strtok_r(s, "\r\n", &save); line; line = strtok_r(NULL, "\r\n", &save)) {
         char *sv = NULL; c = 0;
@@ -61,7 +61,7 @@ static double *load_csv(const char *path, int *n) {
         }
         for (char *t = strtok_r(line, ",", &sv); t; t = strtok_r(NULL, ",", &sv), c++)
             if (c == col) {
-                if (*n == cap) v = realloc(v, sizeof(double) * (size_t)(cap *= 2));
+                if (*n == cap) v = xrealloc(v, sizeof(double) * (size_t)(cap *= 2));
                 v[(*n)++] = strtod(t, NULL);
             }
     }
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
         long n; uint8_t *b = slurp(argv[2], &n);
         if (!b) return 1;
         if (cmd[0] == 'd') {
-            size_t cap = (size_t)n * 40 + 64; char *o = malloc(cap);
+            size_t cap = (size_t)n * 40 + 64; char *o = xmalloc(cap);
             disasm(b, (size_t)n, 1, o, cap);
             printf("# %s : %ld octets\n%s", argv[2], n, o); free(o);
         } else for (long i = 0; i < n; i++) printf("%02x%s", b[i], (i % 16 == 15 || i == n - 1) ? "\n" : " ");

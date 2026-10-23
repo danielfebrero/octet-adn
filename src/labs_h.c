@@ -84,7 +84,7 @@ static double fold_score(FoldState *s, const Creature *c) {
 static double fold_random_baseline(void) {        /* marche auto-évitante aléatoire, 64 essais / séquence */
     static double cached = -1;
     if (cached >= 0) return cached;
-    FoldState *s = calloc(1, sizeof *s); Rng r; rng_seed(&r, 12345); double t = 0;
+    FoldState *s = xcalloc(1, sizeof *s); Rng r; rng_seed(&r, 12345); double t = 0;
     for (int k = 0; k < N_HP; k++) for (int j = 0; j < 64; j++) t += (double)fold_seq(s, k, NULL, &r) / HP[k].opt / 64;
     free(s);
     return cached = t / N_HP;
@@ -98,9 +98,9 @@ static void fold_before(World *w, Creature *c) {
 }
 void hl_fold_free(Lab *l);
 static void fold_init(Lab *l, World *w) {
-    FoldState *s = calloc(1, sizeof *s);
+    FoldState *s = xcalloc(1, sizeof *s);
     WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0;
-    Rng *r = malloc(sizeof *r); rng_seed(r, 0);
+    Rng *r = xmalloc(sizeof *r); rng_seed(r, 0);
     s->sb = world_new(NULL, 0, r, &sc, NULL);
     l->ext = s; l->ext_free = hl_fold_free; w->before_vm = fold_before;
 }
@@ -137,7 +137,7 @@ static double replay_pool(Lab *l, int ticks, const PoolEntry *pool, int n, doubl
     Lab l2; lab_init(&l2, l->id, base);
     l2.counterfactual = 1;
     Rng r = l->rng0;
-    CycleResult *res = malloc(sizeof *res);
+    CycleResult *res = xmalloc(sizeof *res);
     run_cycle(&l2, pool, n, &r, base, res);
     double f = res->fitness;
     if (extra) memcpy(extra, l2.extra, sizeof l2.extra);
@@ -182,7 +182,7 @@ static int ab_key(const Creature *c) { return c->dna[0] & 7; }
 void hl_ab_cfg(WorldConfig *c) { c->max_pop = 260; c->attack_steal = 6; }
 int hl_ab_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "antibiotic", 0); return 4; }
 void hl_ab_init(Lab *l, World *w) {
-    l->ext = calloc(1, sizeof(AbState));
+    l->ext = xcalloc(1, sizeof(AbState));
     static const uint8_t host[8] = { 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f };
     uint8_t path[8] = { 0x20, 0x1a, 0x0e, 0x0f, 0x1e, 0x1e, 0x1e, 0x1e };   /* clé ; ATTACK SPLIT YIELD LOOP */
     int x0 = w->cfg.w / 2 - 4, y0 = w->cfg.h / 2 - 2;
@@ -279,7 +279,7 @@ static long cm_cap(const World *w, const CmState *s) {
     return r;
 }
 void hl_cm_init(Lab *l, World *w) {
-    CmState *s = calloc(1, sizeof *s);
+    CmState *s = xcalloc(1, sizeof *s);
     for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) { s->cap[y][x] = 14; s->snap[y][x] = w->food[y][x]; }
     s->r0 = cm_cap(w, s);
     l->ext = s;
@@ -333,7 +333,7 @@ static void pd_before(World *w, Creature *c) {
     w->stimulus = (c->ls[1] == PS_I) | ((c->ls[4] > w->t) << 1) | ((c->ls[1] == PS_R) << 2);
 }
 void hl_pd_init(Lab *l, World *w) {
-    PdState *s = calloc(1, sizeof *s);
+    PdState *s = xcalloc(1, sizeof *s);
     s->key = fnv1a(l->rng0.s, sizeof l->rng0.s, FNV_INIT);   /* identique dans les deux runs d'une paire */
     l->ext = s; w->before_vm = pd_before;
 }
@@ -386,7 +386,7 @@ static double pd_run(Lab *l, int ticks, const Rng *rng, int cf, double *ex) {
     Lab l2; lab_init(&l2, l->id, ticks);
     l2.counterfactual = cf;
     Rng r = *rng;
-    CycleResult *res = malloc(sizeof *res);
+    CycleResult *res = xmalloc(sizeof *res);
     run_cycle(&l2, l->pool0, l->npool0, &r, ticks, res);
     double f = res->fitness;
     if (ex) memcpy(ex, l2.extra, sizeof l2.extra);
@@ -495,9 +495,9 @@ static void cr_before(World *w, Creature *c) {
 }
 static void cr_free(Lab *l) { CrState *s = l->ext; if (s) { free(s->sb->rng); world_free(s->sb); } }
 void hl_cr_init(Lab *l, World *w) {
-    CrState *s = calloc(1, sizeof *s);
+    CrState *s = xcalloc(1, sizeof *s);
     WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0;
-    Rng *r = malloc(sizeof *r); rng_seed(r, 0);
+    Rng *r = xmalloc(sizeof *r); rng_seed(r, 0);
     s->sb = world_new(NULL, 0, r, &sc, NULL);
     l->ext = s; l->ext_free = cr_free; w->before_vm = cr_before;
 }
@@ -541,7 +541,7 @@ typedef struct { int R; double corr[16]; long ct[16]; uint64_t key; } SeState;
 void hl_se_cfg(WorldConfig *c) { (void)c; }
 int hl_se_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "selfevo", 0); return 4; }
 void hl_se_init(Lab *l, World *w) {
-    SeState *s = calloc(1, sizeof *s);
+    SeState *s = xcalloc(1, sizeof *s);
     s->key = fnv1a(l->rng0.s, sizeof l->rng0.s, FNV_INIT);   /* cibles communes aux runs appariés */
     l->ext = s; w->cfg.self_evo = l->counterfactual != 1;
 }
@@ -615,7 +615,7 @@ void hl_dg_cfg(WorldConfig *c) {
 }
 int hl_dg_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "diagnose", 0); return 4; }
 void hl_dg_init(Lab *l, World *w) {
-    DgState *s = calloc(1, sizeof *s);
+    DgState *s = xcalloc(1, sizeof *s);
     s->best_rate = -1;
     s->mark = (int)rng_below(w->rng, 8);
     l->ext = s;
@@ -788,10 +788,10 @@ static int gn_target(const GnTask *t, int trial, int c, int p1, int p2, int p3) 
 typedef struct { World *sb; Creature tc; } GnState;
 typedef struct { int level; } GnLab;
 static GnState *gn_state_new(void) {
-    GnState *s = calloc(1, sizeof *s);
+    GnState *s = xcalloc(1, sizeof *s);
     WorldConfig sc = cfg_default(); sc.max_pop = 0; sc.food_density = 0; sc.ops_per_tick = GN_OPS;
     sc.regs = GN_REGS;
-    Rng *r = malloc(sizeof *r); rng_seed(r, 0);
+    Rng *r = xmalloc(sizeof *r); rng_seed(r, 0);
     s->sb = world_new(NULL, 0, r, &sc, NULL);
     return s;
 }
@@ -998,7 +998,7 @@ int gn_level_of(const PoolEntry *g, int n) {
     return L;
 }
 void hl_gn_init(Lab *l, World *w) {
-    GnLab *s = calloc(1, sizeof *s);
+    GnLab *s = xcalloc(1, sizeof *s);
     s->level = l->pool0 ? gn_level_of(l->pool0, l->npool0) : 0;
     l->ext = s; w->before_vm = gn_before;
     if (l->eval_only) {                                 /* réévaluation : la fitness ne lit que le pool, pas de monde à simuler */
@@ -1078,7 +1078,7 @@ static void gn_take(const PoolEntry *cand, double *s, int m, int k, PoolEntry *o
  * bac à sable. Places 0-7 : échelle mémoire ; places 8-15 : sélection du curriculum. */
 int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     if (l->eval_only) return 0;                         /* réévaluation : seule la fitness du pool compte */
-    Creature **v = malloc(sizeof(Creature *) * CMAX); int n = 0;
+    Creature **v = xmalloc(sizeof(Creature *) * CMAX); int n = 0;
     for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species == 0) v[n++] = w->cs[i];
     for (int i = 1; i < n; i++) {
         Creature *c = v[i]; int j = i - 1;
@@ -1086,8 +1086,8 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
         v[j + 1] = c;
     }
     int m = 0;
-    PoolEntry *cand = malloc(sizeof(PoolEntry) * (GN_CAND + POOL_MAX));
-    double *sm = malloc(sizeof(double) * (GN_CAND + POOL_MAX)), *st = malloc(sizeof(double) * (GN_CAND + POOL_MAX));
+    PoolEntry *cand = xmalloc(sizeof(PoolEntry) * (GN_CAND + POOL_MAX));
+    double *sm = xmalloc(sizeof(double) * (GN_CAND + POOL_MAX)), *st = xmalloc(sizeof(double) * (GN_CAND + POOL_MAX));
     for (int i = 0; i < n && m < GN_CAND; i++) {
         PoolEntry e; gn_inherit(&e, v[i], w->cfg.germline);
         int dup = 0;
@@ -1097,8 +1097,8 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     for (int i = 0; i < l->npool0 && i < POOL_MAX; i++) cand[m++] = l->pool0[i];
 #ifdef GN_DIRECT_SEL
     (void)sm; (void)st;
-    double *sd = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
-    double *so = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *sd = xmalloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *so = xmalloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
     int other = (GN_DIRECT_FAM == 6) ? 7 : 6;
     for (int i = 0; i < m; i++) {
         sd[i] = gn_eval(&cand[i], 1, 1, 0, 0, GN_HELD_N, 0, GN_DIRECT_FAM, NULL);
@@ -1111,8 +1111,8 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
     return k;
 #else
     uint64_t seed = gn_cycle_seed(l) ^ 0x5E1EC7ULL;
-    double *s1 = sm, *s2 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
-    double *s3 = malloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *s1 = sm, *s2 = xmalloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
+    double *s3 = xmalloc(sizeof(double) * (size_t)(GN_CAND + POOL_MAX));
     for (int i = 0; i < m; i++) {
         s1[i] = gn_eval(&cand[i], 1, 0, 0, seed ^ 0x6A6C0003ULL, 8, 0, 3, NULL);
         s2[i] = gn_eval(&cand[i], 1, 0, 0, seed ^ 0x6A6C0004ULL, 8, 0, 6, NULL);
@@ -1144,7 +1144,7 @@ int hl_gn_sel(Lab *l, World *w, PoolEntry *out) {
 typedef struct { int prev, fake, s; double credit, emits, exact; } DmState;
 static double pop_ticks_h(const Lab *l) { long n = 0; for (int i = 0; i < l->npops; i++) n += l->pops[i]; return n > 0 ? (double)n : 1.0; }
 int hl_dm_seeds(PoolEntry *o) { for (int i = 0; i < 4; i++) seed_entry(&o[i], "dialog", 0); return 4; }
-void hl_dm_init(Lab *l, World *w) { DmState *s = calloc(1, sizeof *s); s->prev = (int)rng_below(w->rng, 16); l->ext = s; }
+void hl_dm_init(Lab *l, World *w) { DmState *s = xcalloc(1, sizeof *s); s->prev = (int)rng_below(w->rng, 16); l->ext = s; }
 void hl_dm_rank(const Creature *c, double k[2]) { k[0] = c->age > 0 ? c->lscore / c->age : 0; k[1] = c->e; }
 void hl_dm_pre(Lab *l, World *w) {
     DmState *s = l->ext;

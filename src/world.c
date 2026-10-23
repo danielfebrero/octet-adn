@@ -16,7 +16,7 @@ WorldConfig cfg_default(void) {
 }
 
 Creature *creature_new(int x, int y, const uint8_t *dna, int len, int e, int id, int species, int parent) {
-    Creature *c = calloc(1, sizeof *c);
+    Creature *c = xcalloc(1, sizeof *c);
     c->x = x; c->y = y; c->e = e; c->id = id; c->species = species; c->parent = parent;
     c->len = len; c->germ_len = len; c->emitted = -1;
     if (len > 0) { memcpy(c->dna, dna, (size_t)len); memcpy(c->germ, dna, (size_t)len); }
@@ -31,7 +31,7 @@ static void add(World *w, Creature *c) {
 void world_spawn(World *w, Creature *c) { add(w, c); }   /* labos : injecter une créature (pathogène, hôte...) */
 
 World *world_new(const PoolEntry *g, int n, Rng *rng, const WorldConfig *cfg, struct Lab *lab) {
-    World *w = calloc(1, sizeof *w);
+    World *w = xcalloc(1, sizeof *w);
     w->cfg = cfg ? *cfg : cfg_default();
     if (w->cfg.w > GRID_W) w->cfg.w = GRID_W;
     if (w->cfg.h > GRID_H) w->cfg.h = GRID_H;
