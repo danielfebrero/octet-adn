@@ -773,6 +773,7 @@ static int usage(void) {
                     "                       [--repro split|copy] [--rep-steps N] [--rep-cost E] [--rep-energy E] [--rep-p p] [--rep-mut x]\n"
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
+                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow (le reste vient du checkpoint)\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
     return 2;
@@ -780,6 +781,7 @@ static int usage(void) {
 
 static int cmd_run(int argc, char **argv) {
     Params P = defaults(); const char *dir = NULL; long ticks = 20000;
+    int got_season_amp = 0, got_season_period = 0, got_pred = 0, got_pred_dmg = 0, got_pred_every = 0, got_regrow = 0;
     for (int i = 2; i < argc; i++) {
         const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!v) return usage();
@@ -788,7 +790,7 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--w")) P.w = atoi(v);
         else if (!strcmp(a, "--h")) P.h = atoi(v);
         else if (!strcmp(a, "--max-pop")) P.max_pop = atoi(v);
-        else if (!strcmp(a, "--regrow")) P.regrow = atoi(v);
+        else if (!strcmp(a, "--regrow")) { P.regrow = atoi(v); got_regrow = 1; }
         else if (!strcmp(a, "--pop0")) P.pop0 = atoi(v);
         else if (!strcmp(a, "--ticks")) ticks = atol(v);
         else if (!strcmp(a, "--sample")) P.sample = atoi(v);
@@ -811,12 +813,12 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--rep-energy")) P.rep_energy = atoi(v);
         else if (!strcmp(a, "--rep-p")) P.rep_p = atof(v);
         else if (!strcmp(a, "--rep-mut")) P.rep_mut = atof(v);
-        else if (!strcmp(a, "--pred")) P.pred = atoi(v);
-        else if (!strcmp(a, "--pred-dmg")) P.pred_dmg = atoi(v);
-        else if (!strcmp(a, "--pred-every")) P.pred_every = atoi(v);
+        else if (!strcmp(a, "--pred")) { P.pred = atoi(v); got_pred = 1; }
+        else if (!strcmp(a, "--pred-dmg")) { P.pred_dmg = atoi(v); got_pred_dmg = 1; }
+        else if (!strcmp(a, "--pred-every")) { P.pred_every = atoi(v); got_pred_every = 1; }
         else if (!strcmp(a, "--osmo")) P.osmo = atoi(v);
-        else if (!strcmp(a, "--season-amp")) P.season_amp = atof(v);
-        else if (!strcmp(a, "--season-period")) P.season_period = atoi(v);
+        else if (!strcmp(a, "--season-amp")) { P.season_amp = atof(v); got_season_amp = 1; }
+        else if (!strcmp(a, "--season-period")) { P.season_period = atoi(v); got_season_period = 1; }
         else if (!strcmp(a, "--soc-thr")) P.soc_thr = atof(v);
         else return usage();
         i++;
@@ -831,7 +833,29 @@ static int cmd_run(int argc, char **argv) {
     if (access(ck, F_OK) == 0) {
         if (!load(&T, ck)) { fprintf(stderr, "%s illisible\n", ck); return 1; }
         resumed = 1;
-        fprintf(stderr, "reprise de %s au tick %ld (paramètres du checkpoint ; seuls --ticks comptent)\n", ck, T.t);
+        /* choc : ces flags écrasent le checkpoint. Le reste (repro, osmo, seed, mondes) reste. */
+        if (got_season_amp) T.P.season_amp = P.season_amp;
+        if (got_season_period) T.P.season_period = P.season_period;
+        if (got_regrow) T.P.regrow = P.regrow;
+        if (got_pred_dmg) T.P.pred_dmg = P.pred_dmg;
+        if (got_pred_every) T.P.pred_every = P.pred_every;
+        if (got_pred) {
+            T.P.pred = P.pred;
+            for (int k = 0; k < T.P.K; k++) {
+                Island *I = &T.I[k];
+                I->npred = P.pred;
+                for (int q = 0; q < P.pred; q++) {
+                    I->px[q] = (int)rng_below(&I->rr, (uint32_t)T.P.w);
+                    I->py[q] = (int)rng_below(&I->rr, (uint32_t)T.P.h);
+                }
+            }
+        }
+        fprintf(stderr, "reprise de %s au tick %ld", ck, T.t);
+        if (got_season_amp || got_pred || got_regrow)
+            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d)", T.P.season_amp, T.P.pred, T.P.regrow);
+        else
+            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow comptent)");
+        fprintf(stderr, "\n");
     } else {
         terra_new(&T, &P);
         if (P.repro || P.founders >= F_SOUP) {           /* part de copieurs vérifiés parmi les fondateurs */
