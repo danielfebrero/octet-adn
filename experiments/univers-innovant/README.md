@@ -75,3 +75,21 @@ partagent un motif. Ce journal ne crée pas un second seuil.
 make experiments/univers_innovant
 ./experiments/univers_innovant > experiments/univers-innovant/results.txt
 ```
+
+## Résultats
+
+Dispositif valide. Sortie brute : `results.txt`.
+
+| étalon | lecture |
+|---|---|
+| motif planté, identité | vu |
+| bruit gelé, identité | 0 / 8 |
+| cristal `0x11`, identité | refusé |
+
+| bras | lois qui passent | meilleur bassin |
+|---|---:|---:|
+| 8 familles × 32 lois × 8 graines | 0 | 0 / 8 |
+
+Le journal des lois à 2 graines est vide.
+
+**Verdict : non.** À ce volume, ces huit familles ne font pas naître un ensemble partagé.
