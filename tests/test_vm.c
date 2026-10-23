@@ -899,25 +899,29 @@ TEST(test_dialog_mem_needs_memory) {
     assert(fm > 0.90 && em[1] > 0.90 && em[3] < 0.40);
 }
 
-/* dialog-lag2 : sans deux cases mémoire, l'espérance est nulle. La seed-amorce (s_t + 1) et le
- * génome de dialog-mem (mémoire d'un tick, s_{t-1} + 1, puni) restent sous le plafond ; un génome à
- * deux cases (B = s_{t-2} + 1, un octet du génome via STORE/LOAD garde s_{t-1} + 1) le dépasse
- * nettement et retombe à ~0 contre un faux s_{t-2} (baseline). Seuils mesurés, avec marge. */
+/* dialog-lag2 : la seed-amorce (s_t + 1) reste à ~0 et le génome de dialog-mem (mémoire d'un tick,
+ * s_{t-1} + 1) est puni. Trou connu, trouvé par l'évolution : une case + la phase de l'ip (lire un
+ * tick sur deux, répondre ¬A l'autre tick) tient s_{t-2} une fois sur deux, plafond 1/2 par émission.
+ * Un génome à deux cases (B = s_{t-2} + 1, un octet du génome via STORE/LOAD garde s_{t-1} + 1)
+ * dépasse ce plafond et retombe à ~0 contre un faux s_{t-2} (baseline). Seuils mesurés, avec marge. */
 TEST(test_dialog_lag2_needs_two_slots) {
-    PoolEntry seed[POOL_MAX], one[4], two[4];
+    PoolEntry seed[POOL_MAX], one[4], ph[4], two[4];
     int id = lab_index("dialog-lag2"), n = LABS[id].seeds(seed);
     assert(id == N_LABS - 1 && n == 4);
-    double es[N_EXTRA], e1[N_EXTRA], e2[N_EXTRA];
+    double es[N_EXTRA], e1[N_EXTRA], ep[N_EXTRA], e2[N_EXTRA];
     double fs = ev4("dialog-lag2", seed, n, es);
     raw_pool(one, "0d1412010e0f1e");                       /* mémoire d'un tick : EMIT s_{t-1}+1 */
     double f1 = ev4("dialog-lag2", one, 4, e1);
+    raw_pool(ph, "0d1412010e0f151c0f1914160f1e");           /* 1 case + phase : EMIT A, SENSE ; puis EMIT ¬A (évite s_{t-1}) */
+    double fp = ev4("dialog-lag2", ph, 4, ep);
     raw_pool(two, "0d060d1614070d1512010e0f1eff");         /* EAT STORE 13 MOV_AB EMIT LOAD 13 MOV_BA SENSE_STIM INC_A SPLIT YIELD LOOP [case] */
     double f2 = ev4("dialog-lag2", two, 4, e2);
-    printf("    dialog-lag2 : seed %.3f (exact2 %.3f)  1 case %.3f (hit1 %.3f)  2 cases %.3f (exact2 %.3f, baseline %.3f)\n",
-           fs, es[1], f1, e1[2], f2, e2[1], e2[4]); fflush(stdout);
+    printf("    dialog-lag2 : seed %.3f (exact2 %.3f)  1 case %.3f (hit1 %.3f)  1 case + phase %.3f (exact2 %.3f, hit1 %.3f)  2 cases %.3f (exact2 %.3f, baseline %.3f)\n",
+           fs, es[1], f1, e1[2], fp, ep[1], ep[2], f2, e2[1], e2[4]); fflush(stdout);
     assert(fs < 0.10 && es[1] < 0.15);
     assert(f1 < -0.20 && e1[2] > 0.60);
-    assert(f2 > 0.50 && e2[1] > 0.80 && fabs(e2[4]) < 0.10);
+    assert(fp > 0.30 && ep[1] < 0.55 && ep[2] < 0.10);    /* trou connu : la phase (ip) donne une 2e case d'un bit, plafond 1/2 */
+    assert(f2 > 0.50 && e2[1] > 0.80 && fabs(e2[4]) < 0.10 && f2 > fp + 0.15);
 }
 
 /* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */

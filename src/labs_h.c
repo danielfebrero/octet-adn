@@ -1204,9 +1204,11 @@ double hl_dm_fit(Lab *l, World *w, int ticks) {
  * crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming de dialog-mem.
  * Toute politique qui ne distingue pas s_{t-1} de s_{t-2} a une espérance nulle : sans mémoire
  * (0,2875 − 0,2875), mémoire d'un tick (s_{t-1} : 0,2875 − 1), et la couverture de dialog-mem
- * (garder une valeur 2 ticks → moitié s_{t-1}, moitié s_{t-2}) retombe à 0. Seule une lignée qui
- * tient DEUX valeurs à la fois (A et B, A et un octet du génome via STORE/LOAD, deux quartets dans
- * un octet…) dépasse 0 ; optimum = 1 − 0,2875 = 0,7125. Seed-amorce = seed emit-dialog.
+ * (garder une valeur 2 ticks et la répondre les deux fois) retombe à 0. Trou connu : une case + la
+ * phase de l'ip (lire un tick sur deux, répondre autre chose que s_{t-1}+1 l'autre tick) plafonne à
+ * (0,7125 + 0,2875) / 2 = 0,5 par émission ; c'est ce que l'évolution trouve depuis la seed.
+ * Une lignée qui tient DEUX valeurs à la fois (A et B, A et un octet du génome via STORE/LOAD,
+ * deux quartets dans un octet…) vise l'optimum 1 − 0,2875 = 0,7125. Seed-amorce = seed emit-dialog.
  * Taxe de silence : une créature-tick sans EMIT coûte 0,1, sinon se taire (0) égale le plafond et
  * l'évolution perd EMIT (mesuré : fitness 0, eval 0/0 dès ~2000 cycles sans la taxe).
  * Baseline : même pool, même graine, s_{t-2} remplacé par un faux tiré au hasard (pénalité inchangée). */
