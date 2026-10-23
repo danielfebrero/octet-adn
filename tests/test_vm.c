@@ -333,7 +333,7 @@ static int raw_pool(PoolEntry *p, const char *hex) {
 TEST(test_sixteen_labs_and_core_untouched) {
     const char *nw[6] = { "fold", "antibiotic", "commons", "pandemic", "code-repair", "self-evolve" };
     for (int i = 0; i < 6; i++) assert(lab_index(nw[i]) == N_CORE_LABS + i);
-    assert(N_LABS == 18 && cfg_default().self_evo == 0);
+    assert(N_LABS == 19 && cfg_default().self_evo == 0);
     Rng r; rng_seed(&r, 0); WorldConfig cfg = cfg_default();
     World *w = world_new(NULL, 0, &r, &cfg, NULL);
     assert(w->before_vm == NULL);
@@ -876,6 +876,22 @@ TEST(test_soup_detector_controls) {
     assert(soup_run(&r, NULL, &a) == 0 && a.births == 0 && a.copiers_final == 0 && a.t_first == -1);
 }
 
+/* dialog-mem : la seed-amorce (emit-dialog, s_t + 1) ne contient pas la mémoire ; un génome
+ * qui garde s_{t-1} + 1 dans A et l'émet avant de relire le stimulus passe le plafond sans mémoire,
+ * et retombe au hasard quand on remplace s_{t-1} par un faux (baseline). Seuils mesurés, avec marge. */
+TEST(test_dialog_mem_needs_memory) {
+    PoolEntry seed[POOL_MAX], mem[4];
+    int id = lab_index("dialog-mem"), n = LABS[id].seeds(seed);
+    assert(id == N_LABS - 1 && n == 4);
+    double es[N_EXTRA], em[N_EXTRA];
+    double fs = ev4("dialog-mem", seed, n, es);
+    raw_pool(mem, "0d1412010e0f1e");          /* EAT EMIT SENSE_STIM INC_A SPLIT YIELD LOOP */
+    double fm = ev4("dialog-mem", mem, 4, em);
+    printf("    dialog-mem : seed %.3f (exact %.3f)  mémoire %.3f (exact %.3f, baseline %.3f)\n", fs, es[1], fm, em[1], em[3]);
+    assert(fs < 0.40 && es[1] < 0.25);
+    assert(fm > 0.90 && em[1] > 0.90 && em[3] < 0.40);
+}
+
 int main(void) {
     RUN(test_legacy_opcodes_preserved);
     RUN(test_decode_bytes);
@@ -917,6 +933,7 @@ int main(void) {
     RUN(test_general_regs_push_peek);
     RUN(test_novelty_map_elites);
     RUN(test_soup_detector_controls);
-    printf("\n%d/%d tests OK\n", passed, 40);
+    RUN(test_dialog_mem_needs_memory);
+    printf("\n%d/%d tests OK\n", passed, 41);
     return 0;
 }
