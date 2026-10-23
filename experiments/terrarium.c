@@ -110,6 +110,7 @@ typedef struct {
     int npred, px[16], py[16];
     long rep_try, rep_ok, pred_hits;
     long cause_yield, cause_attr, cause_rep, cause_drain;
+    int celln[GRID_H][GRID_W]; Creature *cellv[GRID_H][GRID_W][4];
     const Params *P;
     long t_end;
 } Island;
@@ -186,16 +187,15 @@ static void hook(World *w, Creature *c) {
         int has[OP_COUNT]; tape_scan(c->germ, c->germ_len, has);
         int W = w->cfg.w, H = w->cfg.h;
         Creature *sim = NULL, *dif = NULL; int best_s = 1 << 20, best_d = -1;
-        for (int i = 0; i < w->ncs; i++) {
-            Creature *o = w->cs[i];
-            if (o == c || o->e <= 0) continue;
-            int dx = abs(o->x - c->x), dy = abs(o->y - c->y);
-            if (dx > W - dx) dx = W - dx;
-            if (dy > H - dy) dy = H - dy;
-            if (dx > 1 || dy > 1) continue;
-            int h = ham_bytes(c->germ, c->germ_len, o->germ, o->germ_len);
-            if (h < best_s) { best_s = h; sim = o; }
-            if (h > best_d) { best_d = h; dif = o; }
+        for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
+            int y = (c->y + dy + H) % H, x = (c->x + dx + W) % W;
+            for (int k = 0; k < I->celln[y][x]; k++) {
+                Creature *o = I->cellv[y][x][k];
+                if (o == c || o->e <= 0) continue;
+                int h = ham_bytes(c->germ, c->germ_len, o->germ, o->germ_len);
+                if (h < best_s) { best_s = h; sim = o; }
+                if (h > best_d) { best_d = h; dif = o; }
+            }
         }
         if (has[OP_YIELD] && c->e > 10) {
             uint8_t *f = &w->food[c->y][c->x];
@@ -296,6 +296,7 @@ static void island_tick(Island *I) {
         w->cfg.food_regrow = (int)lround(P->regrow * f);
     }
     memset(I->em_n, 0, sizeof I->em_n);
+    memset(I->celln, 0, sizeof I->celln);
     I->nsnap = w->ncs;
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
@@ -304,6 +305,7 @@ static void island_tick(Island *I) {
             int k = I->em_n[c->y][c->x]++;
             I->em_v[c->y][c->x][k] = (uint8_t)(c->emitted & 15); I->em_id[c->y][c->x][k] = c->id;
         }
+        if (I->celln[c->y][c->x] < 4) I->cellv[c->y][c->x][I->celln[c->y][c->x]++] = c;
     }
     int n_before = w->ncs;
     world_step(w);

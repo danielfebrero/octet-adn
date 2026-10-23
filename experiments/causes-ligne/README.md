@@ -59,4 +59,20 @@ Voir `originaux.txt` (dump du vivant, avant le compte).
 
 ## Résultats
 
-Course unique après le commit de ce protocole. Voir `results.txt`.
+Course unique, après `9a4e750` (+ grille 3×3). Fork t = 14 294 000, pop = 3 851.
+Pid 65645 et le fork forces (K=16) laissés vivants.
+
+| bras | pop finale | ATTACK | YIELD | XOR | porte |
+|---|---:|---:|---:|---:|---|
+| témoin | 3 874 | 0,1 % | 0,1 % | 1,5 % | **tenue** |
+| `--forces 2` | 3 659 | **40,6 %** | **59,2 %** | **28 %** | **tenue + causes_actives + producteurs + forces_tenues** |
+
+Les octets qui paient, chez les originaux, se répandent : YIELD (producteur) 6 → 59 %,
+ATTACK 0,2 → 41 %, XOR (répulsion) 8 → 28 %. ADD/AND (attraction) s'éteignent.
+SUB (drain) recule de 94 → 53 %. Le témoin, même checkpoint, perd YIELD (0,1 %).
+
+Les îles se différencient : île 0 = 664 créatures dont 648 espèce 1 ; île 2 = 1 000 dont 76.
+Copier_frac = 0,98. 3 niches stables.
+
+Sortie brute : `results.txt`. Les deux mondes longs continuent.
+
