@@ -35,3 +35,19 @@ make experiments/terrarium_run
 
 Le choc n'entre pas dans `make test`. `selftest` ne passe pas ces flags : la reprise
 reste déterministe.
+
+## Résultats
+
+Course unique, après le commit `2854a61`. Fork t = 11 204 000, pop = 3 878.
+Pid 65645 laissé vivant.
+
+| bras | pop finale | verdict |
+|---|---:|---|
+| témoin, +120 000 ticks | 3 883 (min 3 801, max 3 952) | tenue |
+| saison amp=1, période 4 000 | **0** à t = 11 207 000 | **extinction** |
+
+Ils remplissent le bocal pendant la crue (3 998 / 4 000, naissances qui s'effondrent).
+Au premier creux (repousse → 0), la mort dépasse la naissance : 3 972 → 1 947 → 778 → 116 → 0
+en 800 ticks. Les 3 niches tiennent jusqu'au bout. Pas de fuite vers une case encore pleine.
+
+Sortie brute : `results.txt`. Le monde original continue.

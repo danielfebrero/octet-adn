@@ -1,0 +1,23 @@
+# perturbation saison, fork t=11204000 pop=3878, 120000 ticks demandés
+# témoin : experiments/vie-choc-ctrl  choc : experiments/vie-choc
+# season_amp=1 season_period=4000  (repousse 0…2×)
+fork_t	11204000
+fork_pop	3878
+ctrl_end_t	11325800
+ctrl_end_pop	3883
+ctrl_min	3801
+ctrl_max	3952
+choc_end_t	11207000
+choc_end_pop	0
+choc_t_extinction	11207000
+verdict	extinction
+
+# trajectoire choc (tick pop births deaths)
+11204000	3878	5872	5872
+11205000	3998	841	836
+11206000	3984	1657	1670
+11206200	3972	3233	3245
+11206400	1947	3811	5836
+11206600	778	1818	2987
+11206800	116	1120	1782
+11207000	0	7	123
