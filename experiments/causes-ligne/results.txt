@@ -1,0 +1,40 @@
+# causes --forces 2, fork t=14294000 pop=3851, 80000 ticks
+# témoin : experiments/vie-causes-ctrl
+# causes : experiments/vie-causes  --forces 2  (regrow 80, pas d'expand)
+# originaux pid 65645 et fork forces pid 381736 laissés vivants
+fork_t	14294000
+fork_pop	3851
+ctrl_end_t	14374000
+ctrl_end_pop	3874
+ctrl_min	3817
+ctrl_max	3943
+ctrl_stable_niches	3
+ctrl_ATTACK_pct	0.10
+ctrl_YIELD_pct	0.10
+causes_end_t	14374000
+causes_end_pop	3659
+causes_min	3295
+causes_max	4000
+causes_stable_niches	3
+causes_end_sp1	1486
+causes_end_sp1_pct	40.61
+causes_end_YIELD_pct	59.2
+causes_end_XOR_pct	28.0
+causes_end_SUB_pct	52.7
+causes_end_ADD_pct	0.03
+causes_end_food	33253
+causes_sum_yield	249312810
+causes_sum_attr	3765066
+causes_sum_rep	119711942
+causes_sum_drain	72421141
+verdict	tenue+causes_actives+producteurs+forces_tenues
+
+# portes (dernière époque)
+# extinction          non
+# effondrement        non (3659/3851 = 95 %)
+# tenue               oui (95 %, 3 niches)
+# causes_nues         non
+# causes_actives      oui
+# producteurs         oui (YIELD 6.3 % → 59 % ; témoin 0.1 %)
+# forces_rares        non
+# forces_tenues       oui (sp1 40.6 %)

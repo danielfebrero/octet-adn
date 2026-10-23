@@ -1,0 +1,35 @@
+# dump des originaux (vie-monde) et du fork forces vivant
+# 2026-10-23T22:20Z  pid 65645 intact, pid forces (K=16) intact
+# binaire terrarium_run dump, lecture d'une copie de state.ck
+
+## vie-monde (originaux)
+t=14232000 K=4 pop=3910 forces=0 regrow=80
+iles 967/970/986/987  species=0  attacks_cum=0
+
+porteurs d'opcode (germen, pas un immédiat) :
+  SENSE 99.9  LOAD 99.7  TURN 99.7  JNZ 99.7  EAT 99.7  LOOP 99.7  STORE 99.6
+  STEP 99.5  DEC_B 99.8  CLR_A 94.3  SUB 93.7
+  INC_A 14.0  ADD 11.9  XOR 8.5  AND 8.4  YIELD 6.3
+  ATTACK 0.23  (9 individus)
+  SPLIT 0.6  EMIT 1.1
+
+consensus ≥50% : 14 / 64 positions
+  [02] EAT  [03] JNZ  [06] DEC_B  [07] LOAD  [11] STORE  [12] NOP
+  [14] SUB  [15] TURN [51] SENSE  [53] LOOP  [61] CLR_A  [62] STEP
+noyau copieur LOAD/STORE encore là. SUB est dans le consensus (80.9% pos 14).
+
+## vie-forces (vivant, --forces 1 --expand-every 40000 --regrow 20)
+t=14192000 K=16 pop=1605  (KMAX atteint)
+ATTACK porteurs 99.56%  — fixé en position [48]
+YIELD 99.3% pos [62]   ADD 99.4% pos [21]
+SUB 0.4% (perdu)
+EAT 39.6% (en recul)
+consensus ≥50% : 30 / 64  (plus conservé que l'original)
+presque tous espèce 1 : world_attack ne trouve plus d'autre espèce.
+La sécheresse + forces a sélectionné un nouveau noyau ATTACK+YIELD+ADD.
+
+## lecture
+Chez les originaux, les causes de --forces 2 sont déjà écrites :
+  YIELD 6.3%  ADD 11.9%  AND 8.4%  XOR 8.5%  SUB 93.7%  ATTACK 0.23%
+SUB majoritaire → le drain sera commun. YIELD/XOR/AND/ADD minoritaires →
+producteurs et attraction/répulsion naissent d'une minorité de seeds.
