@@ -57,3 +57,52 @@ testé au niveau du détecteur.
 
 **Oui** seulement si les cinq lignes passent. Un seul seuil raté réfute l'approche à ce volume. Pas de
 second mécanisme après les mesures.
+
+## Résultats
+
+Mesuré après le commit du pré-enregistrement. 72 courses, 32 fils, 727 s. Deux passages complets donnent les mêmes lignes et les mêmes hash (seule la durée change : 727 s et 698 s). Sortie brute :
+[`results.txt`](results.txt) (une ligne par course, courbe des copieurs toutes les 1024 époques
+pour la grille).
+
+| bras | graines | passent | seuil | tenu ? |
+|---|---:|---:|---|---|
+| G, grille 64 × 64 | 32 | **1** | ≥ 8 | **non** |
+| M, mélange | 32 | 0 | ≤ 2 | oui |
+| bruit, G sans `STORE` | 8 | 0 naissance, copieurs max 0,000 | 0 | oui |
+| cristal `00 11 … ff` | — | copieur = 0 | 0 | oui |
+| contrôle positif, G + 16 copies de `big_b_0`, 2048 époques | 8 | invasion 8/8 (copieurs en fin 0,953 à 1,000) | ≥ 6 | oui |
+
+**Verdict : non.** Le seuil de la grille est raté : 1 graine sur 32, pour 8 demandées. Les témoins
+tiennent et le contrôle positif envahit 8 fois sur 8 : le dispositif porte la vie quand on la lui
+donne, il ne la fait pas naître plus souvent que le mélange. G 1/32 contre M 0/32 : Fisher
+unilatéral p = 0,5.
+
+Ce qui s'est passé, sans en tirer plus :
+
+- **La graine 11 de la grille.** Réplicateur au point de contrôle 15872 (0,984 de copieurs), encore
+  0,938 à 16384. 239 649 naissances, dont 1490 sur 1500 vérifiées par un copieur. 6 octets
+  essentiels : `STORE 63` (positions 23–24), `LOAD 0` (31–32), `INC_B` (33), `LOOP` (43). C'est la
+  boucle `LOAD`/`STORE` indexée par B déjà décrite dans `soup-replicator`. C'est la seule émergence spontanée
+  mesurée à N = 4096 dans ce dépôt (soupe 0/8, cadre 0/12, mélange ici 0/32), mais un cas
+  sur 32 n'est pas le seuil. Dominant :
+  `9ec661c1002a5deae2c0669d4ac4f9df83d7fa4e84ca00063f85c862f875eb070003bb2400cb45fb7c5b001eef000097000000000065002eb90040a9acc7c800`.
+- **Moins de naissances isolées sur la grille.** Hors graine 11 : 11 naissances sur 10 graines de
+  la grille, contre 83 sur 30 graines du mélange. Aucune n'est due à un copieur vérifié. Rencontrer
+  toujours les quatre mêmes voisins réduit les essais entre programmes différents. Cette lecture
+  n'est pas une mesure de mécanisme.
+- Aucune courbe de la grille ne monte avant la graine 11 : les 31 autres restent à 0,00 à chaque
+  point de contrôle.
+
+Pas de second mécanisme après ces chiffres, comme pré-enregistré.
+
+## Reproduire
+
+```console
+make experiments/soupe_spatiale
+./experiments/soupe_spatiale selftest
+./experiments/soupe_spatiale run --threads 32 > results.txt   # 72 courses, ~12 min sur 32 cœurs
+```
+
+`make test` lance aussi le selftest : pavage (chaque case une fois, avec une voisine, pour les quatre
+tirages), détecteur (`big_b_0` copieur, cristal non), déterminisme, zéro naissance sans `STORE`, et
+invasion d'une petite grille de 256 cases à partir de 16 copies.
