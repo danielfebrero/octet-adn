@@ -301,6 +301,7 @@ void hl_dg_cfg(WorldConfig *c); int hl_dg_seeds(PoolEntry *o); void hl_dg_init(L
 void hl_dg_post(Lab *l, World *w); double hl_dg_fit(Lab *l, World *w, int t); int hl_dg_sel(Lab *l, World *w, PoolEntry *out);
 void hl_gn_cfg(WorldConfig *c); int hl_gn_seeds(PoolEntry *o); void hl_gn_init(Lab *l, World *w); void hl_gn_pre(Lab *l, World *w); double hl_gn_fit(Lab *l, World *w, int t); int hl_gn_sel(Lab *l, World *w, PoolEntry *out);
 int hl_dm_seeds(PoolEntry *o); void hl_dm_init(Lab *l, World *w); void hl_dm_rank(const Creature *c, double k[2]); void hl_dm_pre(Lab *l, World *w); void hl_dm_post(Lab *l, World *w); double hl_dm_fit(Lab *l, World *w, int t);
+void hl_d2_init(Lab *l, World *w); void hl_d2_pre(Lab *l, World *w); void hl_d2_post(Lab *l, World *w); double hl_d2_fit(Lab *l, World *w, int t);
 
 /* ---------------- registre ---------------- */
 const LabDef LABS[N_LABS] = {
@@ -356,6 +357,9 @@ const LabDef LABS[N_LABS] = {
     { "dialog-mem", "Dialogue avec mémoire : répondre au message d'avant",
       "réponse = (s_{t-1} + 1) mod 16 (le message d'avant, + 1), un symbole neuf par tick, historique vidé ; crédit gradué (Hamming 4 bits) / créature-tick ; plafond sans mémoire = 0,2875 de crédit, 1/16 exact ; seed-amorce = seed emit-dialog (s_t + 1, sans mémoire) ; baseline = même pool, faux s_{t-1}",
       { "accuracy", "exact", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_dm_pre, hl_dm_post, hl_dm_fit, hl_dm_rank, NULL, hl_dm_init, 0, 0 },
+    { "dialog-lag2", "Dialogue à deux cases mémoire : répondre au message d'il y a deux tours",
+      "crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming 4 bits, / créature-tick ; répondre au message d'avant est pénalisé ; créature-tick sans EMIT = −0,1 ; espérance 0 sans mémoire, mémoire d'un tick ou couverture ; une case + phase (un tick sur deux) plafonne à 0,5 / émission ; deux cases : optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-2}",
+      { "accuracy", "exact2", "hit1", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_d2_pre, hl_d2_post, hl_d2_fit, hl_dm_rank, NULL, hl_d2_init, 0, 0 },
 };
 
 int lab_index(const char *name) {

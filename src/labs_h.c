@@ -1197,3 +1197,73 @@ double hl_dm_fit(Lab *l, World *w, int ticks) {
     }
     return f;
 }
+
+/* ======================= dialog-lag2 : deux cases mémoire, pas une couverture =======================
+ * Même dialogue que dialog-mem (un symbole s_t neuf par tick, historique vidé), mais la bonne
+ * réponse est (s_{t-2} + 1) mod 16 ET la réponse au message d'avant (s_{t-1} + 1) est pénalisée :
+ * crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming de dialog-mem.
+ * Toute politique qui ne distingue pas s_{t-1} de s_{t-2} a une espérance nulle : sans mémoire
+ * (0,2875 − 0,2875), mémoire d'un tick (s_{t-1} : 0,2875 − 1), et la couverture de dialog-mem
+ * (garder une valeur 2 ticks et la répondre les deux fois) retombe à 0. Trou connu : une case + la
+ * phase de l'ip (lire un tick sur deux, répondre autre chose que s_{t-1}+1 l'autre tick) plafonne à
+ * (0,7125 + 0,2875) / 2 = 0,5 par émission ; c'est ce que l'évolution trouve depuis la seed.
+ * Une lignée qui tient DEUX valeurs à la fois (A et B, A et un octet du génome via STORE/LOAD,
+ * deux quartets dans un octet…) vise l'optimum 1 − 0,2875 = 0,7125. Seed-amorce = seed emit-dialog.
+ * Taxe de silence : une créature-tick sans EMIT coûte 0,1, sinon se taire (0) égale le plafond et
+ * l'évolution perd EMIT (mesuré : fitness 0, eval 0/0 dès ~2000 cycles sans la taxe).
+ * Baseline : même pool, même graine, s_{t-2} remplacé par un faux tiré au hasard (pénalité inchangée). */
+#define D2_SILENCE 0.1
+typedef struct { int prev, prev2, fake, s; double credit, emits, exact2, hit1; } D2State;
+static double d2_c(int v, int want) {
+    int b = (v ^ want) & 15;
+    b = (b & 1) + ((b >> 1) & 1) + ((b >> 2) & 1) + ((b >> 3) & 1);
+    return b == 0 ? 1.0 : b == 1 ? 0.55 : b == 2 ? 0.20 : b == 3 ? 0.05 : 0.0;
+}
+void hl_d2_init(Lab *l, World *w) {
+    D2State *s = xcalloc(1, sizeof *s);
+    s->prev = (int)rng_below(w->rng, 16); s->prev2 = (int)rng_below(w->rng, 16);
+    l->ext = s;
+}
+void hl_d2_pre(Lab *l, World *w) {
+    D2State *s = l->ext;
+    if (w->t > 0) { s->prev2 = s->prev; s->prev = s->s; }
+    s->s = (int)rng_below(w->rng, 16);
+    s->fake = (int)rng_below(w->rng, 16);                /* tiré dans les deux modes : rejeu apparié */
+    w->stimulus = s->s;
+    w->hist_n = 0;
+}
+void hl_d2_post(Lab *l, World *w) {
+    D2State *s = l->ext;
+    int want2 = ((l->counterfactual ? s->fake : s->prev2) + 1) & 15, want1 = (s->prev + 1) & 15;
+    for (int i = 0; i < w->nem; i++) {
+        Creature *a = w->em[i].c;
+        if (!a || a->species != 0) continue;
+        int v = w->em[i].v & 15;
+        double c2 = d2_c(v, want2), c1 = d2_c(v, want1), c = c2 - c1;
+        a->lscore += c;
+        int g = c2 == 1.0 ? 4 : c2 == 0.55 ? 2 : c2 == 0.20 ? 1 : 0;
+        a->e += g - 1 - (v == want1 && v != want2 ? 2 : 0);   /* répondre au message d'avant coûte */
+        cap_e(a);
+        s->credit += c; s->emits += 1;
+        s->exact2 += v == want2 && v != want1; s->hit1 += v == want1;
+    }
+    for (int i = 0; i < w->ncs; i++) {                    /* taxe de silence : se taire ne vaut pas 0 */
+        Creature *c = w->cs[i];
+        if (c->species == 0 && c->emitted < 0) { c->lscore -= D2_SILENCE; s->credit -= D2_SILENCE; }
+    }
+}
+double hl_d2_fit(Lab *l, World *w, int ticks) {
+    (void)w;
+    D2State *s = l->ext;
+    double f = s->credit / pop_ticks_h(l);
+    l->extra[0] = s->emits > 0 ? s->credit / s->emits : 0;
+    l->extra[1] = s->emits > 0 ? s->exact2 / s->emits : 0;
+    l->extra[2] = s->emits > 0 ? s->hit1 / s->emits : 0;
+    l->extra[3] = s->emits;
+    if (!l->counterfactual) {
+        double b = replay(l, ticks, NULL);
+        l->extra[4] = b;
+        l->extra[5] = f - b;
+    }
+    return f;
+}
