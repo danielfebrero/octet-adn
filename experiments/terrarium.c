@@ -23,6 +23,10 @@
  *  - cycles : autocorrélation de la population et des niches.
  *  Événements (events.tsv) : signal social significatif, nouvelle niche stable, cycle, extinction.
  *
+ * --forces 3 : EMIT pose une brique (recette = YIELD/XOR/ATTACK du germen). 64 briques
+ * ouvrent une île vide (KMAX 32). Un 2×2 de recettes distinctes irrigue. Le plafond
+ * 4×1000 est un bouchon de labo ; l'espace se bâtit dans les octets.
+ *
  *   ./experiments/terrarium_run run --dir D [options]   (reprend tout seul depuis D/state.ck)
  *   ./experiments/terrarium_run report D [D...]          (résumé des séries)
  *   ./experiments/terrarium_run selftest */
@@ -41,7 +45,9 @@
 
 void world_eat(World *w, Creature *c);
 
-#define KMAX    16
+#define KMAX    32
+#define BRK_NEED 64         /* briques sur une île pour ouvrir un nouvel espace */
+#define BRK_PAY  32         /* coût en briques (on les consomme) */
 #define PERSIST 10          /* échantillons consécutifs pour « persister » */
 #define COMPK   5           /* longueur des composants (k-grammes d'opcodes) : 3 sature l'espace (~30k), 5 ≈ 28M */
 #define CLONES  3           /* … et au moins CLONES porteurs simultanés à un moment (pas un seul individu qui vit vieux) */
@@ -64,8 +70,8 @@ typedef struct {               /* paramètres (sauvés dans le checkpoint) */
     int osmo;                   /* pont métabolique : absorbe ≤ osmo unités de nourriture de sa case par tick (sans EAT) */
     char ffile[256];            /* --founders soup:FICHIER */
     /* OADNTER4 : 0 = terrarium d'origine (mêmes tirages). Un checkpoint OADNTER3 se relit, ces champs valent 0. */
-    int forces;                 /* 0 = héritage ; 1 = espèce = ATTACK dans le germen ; 2 = + causes (YIELD/AND/ADD/XOR/SUB) */
-    int expand_every;           /* 0 = K fixe ; N = +1 île vide tous les N ticks (multiple de --sample), jusqu'à KMAX */
+    int forces;                 /* 0 héritage ; 1 = espèce ATTACK ; 2 = + causes ; 3 = + briques (EMIT pose, recettes, espace) */
+    int expand_every;           /* 0 = K fixe ; N = +1 île vide tous les N ticks (horloge), jusqu'à KMAX */
 } Params;
 enum { F_SEEDS, F_RANDOM, F_SOUP, F_HANDMADE };
 
@@ -111,6 +117,8 @@ typedef struct {
     long rep_try, rep_ok, pred_hits;
     long cause_yield, cause_attr, cause_rep, cause_drain;
     int celln[GRID_H][GRID_W]; Creature *cellv[GRID_H][GRID_W][4];
+    uint8_t brick[GRID_H][GRID_W];                    /* 0 vide ; bit0 pose, bit1 YIELD, bit2 XOR, bit3 ATTACK */
+    long brick_place, brick_farm, brick_expand, brick_tech;
     const Params *P;
     long t_end;
 } Island;
@@ -205,6 +213,18 @@ static void hook(World *w, Creature *c) {
         if (has[OP_XOR] && dif) { c->d = (dir_to(c->x, c->y, dif->x, dif->y, W, H) + 2) & 3; I->cause_rep++; }
         if (has[OP_SUB] && dif && dif->e > 1) {
             dif->e -= 1; c->e = c->e + 1 > 220 ? 220 : c->e + 1; I->cause_drain++;
+        }
+    }
+    if (I->P->forces >= 3) {                          /* briques : EMIT pose une pierre ; la recette est les autres octets */
+        int has[OP_COUNT]; tape_scan(c->germ, c->germ_len, has);
+        if (has[OP_EMIT] && c->e > 12 && I->brick[c->y][c->x] == 0) {
+            uint8_t t = 1;
+            if (has[OP_YIELD]) t |= 2;
+            if (has[OP_XOR]) t |= 4;
+            if (has[OP_ATTACK]) t |= 8;
+            I->brick[c->y][c->x] = t;
+            c->e -= 2;
+            I->brick_place++;
         }
     }
     c->ls[0] = c->steps; c->ls[1] = c->eaten; c->ls[2] = c->splits; c->ls[3] = c->d; c->ls[5] = (int)w->t;
@@ -339,6 +359,24 @@ static void island_tick(Island *I) {
         if (c->win[0] && c->win[1] && I->soc.pairs < SOC_CAP)
             soc_code(&I->tab, &I->soc, a, (int)c->lscore, c->win[0] - 1, c->win[1] - 1);
         c->lscore = a + 1;
+    }
+    if (P->forces >= 3) {
+        int W = w->cfg.w, H = w->cfg.h;
+        for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) {
+            uint8_t b = I->brick[y][x];
+            if (!b) continue;
+            if ((b & 2) && w->food[y][x] < 14) { w->food[y][x]++; I->brick_farm++; }
+        }
+        for (int y = 0; y < H - 1; y++) for (int x = 0; x < W - 1; x++) {
+            uint8_t a = I->brick[y][x], b = I->brick[y][x + 1], c2 = I->brick[y + 1][x], d = I->brick[y + 1][x + 1];
+            if (!a || !b || !c2 || !d) continue;
+            if (a == b && a == c2 && a == d) continue;
+            I->brick_tech++;
+            if (w->food[y][x] < 14) w->food[y][x]++;
+            if (w->food[y][x + 1] < 14) w->food[y][x + 1]++;
+            if (w->food[y + 1][x] < 14) w->food[y + 1][x]++;
+            if (w->food[y + 1][x + 1] < 14) w->food[y + 1][x + 1]++;
+        }
     }
     int dead = n_before + born - w->ncs;
     I->births += born; I->deaths += dead; I->novel += novel;
@@ -599,7 +637,18 @@ static void sample(Terra *T) {
             yld += T->I[k].cause_yield; attr += T->I[k].cause_attr; rep += T->I[k].cause_rep; drn += T->I[k].cause_drain;
             T->I[k].cause_yield = T->I[k].cause_attr = T->I[k].cause_rep = T->I[k].cause_drain = 0;
         }
-        if (P->forces >= 2)
+        long plc = 0, frm = 0, expn = 0, tec = 0; int bricks = 0;
+        for (int k = 0; k < P->K; k++) {
+            Island *I = &T->I[k];
+            plc += I->brick_place; frm += I->brick_farm; expn += I->brick_expand; tec += I->brick_tech;
+            I->brick_place = I->brick_farm = I->brick_expand = I->brick_tech = 0;
+            int H = I->w->cfg.h, W = I->w->cfg.w;
+            for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) bricks += I->brick[y][x] != 0;
+        }
+        if (P->forces >= 3)
+            fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\t%ld\t%ld\t%ld\t%ld\t%d\t%ld\t%ld\t%ld\t%ld\n",
+                    T->t, N, sp1, attacks, P->K, isles, food, yld, attr, rep, drn, bricks, plc, frm, expn, tec);
+        else if (P->forces >= 2)
             fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\t%ld\t%ld\t%ld\t%ld\n",
                     T->t, N, sp1, attacks, P->K, isles, food, yld, attr, rep, drn);
         else
@@ -639,6 +688,7 @@ static int save(Terra *T) {
              wr(f, I->py, sizeof I->py) && wr(f, &I->nsg, sizeof(int));
         for (int i = 0; i < I->nsg && ok; i++) ok = wr(f, &I->sg[i].species, sizeof(int)) && wr(f, &I->sg[i].len, sizeof(int)) && wr(f, I->sg[i].dna, (size_t)I->sg[i].len);
         for (int i = 0; i < I->w->ncs && ok; i++) ok = wr(f, I->w->cs[i], sizeof(Creature));
+        if (T->P.forces >= 3) ok = ok && wr(f, I->brick, sizeof I->brick);
     }
     ok = fclose(f) == 0 && ok;
     return ok && rename(tmp, path) == 0;
@@ -647,6 +697,8 @@ static void island_alloc(Island *I) {
     I->tab.t = calloc(TMASK + 1, sizeof(Slot)); I->tab.used = malloc(sizeof(uint32_t) * (TMASK + 1));
     I->sh = malloc(sizeof(uint64_t) * 2 * CMAX);
     I->sg = malloc(sizeof(struct SG) * 2 * CMAX);
+    memset(I->brick, 0, sizeof I->brick);
+    I->brick_place = I->brick_farm = I->brick_expand = I->brick_tech = 0;
 }
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
@@ -683,6 +735,7 @@ static int load(Terra *T, const char *path) {
                                                    I->sg[i].len >= 0 && I->sg[i].len <= MAX_LEN && rd(f, I->sg[i].dna, (size_t)I->sg[i].len);
         World *w = I->w; w->rng = &I->wr; w->lab = NULL; w->before_vm = hook; w->nnb = 0; w->nem = 0;
         for (int i = 0; i < w->ncs && ok; i++) { w->cs[i] = malloc(sizeof(Creature)); ok = rd(f, w->cs[i], sizeof(Creature)); }
+        if (T->P.forces >= 3) ok = ok && rd(f, I->brick, sizeof I->brick);
     }
     fclose(f);
     return ok;
@@ -857,6 +910,24 @@ static int terra_run(Terra *T, long t_target, int quiet) {
         T->t = b;
         if (P->migrate > 0 && T->t % P->migrate == 0) migrate(T);
         if (P->expand_every > 0 && T->t % P->expand_every == 0 && T->P.K < KMAX) expand_one(T);
+        if (P->forces >= 3 && T->P.K < KMAX) {        /* l'espace naît des briques, pas d'une horloge */
+            int best = -1, bn = 0;
+            for (int k = 0; k < T->P.K; k++) {
+                Island *I = &T->I[k]; int n = 0, H = I->w->cfg.h, W = I->w->cfg.w;
+                for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) n += I->brick[y][x] != 0;
+                if (n > bn) { bn = n; best = k; }
+            }
+            if (bn >= BRK_NEED && best >= 0) {
+                expand_one(T);
+                Island *I = &T->I[best];
+                int pay = 0, H = I->w->cfg.h, W = I->w->cfg.w;
+                for (int y = 0; y < H && pay < BRK_PAY; y++)
+                    for (int x = 0; x < W && pay < BRK_PAY; x++)
+                        if (I->brick[y][x]) { I->brick[y][x] = 0; pay++; }
+                I->brick_expand++;
+                event(T, "briques", "espace K=%d depuis_ile=%d briques=%d paye=%d", T->P.K, best, bn, pay);
+            }
+        }
         if (T->t % P->sample == 0) {
             sample(T);
             if (!quiet && T->sample_i % 10 == 0) {
@@ -887,8 +958,9 @@ static int open_outputs(Terra *T, int resumed) {
         T->forces_out = fopen(p, resumed && !fresh ? "a" : "w");
         if (!T->forces_out) return 0;
         if (!resumed || fresh)
-            fputs(T->P.forces >= 2 ? "tick\tpop\tsp1\tattacks\tK\tisles\tfood\tyield\tattr\trep\tdrain\n"
-                                   : "tick\tpop\tsp1\tattacks\tK\tisles\tfood\n", T->forces_out);
+            fputs(T->P.forces >= 3 ? "tick\tpop\tsp1\tattacks\tK\tisles\tfood\tyield\tattr\trep\tdrain\tbricks\tplace\tfarm\texpand\ttech\n"
+                  : T->P.forces >= 2 ? "tick\tpop\tsp1\tattacks\tK\tisles\tfood\tyield\tattr\trep\tdrain\n"
+                                     : "tick\tpop\tsp1\tattacks\tK\tisles\tfood\n", T->forces_out);
     }
     return 1;
 }
@@ -909,7 +981,7 @@ static int usage(void) {
                     "                       [--repro split|copy] [--rep-steps N] [--rep-cost E] [--rep-energy E] [--rep-p p] [--rep-mut x]\n"
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
-                    "                       [--forces 0|1|2] [--expand-every T (0 = K fixe, multiple de --sample)]\n"
+                    "                       [--forces 0|1|2|3] [--expand-every T (0 = K fixe, multiple de --sample)]\n"
                     "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every\n"
                     "        terrarium_run dump DIR              (germens d'un checkpoint : opcodes, consensus)\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
@@ -967,7 +1039,7 @@ static int cmd_run(int argc, char **argv) {
     if (!dir || P.K < 1 || P.K > KMAX || P.sample < 1 || P.ck_every % P.sample || P.w < 4 || P.h < 4 || P.w > GRID_W || P.h > GRID_H ||
         P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
         (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1 ||
-        P.forces < 0 || P.forces > 2 || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
+        P.forces < 0 || P.forces > 3 || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
     if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
     static Terra T; char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
@@ -1066,10 +1138,14 @@ static int selftest(void) {
         int hy[OP_COUNT], hz[OP_COUNT];
         uint8_t y[] = { OP_YIELD, OP_XOR }, z[] = { OP_LOAD, OP_YIELD };
         tape_scan(y, 2, hy); tape_scan(z, 2, hz);
-        printf("selftest forces : opcode ATTACK %s, immédiat %s ; YIELD opcode %s immédiat %s\n",
+        int he[OP_COUNT], hi[OP_COUNT];
+        uint8_t e[] = { OP_EMIT, OP_YIELD }, im[] = { OP_STORE, OP_EMIT };
+        tape_scan(e, 2, he); tape_scan(im, 2, hi);
+        printf("selftest forces : opcode ATTACK %s, immédiat %s ; YIELD opcode %s immédiat %s ; EMIT opcode %s immédiat %s\n",
                ha ? "détecté" : "MANQUE", hb ? "FAUX POSITIF" : "ignoré",
-               hy[OP_YIELD] ? "détecté" : "MANQUE", hz[OP_YIELD] ? "FAUX POSITIF" : "ignoré");
-        ok &= ha && !hb && hy[OP_YIELD] && hy[OP_XOR] && !hz[OP_YIELD];
+               hy[OP_YIELD] ? "détecté" : "MANQUE", hz[OP_YIELD] ? "FAUX POSITIF" : "ignoré",
+               he[OP_EMIT] ? "détecté" : "MANQUE", hi[OP_EMIT] ? "FAUX POSITIF" : "ignoré");
+        ok &= ha && !hb && hy[OP_YIELD] && hy[OP_XOR] && !hz[OP_YIELD] && he[OP_EMIT] && he[OP_YIELD] && !hi[OP_EMIT];
     }
     return ok ? 0 : 1;
 }
@@ -1224,7 +1300,9 @@ static int cmd_dump(int argc, char **argv) {
                 for (int b = 0; b < SOUP_PROG; b++) cons_n[b][c->germ[b]]++;
             }
         }
-        printf("  ile %d ncs=%d sp1=%d attacks_cum=%ld\n", k, w->ncs, sp1, atk);
+        int br = 0, H = w->cfg.h, W = w->cfg.w;
+        for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) br += T.I[k].brick[y][x] != 0;
+        printf("  ile %d ncs=%d sp1=%d attacks_cum=%ld briques=%d\n", k, w->ncs, sp1, atk, br);
     }
     printf("porteurs d'opcode (sur %d) :\n", N);
     for (int o = 1; o < OP_COUNT; o++)
