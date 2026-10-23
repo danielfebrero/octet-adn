@@ -31,3 +31,32 @@ bash experiments/soupe-32/run.sh
 ```
 
 Le script n'entre pas dans `make test`.
+
+## Résultats
+
+Mesuré après le commit `7530f4e`. Trente-deux courses jusqu'au bout. Sortie brute : `results.txt`,
+une course par fichier dans `runs/`.
+
+| | |
+|---|---:|
+| réplicateur (`t_first` ≥ 0) | **7 / 32** |
+| dont la soupe passe à moitié | 6 / 32 |
+| porte | 5 à 11 : le taux est le compte |
+
+Les graines déjà publiées se rejouent : 0 et 2 passent (`t_first` 5120 et 256), 1 et 3 non.
+
+| graine | première époque | moitié | min. essentiels | copieurs à la fin |
+|---:|---:|---:|---:|---:|
+| 0 | 5120 | 5120 | 6 | 16 212 |
+| 2 | 256 | 256 | 5 | 16 153 |
+| 10 | 15 872 | — | 9 | 0 |
+| 13 | 15 616 | 15 616 | 11 | 15 411 |
+| 17 | 15 360 | 15 360 | 9 | 16 206 |
+| 24 | 512 | 512 | 5 | 16 288 |
+| 29 | 9216 | 9216 | 6 | 16 072 |
+
+La graine 10 a un copieur vérifié à l'époque 15 872 (1 copieur, 9 octets essentiels) et plus aucun
+à 16 128 ni à la fin. La phrase écrite avant la compte dans les 7. Elle n'occupe pas la soupe.
+Les six autres finissent au-dessus de 15 000 copieurs.
+
+**Porte du milieu.** Ni l'origine rare (≤ 4), ni la compétition (≥ 12). Le taux est 7/32.
