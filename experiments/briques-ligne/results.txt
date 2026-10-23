@@ -1,0 +1,50 @@
+# briques --forces 3, fork t=17164000 pop=3838, 80000 ticks
+# témoin : experiments/vie-briques-ctrl
+# briques : experiments/vie-briques  --forces 3  (regrow 80, pas d'expand-every)
+# originaux pid 375, forces 397, causes 504 laissés vivants
+fork_t	17164000
+fork_pop	3838
+fork_K	4
+fork_EMIT_pct	1.5
+fork_YIELD_pct	2.2
+fork_ATTACK_pct	2.2
+ctrl_end_t	17244000
+ctrl_end_pop	3890
+ctrl_min	3788
+ctrl_max	3921
+ctrl_K	4
+ctrl_stable_niches	3
+ctrl_EMIT_pct	0.8
+ctrl_YIELD_pct	0.2
+ctrl_ATTACK_pct	5.2
+briques_end_t	17244000
+briques_end_pop	32000
+briques_min	2287
+briques_max	32000
+briques_K	32
+briques_isles	32
+briques_stable_niches	5
+briques_end_sp1	25544
+briques_end_sp1_pct	79.83
+briques_end_EMIT_pct	3.8
+briques_end_YIELD_pct	85.6
+briques_end_XOR_pct	3.8
+briques_end_ATTACK_pct	79.8
+briques_end_bricks	61053
+briques_sum_place	61949
+briques_sum_farm	2504610000
+briques_sum_expand	28
+briques_sum_tech	1020091614
+briques_first_expand_t	17164200
+briques_KMAX_t	17169600
+verdict	plateau_leve+espace_bati+tech_composee+briques_posees
+
+# portes (dernière époque)
+# extinction          non
+# effondrement        non (32000/3838)
+# tenue               oui (dernière époque ; min transitoire 2287 pendant l'ouverture)
+# briques_nues        non
+# briques_posees      oui (61949 poses)
+# tech_composee       oui (1.02e9 irrigations 2×2)
+# espace_bati         oui (K 4 → 32 en 5600 ticks)
+# plateau_leve        oui (32000 = KMAX × 1000)

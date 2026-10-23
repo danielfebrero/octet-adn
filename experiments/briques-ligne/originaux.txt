@@ -1,0 +1,56 @@
+t=17164000 K=4 pop=3838 forces=0 expand_every=0 regrow=80
+  ile 0 ncs=959 sp1=0 attacks_cum=0 briques=0
+  ile 1 ncs=966 sp1=0 attacks_cum=0 briques=0
+  ile 2 ncs=955 sp1=0 attacks_cum=0 briques=0
+  ile 3 ncs=958 sp1=0 attacks_cum=0 briques=0
+porteurs d'opcode (sur 3838) :
+  INC_A          664   17.3%
+  DEC_A          188    4.9%
+  INC_B           35    0.9%
+  DEC_B         3829   99.8%
+  CLR_A            4    0.1%
+  STORE         3814   99.4%
+  LOAD          3835   99.9%
+  JMP             30    0.8%
+  JZ             122    3.2%
+  SENSE         3838  100.0%
+  TURN          3829   99.8%
+  STEP          3813   99.3%
+  EAT           3826   99.7%
+  SPLIT           75    2.0%
+  YIELD           85    2.2%
+  SENSE_NB        86    2.2%
+  SENSE_EN       112    2.9%
+  SENSE_STIM      93    2.4%
+  NEURAL          68    1.8%
+  EMIT            57    1.5%
+  MOV_BA         127    3.3%
+  MOV_AB          13    0.3%
+  ADD            121    3.2%
+  SUB           3827   99.7%
+  XOR             89    2.3%
+  ATTACK          86    2.2%
+  JNZ           3828   99.7%
+  LOADI           34    0.9%
+  SENSE_HIST      21    0.5%
+  LOOP          3829   99.8%
+  AND            289    7.5%
+ATTACK porteurs 86 (2.24%)
+consensus 64o (3838 individus), positions ≥ 50 % :
+  [00] 0d EAT           99.7%
+  [01] 1b JNZ           99.7%
+  [02] 39 INTRON        56.8%
+  [04] 04 DEC_B         99.8%
+  [05] 07 LOAD          99.9%
+  [06] 40 INTRON        99.9%
+  [09] 06 STORE         99.4%
+  [10] 00 NOP           99.9%
+  [12] 18 SUB           99.7%
+  [13] 0b TURN          99.7%
+  [34] 00 NOP           51.7%
+  [48] 00 NOP           51.3%
+  [49] 0a SENSE        100.0%
+  [50] 1e LOOP          99.8%
+  [60] 0c STEP          99.6%
+  [61] 0a SENSE         99.6%
+positions majoritaires ≥50% : 16 / 64
