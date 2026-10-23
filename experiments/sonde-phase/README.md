@@ -77,4 +77,19 @@ reste à part, 1 sur 4, et n'entre ni dans les 96 ni dans le 4/4.
 Selftest : moteur = `exec64` OK ; positif 4/4 OK ; 0 réparation sur les 12 négatifs à phases fixes
 OK ; 0 sur 4 sans lésion OK. Le selftest sort 0.
 
-La barre 28/32 n'est pas mesurée ici.
+## Barre 28/32
+
+Détecteur v2 inchangé. Trente-deux phases neuves, graine `0xB72820261023`, tirées avant le compte.
+Seuil écrit avant : au moins 28 réparations.
+
+```console
+./experiments/sonde_phase barre
+```
+
+| | |
+|---|---:|
+| réparations | 31 / 32 |
+| seuil | 28 |
+| ratée | indice 20, phase 1373 |
+
+**Barre tenue.** La suite du débat est les variantes héritables, pas un nouveau réglage du détecteur.
