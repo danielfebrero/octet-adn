@@ -12,6 +12,7 @@
  *
  *   ./experiments/sonde_phase selftest   contrôles à phases fixes, code non nul si ça rate
  *   ./experiments/sonde_phase run        écrit experiments/sonde-phase/results.txt
+ *   ./experiments/sonde_phase barre      32 phases neuves, seuil 28, détecteur inchangé
  */
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +23,8 @@
 #define PHASE_MAX 4096           /* phase tirée dans 0..4095 */
 #define NWIT 32                  /* témoins par classe */
 #define POS_MIN 3                /* positif : au moins 3 phases sur 4 */
+#define BARRE_MIN 28             /* barre suivante : 28 réparations sur 32 phases neuves */
+#define BARRE_SEED 0xB72820261023ULL
 
 static const int POS_PHASES[4] = { 0, 1024, 2048, 3072 };
 static const uint64_t POS_LESION_SEED = 0x504C415345ULL; /* graines neuves, v2 */
@@ -354,9 +357,37 @@ static int run(const char *path) {
     return 0;
 }
 
+/* Barre 28/32. Détecteur v2 inchangé. 32 phases neuves, graine figée avant le compte. */
+static int barre(const char *path) {
+    FILE *o = fopen(path, "w");
+    if (!o) { perror(path); return 1; }
+    uint8_t p[L];
+    motif4(p, 0x90);
+    Rng r;
+    rng_seed(&r, BARRE_SEED);
+    int n = 0;
+    fprintf(o, "# barre 28/32, détecteur v2 figé, motif 0x90, graine 0x%llx, phases neuves dans 0..%d\n",
+            (unsigned long long)BARRE_SEED, PHASE_MAX - 1);
+    fprintf(o, "indice\tphase\tgraine_lesion\tblessure\tzone_egale\tecritures\treparation\n");
+    for (int i = 0; i < NWIT; i++) {
+        int phase = (int)rng_below(&r, PHASE_MAX);
+        uint64_t ls = BARRE_SEED ^ (0x9E3779B97F4A7C15ULL * (uint64_t)(i + 1));
+        Verdict v = detect(p, phase, 1, ls, 0);
+        n += v.repair;
+        fprintf(o, "%d\t%d\t0x%llx\t%d\t%d\t%d\t%d\n", i, phase, (unsigned long long)ls,
+                v.wound, v.zone_eq, v.writes_ok, v.repair);
+    }
+    const char *ver = n >= BARRE_MIN ? "barre tenue" : "barre ratée";
+    fprintf(o, "\npositif lésé : %d/%d (seuil %d)\nbarre : %s\n", n, NWIT, BARRE_MIN, ver);
+    fclose(o);
+    printf("barre 28/32, motif 0x90, 32 phases neuves : %d/%d %s\n", n, NWIT, ver);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "selftest") == 0) return selftest();
     if (argc > 1 && strcmp(argv[1], "run") == 0) return run(argc > 2 ? argv[2] : "experiments/sonde-phase/results.txt");
-    fprintf(stderr, "usage : %s selftest | run [results.txt]\n", argv[0]);
+    if (argc > 1 && strcmp(argv[1], "barre") == 0) return barre(argc > 2 ? argv[2] : "experiments/sonde-phase/barre.txt");
+    fprintf(stderr, "usage : %s selftest | run [results.txt] | barre [barre.txt]\n", argv[0]);
     return 2;
 }
