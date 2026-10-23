@@ -93,3 +93,42 @@ Seuil écrit avant : au moins 28 réparations.
 | ratée | indice 20, phase 1373 |
 
 **Barre tenue.** La suite du débat est les variantes héritables, pas un nouveau réglage du détecteur.
+
+## Fuzz : variantes héritables
+
+Détecteur v2 inchangé. On part du motif soupe fixé (immédiat `0x90`, deux `exec64`, point fixe, 744 `STORE`). Chaque octet est remplacé par chacune des 255 autres valeurs : 16 320 essais. Une forme est héritable si elle se fixe, si la bande diffère encore du parent, et si un exemple repasse la barre 28/32 sur les mêmes 32 phases (graine `0xB72820261023`). L'exemple d'une case est la plus petite valeur qui reste. Seuil écrit avant le compte : au moins 2 formes.
+
+```console
+./experiments/sonde_phase fuzz
+```
+
+| issue | nombre |
+|---|---:|
+| guéries, reviennent au parent | 12 256 |
+| ne se fixent pas | 173 |
+| fixées sans `STORE` | 1 087 |
+| cases qui gardent une mutation | 16 |
+| exemples ≥ 28/32 | 12 |
+
+| case | rôle dans la période | allèles | exemple | barre |
+|---:|---|---:|---:|---:|
+| 0 | `CLR_A` | 3 | `04` | 32/32 |
+| 1 | `SENSE_HIST` | 252 | `00` | 29/32 |
+| 2 | immédiat | 254 | `01` | 31/32 |
+| 3 | `DEC_A` | 250 | `01` | 31/32 |
+| 4 | `LOADI` | 251 | `01` | 31/32 |
+| 5 | immédiat | 254 | `01` | 31/32 |
+| 6 | intron | 243 | `01` | 31/32 |
+| 7 | `LOAD` | 4 | `04` | 32/32 |
+| 8 | immédiat | 35 | `02` | 0/32 |
+| 9 | `INC_B` | 239 | `00` | 32/32 |
+| 10 | `JZ` | 8 | `04` | 26/32 |
+| 11 | immédiat | 255 | `00` | 31/32 |
+| 12 | intron | 236 | `04` | 32/32 |
+| 14 | immédiat `90` | 19 | `00` | 9/32 |
+| 15 | `LOOP` | 252 | `01` | 0/32 |
+| 16 | octet 0 de la période suivante | 249 | `01` | 31/32 |
+
+La case 13 (`STORE`) ne garde aucun allèle. Les cases 17 à 63 non plus. Quatre exemples restent sous 28 : cases 8, 10, 14 et 15. Sortie brute : `fuzz.txt`.
+
+**Au moins deux formes héritables.** Douze exemples passent. Le détecteur n'a pas été retouché. La suite du débat est les 32 graines en parallèle.
