@@ -55,3 +55,26 @@ Trois lignées restent au-dessus de 10 %. Aucune ne passe 50 %.
 Le dominant de la fin est une descendance de la graine 0 : 388 copies, distance 24 du fondateur, 6 octets essentiels. Aucun copieur n'est plus proche d'un autre fondateur que du sien (`autre` = 0 à chaque report).
 
 Les trois qui tiennent (0, 2, 24) sont celles qui avaient envahi leur bocal le plus tôt. Les trois tardives (13, 17, 29) passent sous 10 % et y restent.
+
+## Faire vivre
+
+Les trois lignées qui tiennent deviennent fondateurs d'un terrarium, reproduction par **leur** copie
+(`--repro copy`) et pont d'énergie (`--osmo 1`). C'est le pont déjà mesuré dans `soup-terrarium` :
+sans osmotrophie, tout s'éteint. SPLIT reste éteint : n'importe quel octet se diviserait, l'origine
+soupe n'aurait plus de sens.
+
+```console
+./experiments/competition dump
+make experiments/terrarium_run
+./experiments/terrarium_run run --dir experiments/vie-monde \
+    --repro copy --osmo 1 \
+    --founders soup:experiments/competition-ligne/survivors.bin \
+    --seed 1 --ticks 0
+```
+
+`--ticks 0` : le monde continue, checkpoint toutes les 2000 ticks. Relancer la même commande reprend.
+
+Graine du terrarium : **7**. Les graines 1 à 6 et 8 s'éteignent au goulot de fondation
+(600 à 2600 ticks), déjà vu dans `soup-terrarium` (6/10 tiennent). Au tick 8000, seed 7 :
+1 504 créatures, 256 fondateurs tous copieurs. Le monde est dans `experiments/vie-monde/`
+(hors git, checkpoint).
