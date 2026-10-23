@@ -37,8 +37,8 @@ typedef struct { PoolEntry g; double q, m2, m3; int on; } Elite;
 
 int nov_run(const NovRun *r, FILE *out, NovResult *res) {
     int nc = nov_ncells(r->grid);
-    Elite *a = calloc((size_t)nc, sizeof *a);
-    int *occ = malloc(sizeof(int) * (size_t)nc), nocc = 0;
+    Elite *a = xcalloc((size_t)nc, sizeof *a);
+    int *occ = xmalloc(sizeof(int) * (size_t)nc), nocc = 0;
     if (!a || !occ) { free(a); free(occ); return -1; }
     Rng rng; rng_seed(&rng, r->seed ^ 0x4E4F5645ULL);
     memset(res, 0, sizeof *res); res->ncells = nc;

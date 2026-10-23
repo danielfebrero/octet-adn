@@ -65,9 +65,9 @@ int met_read(const char *path, MetricRec **out) {
     char mg[8];
     if (fread(mg, 8, 1, f) != 1 || memcmp(mg, MET_MAGIC, 8)) { fclose(f); return -1; }
     int n = 0, cap = 64;
-    MetricRec *v = malloc(sizeof *v * (size_t)cap);
+    MetricRec *v = xmalloc(sizeof *v * (size_t)cap);
     while (fread(&v[n], sizeof *v, 1, f) == 1)
-        if (++n == cap) v = realloc(v, sizeof *v * (size_t)(cap *= 2));
+        if (++n == cap) v = xrealloc(v, sizeof *v * (size_t)(cap *= 2));
     fclose(f);
     *out = v;
     return n;

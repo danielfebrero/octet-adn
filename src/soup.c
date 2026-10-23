@@ -135,7 +135,7 @@ static int cmp_uniq(const void *x, const void *y) {
 #define KM 8
 #define KH (1 << 20)
 static double top_kmer(const uint8_t *s, int n, uint64_t *km_out) {
-    uint64_t *key = calloc(KH, sizeof *key); int *cnt = calloc(KH, sizeof *cnt);
+    uint64_t *key = xcalloc(KH, sizeof *key); int *cnt = xcalloc(KH, sizeof *cnt);
     long tot = 0; int best = 0; uint64_t bk = 0;
     for (int p = 0; p < n; p++)
         for (int i = 0; i + KM <= SOUP_PROG; i++) {
@@ -153,9 +153,9 @@ static double top_kmer(const uint8_t *s, int n, uint64_t *km_out) {
 int soup_run(const SoupRun *r, FILE *out, SoupResult *res) {
     int n = r->nprog & ~1;
     if (n < 2) return -1;
-    uint8_t *s = malloc((size_t)n * SOUP_PROG);
-    int *perm = malloc(sizeof(int) * (size_t)n), *ord = malloc(sizeof(int) * (size_t)n);
-    Uniq *u = malloc(sizeof(Uniq) * (size_t)n);
+    uint8_t *s = xmalloc((size_t)n * SOUP_PROG);
+    int *perm = xmalloc(sizeof(int) * (size_t)n), *ord = xmalloc(sizeof(int) * (size_t)n);
+    Uniq *u = xmalloc(sizeof(Uniq) * (size_t)n);
     Rng rng; rng_seed(&rng, r->seed ^ 0x50555045ULL);
     for (size_t i = 0; i < (size_t)n * SOUP_PROG; i++) s[i] = (uint8_t)rng_next(&rng);
     for (int k = 0; k < r->inject && k < n; k++) soup_handmade(s + (size_t)k * SOUP_PROG, r->vm.addr_b);   /* témoin positif */

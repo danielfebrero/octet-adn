@@ -329,4 +329,10 @@ typedef struct { long t_first, t_half, births; int min_ess, copiers_final; uint6
 int soup_run(const SoupRun *r, FILE *out, SoupResult *res);
 /* réplicateurs écrits à la main (contrôles positifs), 64 octets */
 void soup_handmade(uint8_t *p, int addr_b);
+/* Allocation vérifiée : abort() si la mémoire manque (jamais de NULL silencieux). */
+#include <stdlib.h>
+static inline void *xchk(void *p) { if (!p) abort(); return p; }
+#define xmalloc(n)     xchk(malloc(n))
+#define xcalloc(n, s)  xchk(calloc((n), (s)))
+#define xrealloc(p, n) xchk(realloc((p), (n)))
 #endif

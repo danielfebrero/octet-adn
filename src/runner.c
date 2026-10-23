@@ -89,7 +89,7 @@ double pool_eval_x(int id, const PoolEntry *pool, int n, const char *key, int ti
     Rng rng; rng_seed(&rng, fnv1a(key, strlen(key), FNV_INIT));
     Lab lab; lab_init(&lab, id, ticks);
     lab.foreign = foreign; lab.nforeign = nf; lab.eval_only = 1;
-    CycleResult *res = malloc(sizeof *res);
+    CycleResult *res = xmalloc(sizeof *res);
     run_cycle(&lab, pool, n, &rng, ticks, res);
     double f = res->fitness;
     if (extra) memcpy(extra, lab.extra, sizeof lab.extra);
@@ -220,7 +220,7 @@ int runner(RunOpts *o, MetricRec *rows, int cap) {
         if (!o->no_reload && have_ref && k > o->cycles_done && exe_changed(o->exe_path, &ref) && o->argv) {
             char done[32]; snprintf(done, sizeof done, "--cycles-done=%d", k);
             int n = 0; while (o->argv[n]) n++;
-            char **av = calloc((size_t)n + 2, sizeof *av);
+            char **av = xcalloc((size_t)n + 2, sizeof *av);
             for (int i = 0; i < n; i++) av[i] = strncmp(o->argv[i], "--cycles-done=", 14) ? o->argv[i] : done;
             int has = 0; for (int i = 0; i < n; i++) if (av[i] == done) has = 1;
             if (!has) av[n++] = done;
