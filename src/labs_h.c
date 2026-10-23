@@ -684,6 +684,19 @@ int hl_dg_sel(Lab *l, World *w, PoolEntry *out) {
     for (int i = 0; i < n && k < POOL_SIZE; i++) {
         out[k].species = 0; out[k].len = v[i]->len; memcpy(out[k].dna, v[i]->dna, (size_t)v[i]->len); k++;
     }
+    if (k == 0 && !((DgState *)l->ext)->has_best) {
+        /* Aucun corps ne s'est divisé : un pool hérité tout stérile ne produit plus jamais
+         * de nouveau pool (eval 0/0 à chaque cycle, labo figé). On remet les seeds, qui portent
+         * SPLIT, derrière les meilleurs émetteurs stériles : la justesse ne compte que les
+         * émissions, la sélection appariée tranche. */
+        k = hl_dg_seeds(out);
+        for (int i = 0; i < w->ncs && k < POOL_SIZE; i++) {
+            Creature *c = w->cs[i];
+            if (c->species != 0 || c->lscore <= 0) continue;
+            out[k].species = 0; out[k].len = c->len; memcpy(out[k].dna, c->dna, (size_t)c->len); k++;
+        }
+        return k;
+    }
     n = k;
     DgState *s = l->ext;
     if (!s->has_best) return n;
