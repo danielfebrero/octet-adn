@@ -30,6 +30,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +63,9 @@ typedef struct {               /* paramètres (sauvés dans le checkpoint) */
     int pred, pred_dmg, pred_every;   /* prédateurs-environnement : le canal social peut payer */
     int osmo;                   /* pont métabolique : absorbe ≤ osmo unités de nourriture de sa case par tick (sans EAT) */
     char ffile[256];            /* --founders soup:FICHIER */
+    /* OADNTER4 : 0 = terrarium d'origine (mêmes tirages). Un checkpoint OADNTER3 se relit, ces champs valent 0. */
+    int forces;                 /* 1 = espèce = (germen contient l'opcode ATTACK) ; 0 = héritage */
+    int expand_every;           /* 0 = K fixe ; N = +1 île vide tous les N ticks (multiple de --sample), jusqu'à KMAX */
 } Params;
 enum { F_SEEDS, F_RANDOM, F_SOUP, F_HANDMADE };
 
@@ -111,6 +115,16 @@ typedef struct {
 
 static __thread Island *cur;
 
+/* un opcode ATTACK dans le germen (pas un immédiat d'un autre op) : la force naît de la seed */
+static int tape_has_attack(const uint8_t *g, int len) {
+    for (int i = 0; i < len; i++) {
+        uint8_t op = g[i];
+        if (op == OP_ATTACK) return 1;
+        if (op_has_imm(op) && i + 1 < len) i++;
+    }
+    return 0;
+}
+
 /* champs de travail de la créature (labo-libres : win_len = 0, la VM ne les lit pas) */
 /* accès par memcpy : win/win0 ne sont pas alignés sur 8 */
 static uint64_t FH(const Creature *c) { uint64_t v; memcpy(&v, &c->win[16], 8); return v; }
@@ -139,6 +153,10 @@ static void genotype(Creature *c) {
 
 static void hook(World *w, Creature *c) {
     Island *I = cur;
+    if (I->P->forces) {                               /* forces : l'espèce suit le germen, pas un --pred collé */
+        int sp = tape_has_attack(c->germ, c->germ_len) ? 1 : 0;
+        if (c->species != sp) { c->species = sp; if (c->ls[4]) genotype(c); }
+    }
     if (I->P->osmo) {                                 /* osmotrophie : avant le relevé, donc « a mangé » = EAT exécuté */
         int f = w->food[c->y][c->x], take = f < I->P->osmo ? f : I->P->osmo;
         if (take) { w->food[c->y][c->x] = (uint8_t)(f - take); c->e = c->e + take * 5 > 220 ? 220 : c->e + take * 5; }
@@ -209,8 +227,9 @@ static void copy_attempt(Island *I, Creature *c) {
     for (int j = 0; j < SOUP_PROG; j++) if (rng_double(&I->rr) < P->rep_mut) child[j] = (uint8_t)rng_next(&I->rr);
     int dist = 0; for (int j = 0; j < SOUP_PROG; j++) dist += child[j] != old[po + j];
     int d = (c->d + 1) & 3, give = c->e / 3;
+    int sp = P->forces ? (tape_has_attack(child, SOUP_PROG) ? 1 : 0) : c->species;
     Creature *k = creature_new((c->x + TDX[d] + w->cfg.w) % w->cfg.w, (c->y + TDY[d] + w->cfg.h) % w->cfg.h,
-                               child, SOUP_PROG, give, w->nid++, c->species, c->id);
+                               child, SOUP_PROG, give, w->nid++, sp, c->id);
     k->win[30] = (uint8_t)(dist > 255 ? 255 : dist);
     int nb0 = w->nnb; world_spawn(w, k);
     if (w->nnb > nb0) { c->splits++; c->e -= give + 8; I->rep_ok++; w->st.born++; }
@@ -362,7 +381,8 @@ typedef struct {
     int soc_streak, soc_on; long soc_events;
     long n_events;
     long emits_prev;
-    FILE *series, *events; char dir[512];
+    FILE *series, *events, *forces_out; char dir[512];
+    int saw_sp1;
 } Terra;
 
 static void event(Terra *T, const char *type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
@@ -517,6 +537,19 @@ static void sample(Terra *T) {
             rtry, rok, cfrac, T->last_ess, phits, T->scomp.cum, sfresh, s_alive);
     fflush(T->series);
     T->emits_prev = emits;
+    if (T->forces_out) {
+        int sp1 = 0, isles = 0, food = 0; long attacks = 0;
+        for (int k = 0; k < P->K; k++) {
+            World *w = T->I[k].w;
+            if (w->ncs) isles++;
+            attacks += w->st.attacks;
+            for (int i = 0; i < w->ncs; i++) if (w->cs[i]->species) sp1++;
+            for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) food += w->food[y][x];
+        }
+        fprintf(T->forces_out, "%ld\t%d\t%d\t%ld\t%d\t%d\t%d\n", T->t, N, sp1, attacks, P->K, isles, food);
+        fflush(T->forces_out);
+        if (sp1 && !T->saw_sp1) { T->saw_sp1 = 1; event(T, "forces", "sp1=%d pop=%d attacks=%ld K=%d", sp1, N, attacks, P->K); }
+    }
     T->sample_i++;
 }
 
@@ -526,13 +559,14 @@ static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshad
                             "\trep_try\trep_ok\tcopier_frac\tmin_ess\tpred_hits\tscomp_cum\tscomp_new\tscomp_alive\n";
 
 /* ---- checkpoint ---- */
-#define TMAGIC "OADNTER3"
+#define TMAGIC3 "OADNTER3"
+#define TMAGIC4 "OADNTER4"
 static int wr(FILE *f, const void *p, size_t n) { return fwrite(p, 1, n, f) == n; }
 static int rd(FILE *f, void *p, size_t n) { return fread(p, 1, n, f) == n; }
 static int save(Terra *T) {
     char tmp[600], path[600]; snprintf(tmp, sizeof tmp, "%s/state.ck.tmp", T->dir); snprintf(path, sizeof path, "%s/state.ck", T->dir);
     FILE *f = fopen(tmp, "wb"); if (!f) return 0;
-    int ok = wr(f, TMAGIC, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
+    int ok = wr(f, TMAGIC4, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
              wr(f, &T->sample_i, sizeof T->sample_i) && wr(f, &T->founders_done, sizeof(int)) &&
              wr(f, T->niche, sizeof T->niche) && wr(f, T->pop_ring, sizeof T->pop_ring) && wr(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              wr(f, T->cyc_niche, sizeof T->cyc_niche) && wr(f, &T->soc_streak, sizeof(int)) && wr(f, &T->soc_on, sizeof(int)) &&
@@ -559,7 +593,16 @@ static void island_alloc(Island *I) {
 }
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
-    char m[8]; int ok = rd(f, m, 8) && !memcmp(m, TMAGIC, 8) && rd(f, &T->P, sizeof T->P) && rd(f, &T->gr, sizeof T->gr) && rd(f, &T->t, sizeof T->t) &&
+    char m[8]; int ok = rd(f, m, 8);
+    int v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
+    if (!v3 && !v4) { fclose(f); return 0; }
+    if (v4) ok = rd(f, &T->P, sizeof T->P);
+    else {
+        memset(&T->P, 0, sizeof T->P);
+        ok = rd(f, &T->P, offsetof(Params, forces));
+        T->P.forces = 0; T->P.expand_every = 0;
+    }
+    ok = ok && rd(f, &T->gr, sizeof T->gr) && rd(f, &T->t, sizeof T->t) &&
              rd(f, &T->sample_i, sizeof T->sample_i) && rd(f, &T->founders_done, sizeof(int)) &&
              rd(f, T->niche, sizeof T->niche) && rd(f, T->pop_ring, sizeof T->pop_ring) && rd(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              rd(f, T->cyc_niche, sizeof T->cyc_niche) && rd(f, &T->soc_streak, sizeof(int)) && rd(f, &T->soc_on, sizeof(int)) &&
@@ -699,6 +742,30 @@ static void migrate(Terra *T) {
     }
 }
 
+/* expansion douce : une île vide (nourriture primordiale, personne). La migration la colonise. */
+static void expand_one(Terra *T) {
+    if (T->P.K >= KMAX) return;
+    int k = T->P.K;
+    Island *I = &T->I[k];
+    memset(I, 0, sizeof *I);
+    island_alloc(I); I->idx = k; I->P = &T->P;
+    rng_seed(&I->wr, rng_next(&T->gr) ^ (0xE11AULL * (uint64_t)(k + 1)));
+    rng_seed(&I->tr, rng_next(&T->gr) ^ (0xE11BULL * (uint64_t)(k + 1)));
+    rng_seed(&I->sr, rng_next(&T->gr) ^ (0xE11CULL * (uint64_t)(k + 1)));
+    rng_seed(&I->rr, rng_next(&T->gr) ^ (0xE11DULL * (uint64_t)(k + 1)));
+    I->env = (int)rng_below(&I->tr, 16);
+    WorldConfig cfg = cfg_default();
+    cfg.w = T->P.w; cfg.h = T->P.h; cfg.max_pop = T->P.max_pop; cfg.food_regrow = T->P.regrow;
+    cfg.mut_rate = T->P.mut; cfg.dup_rate = T->P.dup;
+    if (T->P.repro) cfg.split_energy = 1 << 29;
+    I->w = world_new(NULL, 0, &I->wr, &cfg, NULL);
+    I->w->before_vm = hook;
+    I->w->t = T->t;
+    I->w->stimulus = (I->env << 4) | I->env;
+    T->P.K++;
+    event(T, "expand", "K=%d ile_vide t=%ld", T->P.K, T->t);
+}
+
 static volatile sig_atomic_t stop_flag;
 static void on_sig(int s) { (void)s; stop_flag = 1; }
 
@@ -732,6 +799,7 @@ static int terra_run(Terra *T, long t_target, int quiet) {
         for (int k = 0; k < P->K; k++) pthread_join(th[k], NULL);
         T->t = b;
         if (P->migrate > 0 && T->t % P->migrate == 0) migrate(T);
+        if (P->expand_every > 0 && T->t % P->expand_every == 0 && T->P.K < KMAX) expand_one(T);
         if (T->t % P->sample == 0) {
             sample(T);
             if (!quiet && T->sample_i % 10 == 0) {
@@ -755,6 +823,14 @@ static int open_outputs(Terra *T, int resumed) {
     snprintf(p, sizeof p, "%s/events.tsv", T->dir); if (resumed) truncate_tsv(p, T->t);
     T->events = fopen(p, resumed ? "a" : "w"); if (!T->events) return 0;
     if (!resumed) fputs("tick\ttype\tdetail\n", T->events);
+    T->forces_out = NULL;
+    if (T->P.forces || T->P.expand_every) {
+        snprintf(p, sizeof p, "%s/forces.tsv", T->dir); if (resumed) truncate_tsv(p, T->t);
+        int fresh = access(p, F_OK) != 0;
+        T->forces_out = fopen(p, resumed && !fresh ? "a" : "w");
+        if (!T->forces_out) return 0;
+        if (!resumed || fresh) fputs("tick\tpop\tsp1\tattacks\tK\tisles\tfood\n", T->forces_out);
+    }
     return 1;
 }
 
@@ -762,7 +838,8 @@ static Params defaults(void) {
     Params P = { .K = 4, .w = 64, .h = 32, .max_pop = 1000, .regrow = 80, .sample = 200, .ck_every = 2000, .migrate = 1000,
                  .channel = 1, .founders = 0, .pop0 = 64, .mut = 0.02, .dup = 0.05, .season_amp = 0, .season_period = 4000, .soc_thr = 0.05, .seed = 1,
                  .repro = 0, .rep_steps = 8192, .rep_cost = 2, .rep_energy = 70, .rep_p = 1, .rep_mut = 0.005,
-                 .pred = 0, .pred_dmg = 25, .pred_every = 2, .osmo = 0 };
+                 .pred = 0, .pred_dmg = 25, .pred_every = 2, .osmo = 0,
+                 .forces = 0, .expand_every = 0 };
     return P;
 }
 
@@ -773,7 +850,8 @@ static int usage(void) {
                     "                       [--repro split|copy] [--rep-steps N] [--rep-cost E] [--rep-energy E] [--rep-p p] [--rep-mut x]\n"
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
-                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow (le reste vient du checkpoint)\n"
+                    "                       [--forces 0|1] [--expand-every T (0 = K fixe, multiple de --sample)]\n"
+                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
     return 2;
@@ -782,6 +860,7 @@ static int usage(void) {
 static int cmd_run(int argc, char **argv) {
     Params P = defaults(); const char *dir = NULL; long ticks = 20000;
     int got_season_amp = 0, got_season_period = 0, got_pred = 0, got_pred_dmg = 0, got_pred_every = 0, got_regrow = 0;
+    int got_forces = 0, got_expand = 0;
     for (int i = 2; i < argc; i++) {
         const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!v) return usage();
@@ -820,12 +899,15 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--season-amp")) { P.season_amp = atof(v); got_season_amp = 1; }
         else if (!strcmp(a, "--season-period")) { P.season_period = atoi(v); got_season_period = 1; }
         else if (!strcmp(a, "--soc-thr")) P.soc_thr = atof(v);
+        else if (!strcmp(a, "--forces")) { P.forces = atoi(v); got_forces = 1; }
+        else if (!strcmp(a, "--expand-every")) { P.expand_every = atoi(v); got_expand = 1; }
         else return usage();
         i++;
     }
     if (!dir || P.K < 1 || P.K > KMAX || P.sample < 1 || P.ck_every % P.sample || P.w < 4 || P.h < 4 || P.w > GRID_W || P.h > GRID_H ||
         P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
-        (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1) return usage();
+        (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1 ||
+        (P.forces != 0 && P.forces != 1) || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
     if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
     static Terra T; char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
@@ -836,7 +918,12 @@ static int cmd_run(int argc, char **argv) {
         /* choc : ces flags écrasent le checkpoint. Le reste (repro, osmo, seed, mondes) reste. */
         if (got_season_amp) T.P.season_amp = P.season_amp;
         if (got_season_period) T.P.season_period = P.season_period;
-        if (got_regrow) T.P.regrow = P.regrow;
+        if (got_regrow) {
+            T.P.regrow = P.regrow;
+            for (int k = 0; k < T.P.K; k++) T.I[k].w->cfg.food_regrow = P.regrow;
+        }
+        if (got_forces) T.P.forces = P.forces;
+        if (got_expand) T.P.expand_every = P.expand_every;
         if (got_pred_dmg) T.P.pred_dmg = P.pred_dmg;
         if (got_pred_every) T.P.pred_every = P.pred_every;
         if (got_pred) {
@@ -851,10 +938,11 @@ static int cmd_run(int argc, char **argv) {
             }
         }
         fprintf(stderr, "reprise de %s au tick %ld", ck, T.t);
-        if (got_season_amp || got_pred || got_regrow)
-            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d)", T.P.season_amp, T.P.pred, T.P.regrow);
+        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand)
+            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d)",
+                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every);
         else
-            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow comptent)");
+            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every comptent)");
         fprintf(stderr, "\n");
     } else {
         terra_new(&T, &P);
@@ -869,7 +957,7 @@ static int cmd_run(int argc, char **argv) {
     signal(SIGINT, on_sig); signal(SIGTERM, on_sig);
     int rc = terra_run(&T, ticks, 0);
     fprintf(stderr, "fin : t=%ld pop=%d événements=%ld (checkpoint %s)\n", T.t, total_pop(&T), T.n_events, ck);
-    fclose(T.series); fclose(T.events); terra_free(&T);
+    fclose(T.series); fclose(T.events); if (T.forces_out) fclose(T.forces_out); terra_free(&T);
     return rc;
 }
 
@@ -911,6 +999,13 @@ static int selftest(void) {
     int g = resume_check(&P, 100, 300, " (copie+prédateurs)", &pe, &nb) && nb > 0;
     printf("selftest copie réelle : %ld naissances par copie (soup_exec), pop finale %d → %s\n", nb, pe, g ? "OK" : "ÉCHEC");
     ok &= g;
+    /* 4. forces : ATTACK opcode vs ATTACK en immédiat d'un STORE */
+    {
+        uint8_t a[] = { OP_NOP, OP_ATTACK }, b[] = { OP_STORE, OP_ATTACK };
+        int ha = tape_has_attack(a, 2), hb = tape_has_attack(b, 2);
+        printf("selftest forces : opcode ATTACK %s, immédiat %s\n", ha ? "détecté" : "MANQUE", hb ? "FAUX POSITIF" : "ignoré");
+        ok &= ha && !hb;
+    }
     return ok ? 0 : 1;
 }
 
@@ -1022,13 +1117,13 @@ static int resume_check(const Params *P, long t1, long t2, const char *label, in
     mkdir(da, 0755); mkdir(db, 0755);
     static Terra A, B;
     terra_new(&A, P); snprintf(A.dir, sizeof A.dir, "%s", da); open_outputs(&A, 0); terra_run(&A, t2, 1);
-    uint64_t ha = terra_hash(&A); *pop_end = total_pop(&A); fclose(A.series); fclose(A.events); terra_free(&A);
+    uint64_t ha = terra_hash(&A); *pop_end = total_pop(&A); fclose(A.series); fclose(A.events); if (A.forces_out) fclose(A.forces_out); terra_free(&A);
     terra_new(&B, P); snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 0); terra_run(&B, t1, 1);
-    fclose(B.series); fclose(B.events); terra_free(&B);
+    fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); terra_free(&B);
     { char p[600]; snprintf(p, sizeof p, "%s/state.ck", db); memset(&B, 0, sizeof B);
       if (!load(&B, p)) { printf("selftest : checkpoint illisible\n"); return 0; } }
     snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 1); terra_run(&B, t2, 1);
-    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); terra_free(&B);
+    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); terra_free(&B);
     char pa[600], pb[600]; snprintf(pa, sizeof pa, "%s/series.tsv", da); snprintf(pb, sizeof pb, "%s/series.tsv", db);
     char *sa = slurp(pa), *sb = slurp(pb);
     int same = ha == hb && sa && sb && !strcmp(sa, sb) && strlen(sa) > 100;
