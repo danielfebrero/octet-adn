@@ -899,29 +899,38 @@ TEST(test_dialog_mem_needs_memory) {
     assert(fm > 0.90 && em[1] > 0.90 && em[3] < 0.40);
 }
 
-/* dialog-lag2 : la seed-amorce (s_t + 1) reste à ~0 et le génome de dialog-mem (mémoire d'un tick,
- * s_{t-1} + 1) est puni. Trou connu, trouvé par l'évolution : une case + la phase de l'ip (lire un
- * tick sur deux, répondre ¬A l'autre tick) tient s_{t-2} une fois sur deux, plafond 1/2 par émission.
- * Un génome à deux cases (B = s_{t-2} + 1, un octet du génome via STORE/LOAD garde s_{t-1} + 1)
- * dépasse ce plafond et retombe à ~0 contre un faux s_{t-2} (baseline). Seuils mesurés, avec marge. */
+/* dialog-lag2 (question q_t ∈ {1,2} aléatoire, annoncée dans le bit 0x20 du stimulus d'avant) :
+ * la seed-amorce (s_t + 1) reste à ~0 ; une mémoire d'un tick constante (dialog-mem) et l'ancien
+ * deux-cases de PR #16 qui répond toujours s_{t-2} tombent à ~0 (juste à q = 1, resp. q = 2 : les
+ * deux questions sont bien posées) ; la meilleure case seule (s_{t-1} si q = 1, son complément
+ * si q = 2) et l'ancien 1 case + phase plafonnent à ~0,5 / émission ; le génome à deux cases qui
+ * lit q (A = s_{t-1}+1 avec le drapeau, B = s_{t-2}+1, octet du génome en relais) vise 0,7125,
+ * exact sur q = 1 ET q = 2, et retombe à ~0 contre un faux s_{t-q}. Seuils mesurés, avec marge. */
 TEST(test_dialog_lag2_needs_two_slots) {
-    PoolEntry seed[POOL_MAX], one[4], ph[4], two[4];
+    PoolEntry seed[POOL_MAX], one[4], ph[4], gate[4], old2[4], two[4];
     int id = lab_index("dialog-lag2"), n = LABS[id].seeds(seed);
     assert(id == N_LABS - 1 && n == 4);
-    double es[N_EXTRA], e1[N_EXTRA], ep[N_EXTRA], e2[N_EXTRA];
+    double es[N_EXTRA], e1[N_EXTRA], ep[N_EXTRA], eg[N_EXTRA], eo[N_EXTRA], e2[N_EXTRA];
     double fs = ev4("dialog-lag2", seed, n, es);
     raw_pool(one, "0d1412010e0f1e");                       /* mémoire d'un tick : EMIT s_{t-1}+1 */
     double f1 = ev4("dialog-lag2", one, 4, e1);
-    raw_pool(ph, "0d1412010e0f151c0f1914160f1e");           /* 1 case + phase : EMIT A, SENSE ; puis EMIT ¬A (évite s_{t-1}) */
+    raw_pool(ph, "0d1412010e0f151c0f1914160f1e");           /* 1 case + phase (trou de PR #16) */
     double fp = ev4("dialog-lag2", ph, 4, ep);
-    raw_pool(two, "0d060d1614070d1512010e0f1eff");         /* EAT STORE 13 MOV_AB EMIT LOAD 13 MOV_BA SENSE_STIM INC_A SPLIT YIELD LOOP [case] */
+    raw_pool(gate, "0d151f2009061c0f1914080216141201" "0e0f1e");   /* 1 case qui lit q : A si q=1, A^0x0f si q=2 */
+    double fg = ev4("dialog-lag2", gate, 4, eg);
+    raw_pool(old2, "0d060d1614070d1512010e0f1eff");         /* deux cases de PR #16 : toujours s_{t-2}+1 */
+    double fo = ev4("dialog-lag2", old2, 4, eo);
+    raw_pool(two, "0d06161f20090416140803071614071615" "12010e0f1eff");   /* deux cases + q : STORE 22, AND 0x20, JZ ; B ou [22] */
     double f2 = ev4("dialog-lag2", two, 4, e2);
-    printf("    dialog-lag2 : seed %.3f (exact2 %.3f)  1 case %.3f (hit1 %.3f)  1 case + phase %.3f (exact2 %.3f, hit1 %.3f)  2 cases %.3f (exact2 %.3f, baseline %.3f)\n",
-           fs, es[1], f1, e1[2], fp, ep[1], ep[2], f2, e2[1], e2[4]); fflush(stdout);
-    assert(fs < 0.10 && es[1] < 0.15);
-    assert(f1 < -0.20 && e1[2] > 0.60);
-    assert(fp > 0.30 && ep[1] < 0.55 && ep[2] < 0.10);    /* trou connu : la phase (ip) donne une 2e case d'un bit, plafond 1/2 */
-    assert(f2 > 0.50 && e2[1] > 0.80 && fabs(e2[4]) < 0.10 && f2 > fp + 0.15);
+    printf("    dialog-lag2 q_t : seed %.3f  1 case %.3f (q1 %.3f q2 %.3f)  phase %.3f (acc %.3f)  1 case+q %.3f (acc %.3f)  2 cases fixes %.3f (q1 %.3f q2 %.3f)  2 cases+q %.3f (acc %.3f q1 %.3f q2 %.3f, baseline %.3f)\n",
+           fs, f1, e1[1], e1[2], fp, ep[0], fg, eg[0], fo, eo[1], eo[2], f2, e2[0], e2[1], e2[2], e2[4]); fflush(stdout);
+    assert(fs < 0.10);
+    assert(f1 < 0.15 && e1[1] > 0.70 && e1[2] < 0.10);    /* q_t varie : la mémoire d'un tick ne répond juste qu'à q = 1 */
+    assert(fo < 0.10 && eo[2] > 0.70 && eo[1] < 0.10);    /* … et l'ancien deux-cases qu'à q = 2 */
+    assert(fp < 0.15);                                    /* la phase choisie ne suit plus une question aléatoire */
+    assert(fg > 0.35 && fg < 0.55);                       /* meilleure case seule : plafond 1/2 */
+    assert(f2 > 0.55 && e2[1] > 0.75 && e2[2] > 0.75 && fabs(e2[4]) < 0.10);
+    assert(f2 > fg + 0.10 && f2 > fp + 0.30);             /* deux cases battent une case (+ phase ou + q) */
 }
 
 /* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */

@@ -357,9 +357,9 @@ const LabDef LABS[N_LABS] = {
     { "dialog-mem", "Dialogue avec mémoire : répondre au message d'avant",
       "réponse = (s_{t-1} + 1) mod 16 (le message d'avant, + 1), un symbole neuf par tick, historique vidé ; crédit gradué (Hamming 4 bits) / créature-tick ; plafond sans mémoire = 0,2875 de crédit, 1/16 exact ; seed-amorce = seed emit-dialog (s_t + 1, sans mémoire) ; baseline = même pool, faux s_{t-1}",
       { "accuracy", "exact", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_dm_pre, hl_dm_post, hl_dm_fit, hl_dm_rank, NULL, hl_dm_init, 0, 0 },
-    { "dialog-lag2", "Dialogue à deux cases mémoire : répondre au message d'il y a deux tours",
-      "crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming 4 bits, / créature-tick ; répondre au message d'avant est pénalisé ; créature-tick sans EMIT = −0,1 ; espérance 0 sans mémoire, mémoire d'un tick ou couverture ; une case + phase (un tick sur deux) plafonne à 0,5 / émission ; deux cases : optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-2}",
-      { "accuracy", "exact2", "hit1", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_d2_pre, hl_d2_post, hl_d2_fit, hl_dm_rank, NULL, hl_d2_init, 0, 0 },
+    { "dialog-lag2", "Dialogue à deux cases mémoire : répondre au message demandé (il y a 1 ou 2 tours)",
+      "question q_t ∈ {1,2} tirée au hasard, annoncée un tick d'avance (bit 0x20 du stimulus) ; crédit = c(réponse, s_{t-q}+1) − c(réponse, s_{t-q'}+1), q' = 3 − q, c = crédit gradué Hamming 4 bits, / créature-tick ; créature-tick sans EMIT = −0,1 ; espérance 0 sans mémoire ou avec une mémoire d'un tick constante ; une case (avec ou sans phase) plafonne à 0,5 / émission ; deux cases : optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-q}",
+      { "accuracy", "exact_q1", "exact_q2", "emits", "baseline", "vs_baseline" }, NULL, hl_dm_seeds, hl_d2_pre, hl_d2_post, hl_d2_fit, hl_dm_rank, NULL, hl_d2_init, 0, 0 },
 };
 
 int lab_index(const char *name) {
