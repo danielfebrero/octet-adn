@@ -333,7 +333,7 @@ static int raw_pool(PoolEntry *p, const char *hex) {
 TEST(test_sixteen_labs_and_core_untouched) {
     const char *nw[6] = { "fold", "antibiotic", "commons", "pandemic", "code-repair", "self-evolve" };
     for (int i = 0; i < 6; i++) assert(lab_index(nw[i]) == N_CORE_LABS + i);
-    assert(N_LABS == 19 && cfg_default().self_evo == 0);
+    assert(N_LABS == 20 && cfg_default().self_evo == 0);
     Rng r; rng_seed(&r, 0); WorldConfig cfg = cfg_default();
     World *w = world_new(NULL, 0, &r, &cfg, NULL);
     assert(w->before_vm == NULL);
@@ -889,7 +889,7 @@ TEST(test_soup_detector_controls) {
 TEST(test_dialog_mem_needs_memory) {
     PoolEntry seed[POOL_MAX], mem[4];
     int id = lab_index("dialog-mem"), n = LABS[id].seeds(seed);
-    assert(id == N_LABS - 1 && n == 4);
+    assert(id == N_CORE_LABS + 8 && n == 4);
     double es[N_EXTRA], em[N_EXTRA];
     double fs = ev4("dialog-mem", seed, n, es);
     raw_pool(mem, "0d1412010e0f1e");          /* EAT EMIT SENSE_STIM INC_A SPLIT YIELD LOOP */
@@ -897,6 +897,27 @@ TEST(test_dialog_mem_needs_memory) {
     printf("    dialog-mem : seed %.3f (exact %.3f)  mémoire %.3f (exact %.3f, baseline %.3f)\n", fs, es[1], fm, em[1], em[3]);
     assert(fs < 0.40 && es[1] < 0.25);
     assert(fm > 0.90 && em[1] > 0.90 && em[3] < 0.40);
+}
+
+/* dialog-lag2 : sans deux cases mémoire, l'espérance est nulle. La seed-amorce (s_t + 1) et le
+ * génome de dialog-mem (mémoire d'un tick, s_{t-1} + 1, puni) restent sous le plafond ; un génome à
+ * deux cases (B = s_{t-2} + 1, un octet du génome via STORE/LOAD garde s_{t-1} + 1) le dépasse
+ * nettement et retombe à ~0 contre un faux s_{t-2} (baseline). Seuils mesurés, avec marge. */
+TEST(test_dialog_lag2_needs_two_slots) {
+    PoolEntry seed[POOL_MAX], one[4], two[4];
+    int id = lab_index("dialog-lag2"), n = LABS[id].seeds(seed);
+    assert(id == N_LABS - 1 && n == 4);
+    double es[N_EXTRA], e1[N_EXTRA], e2[N_EXTRA];
+    double fs = ev4("dialog-lag2", seed, n, es);
+    raw_pool(one, "0d1412010e0f1e");                       /* mémoire d'un tick : EMIT s_{t-1}+1 */
+    double f1 = ev4("dialog-lag2", one, 4, e1);
+    raw_pool(two, "0d060d1614070d1512010e0f1eff");         /* EAT STORE 13 MOV_AB EMIT LOAD 13 MOV_BA SENSE_STIM INC_A SPLIT YIELD LOOP [case] */
+    double f2 = ev4("dialog-lag2", two, 4, e2);
+    printf("    dialog-lag2 : seed %.3f (exact2 %.3f)  1 case %.3f (hit1 %.3f)  2 cases %.3f (exact2 %.3f, baseline %.3f)\n",
+           fs, es[1], f1, e1[2], f2, e2[1], e2[4]); fflush(stdout);
+    assert(fs < 0.10 && es[1] < 0.15);
+    assert(f1 < -0.20 && e1[2] > 0.60);
+    assert(f2 > 0.50 && e2[1] > 0.80 && fabs(e2[4]) < 0.10);
 }
 
 /* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */
@@ -981,6 +1002,7 @@ int main(void) {
     RUN(test_dialog_mem_needs_memory);
     RUN(test_reseed_rule_sign_and_noise);
     RUN(test_best_only_from_accepted);
-    printf("\n%d/%d tests OK\n", passed, 43);
+    RUN(test_dialog_lag2_needs_two_slots);
+    printf("\n%d/%d tests OK\n", passed, 44);
     return 0;
 }
