@@ -59,4 +59,24 @@ Les checkpoints `OADNTER3` (monde original) se relisent ; les nouveaux s'écrive
 
 ## Résultats
 
-Course unique, après le commit de ce protocole. Voir `results.txt`.
+Course unique, après le commit `68cd69a`. Fork t = 13 036 000, pop = 3 878.
+Pid 65645 laissé vivant.
+
+| bras | pop finale | K | sp1 | verdict |
+|---|---:|---:|---:|---|
+| témoin, +160 000 ticks | 3 890 (min 3 799, max 3 943) | 4 | 0 | **tenue** |
+| forces + expand + regrow 20 | **836** (min 355) | **8** | 1 (max 43, 9,4 %) | **effondrement + colonise + forces_rares** |
+
+Le gène `ATTACK` était déjà dans les germens du plateau 13 M. `--forces 1` n'injecte personne :
+à t+400 ticks, 5 créatures sont espèce 1 et les attaques ont commencé (événement `forces`).
+Elles tiennent ≥ 1 % de la pop sur 162 / 800 échantillons (max 9,4 % à t = 13 084 800),
+puis retombent à 1 individu à la porte. Ce n'est pas un prédateur collé par le CLI.
+
+La chute 3 878 → 740 en 200 ticks est la nappe `--regrow 20` (4× moins d'événements abiotiques),
+pas les 5 attaquants. Le témoin, même checkpoint, reste plein. Les cadavres (+4) n'empêchent
+pas le trou ; la pop se repose vers ~800–900 pendant que l'espace grandit.
+
+Quatre îles vides à t = 13 040 000, 13 080 000, 13 120 000, 13 160 000. À la fin : K = 8,
+8 / 8 peuplées, copier_frac = 0,98. L'univers s'est étendu. Ils l'ont colonisé.
+
+Sortie brute : `results.txt`. Le monde original continue.

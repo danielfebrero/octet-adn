@@ -1,0 +1,44 @@
+# forces + expansion, fork t=13036000 pop=3878, 160000 ticks
+# témoin : experiments/vie-forces-ctrl
+# forces : experiments/vie-forces  --forces 1 --expand-every 40000 --regrow 20
+# original pid 65645 laissé vivant
+fork_t	13036000
+fork_pop	3878
+ctrl_end_t	13196000
+ctrl_end_pop	3890
+ctrl_min	3799
+ctrl_max	3943
+ctrl_stable_niches	3
+forces_end_t	13196000
+forces_end_pop	836
+forces_min	355
+forces_max	3878
+forces_stable_niches	5
+forces_end_sp1	1
+forces_max_sp1	43
+forces_max_sp1_pct	9.42
+forces_end_attacks	80464
+forces_end_K	8
+forces_end_isles	8
+verdict	effondrement+colonise+forces_rares
+
+# portes (dernière époque)
+# extinction          non (pop=836)
+# effondrement        oui (836/3878 = 22 %)
+# tenue               non
+# colonise            oui (K 4→8, 8/8 îles peuplées)
+# forces_nues         non
+# forces_rares        oui à la porte (sp1=1, 0.12 %, attaques=80464)
+# forces_tenues       non à la porte ; oui pendant 162/800 échantillons (max 9,4 % à t=13084800)
+
+# trajectoire forces (tick pop sp1 K isles food)
+13036000	3878	0	4	4	?
+13036200	740	0	4	4	9717
+13036400	611	5	4	4	?
+13040000	499	2	5	4	10413
+13056000	471	.	5	.	.
+13080000	432	4	6	5	10919
+13120000	470	6	7	6	9476
+13157600	585	43	7	.	.
+13160000	628	1	8	7	9701
+13196000	836	1	8	8	4045
