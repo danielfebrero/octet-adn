@@ -1225,6 +1225,17 @@ double d2_q2_prob(uint32_t cycle) {
     if (cycle <= D2_N1) return 0.0;
     return 0.5 * (double)(cycle - D2_N1) / (double)(D2_N2 - D2_N1);
 }
+/* Échelon de gradient (curriculum seulement) : quand q = 2, bonus = w × (D2_CBAR − c(réponse, s_{t-1}+1)).
+ * Espérance nulle pour une réponse qui ignore s_{t-1} (constante, hasard, silence : rien à gagner) ;
+ * positif seulement si la lignée ÉVITE activement s_{t-1}+1 (au plus w × 0,2875 = 0,2875) ; répondre
+ * s_{t-1}+1 coûte en plus w × 0,7125. Une case qui lit q : (0,7125 + 0,2875 + 0,2875 w) / 2 < 0,7125
+ * des deux cases pour w ≤ 1 (0,644 à w = 1). w = D2_W_AVOID sur N1..N2, décroît linéairement jusqu'à 0
+ * en N3, 0 ensuite et hors runner (eval tenue à l'écart, tests) : plafonds finaux inchangés. */
+double d2_avoid_w(uint32_t cycle) {
+    if (cycle == LAB_CYCLE_FINAL || cycle <= D2_N1 || cycle >= D2_N3) return 0.0;
+    if (cycle <= D2_N2) return D2_W_AVOID;
+    return D2_W_AVOID * (double)(D2_N3 - cycle) / (double)(D2_N3 - D2_N2);
+}
 static int d2_draw_q(const Lab *l, World *w) {
     double p = d2_q2_prob(l->cycle);
     if (p == 0.5) return 1 + (int)rng_below(w->rng, 2);           /* régime final : même tirage qu'avant */
@@ -1256,11 +1267,13 @@ void hl_d2_post(Lab *l, World *w) {
     D2State *s = l->ext;
     int asked = s->q == 2 ? s->prev2 : s->prev, other = s->q == 2 ? s->prev : s->prev2;
     int want = ((l->counterfactual ? s->fake : asked) + 1) & 15, wrong = (other + 1) & 15;
+    double aw = d2_avoid_w(l->cycle);
     for (int i = 0; i < w->nem; i++) {
         Creature *a = w->em[i].c;
         if (!a || a->species != 0) continue;
         int v = w->em[i].v & 15;
         double cw = d2_c(v, want), co = d2_c(v, wrong), c = cw - co;
+        if (s->q == 2 && aw > 0) c += aw * (D2_CBAR - co);   /* échelon : éviter s_{t-1}+1 (curriculum) */
         a->lscore += c;
         int g = cw == 1.0 ? 4 : cw == 0.55 ? 2 : cw == 0.20 ? 1 : 0;
         a->e += g - 1 - (v == wrong && v != want ? 2 : 0);   /* répondre à l'autre message coûte */

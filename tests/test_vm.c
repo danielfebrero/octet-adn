@@ -945,13 +945,51 @@ TEST(test_dialog_lag2_curriculum) {
     raw_pool(one, "0d1412010e0f1e");                       /* mémoire d'un tick : EMIT s_{t-1}+1 */
     g_lab_cycle = 1;               double f1 = ev4("dialog-lag2", one, 4, e); double q2a = e[2], q1a = e[1];
     g_lab_cycle = (D2_N1 + D2_N2) / 2; double fm = ev4("dialog-lag2", one, 4, e);
-    g_lab_cycle = D2_N2;           double f3 = ev4("dialog-lag2", one, 4, e); double q2c = e[2];
+    g_lab_cycle = D2_N3;           double f3 = ev4("dialog-lag2", one, 4, e); double q2c = e[2];
     g_lab_cycle = LAB_CYCLE_FINAL; double ff = ev4("dialog-lag2", one, 4, NULL);
     printf("    dialog-lag2 curriculum (mémoire d'un tick) : phase 1 %.3f (q1 %.3f, q2 %.3f)  transition %.3f  phase 3 %.3f  final %.3f\n",
            f1, q1a, q2a, fm, f3, ff); fflush(stdout);
     assert(q2a == 0 && q1a > 0.70 && f1 > 0.50);           /* phase 1 : jamais q = 2, une case suffit */
-    assert(fm < f1 - 0.15 && fm > f3 + 0.15);               /* transition : entre les deux */
-    assert(f3 == ff && f3 < 0.15 && q2c < 0.10);            /* phase 3 = régime final, à l'octet près */
+    assert(fm < f1 - 0.15 && fm > f3 + 0.10);               /* transition : entre les deux (bonus actif : 1 tick y est puni) */
+    assert(f3 == ff && f3 < 0.15 && q2c < 0.10);            /* après N3 = régime final, à l'octet près */
+}
+
+/* dialog-lag2, échelon d'évitement : pendant la transition (q = 2 possible, w = D2_W_AVOID), une
+ * case qui lit q et évite s_{t-1}+1 bat nettement la mémoire d'un tick constante ; une constante et
+ * le silence n'y gagnent rien d'exploitable ; le bonus est nul en régime final (cf. test d'avant). */
+TEST(test_dialog_lag2_avoid_step) {
+    assert(d2_avoid_w(1) == 0 && d2_avoid_w(D2_N1) == 0 && d2_avoid_w(D2_N1 + 1) == D2_W_AVOID && d2_avoid_w(D2_N2) == D2_W_AVOID);
+    double wm = d2_avoid_w((D2_N2 + D2_N3) / 2);
+    assert(wm > 0.45 * D2_W_AVOID && wm < 0.55 * D2_W_AVOID);
+    assert(d2_avoid_w(D2_N3) == 0 && d2_avoid_w(D2_N3 + 999) == 0 && d2_avoid_w(LAB_CYCLE_FINAL) == 0);
+    PoolEntry one[4], gate[4], two[4], cst[4], mute[4]; double eg[N_EXTRA];
+    raw_pool(one, "0d1412010e0f1e");                                     /* mémoire d'un tick */
+    raw_pool(gate, "0d151f2009061c0f1914080216141201" "0e0f1e");         /* 1 case qui lit q, ¬A si q = 2 */
+    raw_pool(two, "0d06161f20090416140803071614071615" "12010e0f1eff");  /* deux cases + q */
+    raw_pool(cst, "0d1c05140e0f1e");                                     /* EAT LOADI 5 EMIT SPLIT YIELD LOOP */
+    raw_pool(mute, "0d0e0f1e");                                          /* silence */
+    double r[2][5];
+    for (int k = 0; k < 2; k++) {
+        g_lab_cycle = k == 0 ? (D2_N1 + D2_N2) / 2 : LAB_CYCLE_FINAL;
+        r[k][0] = ev4("dialog-lag2", one, 4, NULL);
+        r[k][1] = ev4("dialog-lag2", gate, 4, k == 0 ? eg : NULL);
+        r[k][2] = ev4("dialog-lag2", two, 4, NULL);
+        r[k][3] = ev4("dialog-lag2", cst, 4, NULL);
+        r[k][4] = ev4("dialog-lag2", mute, 4, NULL);
+    }
+    g_lab_cycle = LAB_CYCLE_FINAL;
+    printf("    dialog-lag2 échelon : transition  1 tick %.3f  1 case+q %.3f (q2 exact %.3f)  2 cases %.3f  constante %.3f  silence %.3f\n"
+           "                          final       1 tick %.3f  1 case+q %.3f  2 cases %.3f  constante %.3f  silence %.3f\n",
+           r[0][0], r[0][1], eg[2], r[0][2], r[0][3], r[0][4], r[1][0], r[1][1], r[1][2], r[1][3], r[1][4]); fflush(stdout);
+    assert(r[0][1] > r[0][0] + 0.30);                    /* (a) lire q et éviter paie pendant la transition */
+    g_lab_cycle = D2_N2;                                 /* q uniforme, bonus plein : le pire cas pour les deux cases */
+    double g2 = ev4("dialog-lag2", gate, 4, NULL), t2 = ev4("dialog-lag2", two, 4, NULL);
+    g_lab_cycle = LAB_CYCLE_FINAL;
+    printf("                          N2 (q uniforme, w plein) : 1 case+q %.3f  2 cases %.3f\n", g2, t2); fflush(stdout);
+    assert(t2 > g2);                                     /* la vraie réponse reste au-dessus du bonus */
+    assert(fabs(r[0][3]) < 0.10 && r[0][3] < r[0][1] - 0.40 && r[0][4] < 0);   /* (c) constante ≈ 0, silence < 0 */
+    assert(fabs(r[1][3]) < 0.10 && r[1][4] < 0);
+    assert(r[1][1] > 0.35 && r[1][1] < 0.55 && r[1][2] > 0.55 && r[1][0] < 0.15);   /* (b) final : plafonds de PR #17 */
 }
 
 /* Règle B du reseed : marge indépendante du signe + différence appariée > 2 SE. */
@@ -1038,6 +1076,7 @@ int main(void) {
     RUN(test_best_only_from_accepted);
     RUN(test_dialog_lag2_needs_two_slots);
     RUN(test_dialog_lag2_curriculum);
-    printf("\n%d/%d tests OK\n", passed, 45);
+    RUN(test_dialog_lag2_avoid_step);
+    printf("\n%d/%d tests OK\n", passed, 46);
     return 0;
 }

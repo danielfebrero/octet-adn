@@ -218,7 +218,12 @@ extern uint32_t g_lab_cycle;
 /* dialog-lag2 : probabilité que la question soit q = 2 au cycle donné (curriculum) */
 double d2_q2_prob(uint32_t cycle);
 #define D2_N1 1500u   /* fin de la phase 1 (q ≡ 1) */
-#define D2_N2 4000u   /* fin de la transition : q uniforme ensuite */
+#define D2_N2 4000u   /* fin de la transition : q uniforme ensuite ; le bonus d'évitement commence à décroître */
+#define D2_N3 6000u   /* bonus d'évitement à 0 : régime final (barème et plafonds de PR #17) */
+#define D2_W_AVOID 1.0 /* poids du bonus d'évitement pendant la transition (N1..N2) */
+#define D2_CBAR 0.2875 /* espérance de c(réponse, cible) pour une réponse indépendante de la cible */
+/* dialog-lag2 : poids du bonus d'évitement au cycle donné (0 en phase 1 et en régime final) */
+double d2_avoid_w(uint32_t cycle);
 int  lab_index(const char *name);
 /* general : un génome rejoué seul sur la mémoire 2 et 3 tenues à l'écart (voir labs_h.c) */
 #define GN_CHECK_N 8
