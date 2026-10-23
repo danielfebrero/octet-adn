@@ -13,6 +13,7 @@
  *
  *   ./experiments/competition selftest
  *   ./experiments/competition mix
+ *   ./experiments/competition dump   soupe des 3 lignées qui tiennent, pour le terrarium
  */
 #include <stdio.h>
 #include <string.h>
@@ -256,6 +257,17 @@ int main(int argc, char **argv) {
         fclose(o);
         return rc;
     }
-    fprintf(stderr, "usage : %s selftest | mix [mix.txt]\n", argv[0]);
+    if (argc > 1 && !strcmp(argv[1], "dump")) {
+        const char *path = argc > 2 ? argv[2] : "experiments/competition-ligne/survivors.bin";
+        static const int keep[3] = { 0, 1, 4 }; /* g0, g2, g24 */
+        FILE *f = fopen(path, "wb");
+        if (!f) { perror(path); return 1; }
+        for (int i = 0; i < 256; i++)
+            fwrite(F[keep[i % 3]], SOUP_PROG, 1, f);
+        fclose(f);
+        printf("dump : 256 programmes, lignées 0/2/24 → %s\n", path);
+        return 0;
+    }
+    fprintf(stderr, "usage : %s selftest | mix [mix.txt] | dump [survivors.bin]\n", argv[0]);
     return 2;
 }
