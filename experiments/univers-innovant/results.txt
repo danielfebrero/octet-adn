@@ -1,0 +1,8 @@
+etalon plante : vu
+etalon bruit gele : 0/8 vus
+etalon cristal : refuse
+dispositif : ok
+lois a 2 graines ou plus : 0
+lois a 4 graines ou plus : 0
+meilleur bassin : 0/8
+verdict : non
