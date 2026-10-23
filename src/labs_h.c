@@ -1198,22 +1198,50 @@ double hl_dm_fit(Lab *l, World *w, int ticks) {
     return f;
 }
 
-/* ======================= dialog-lag2 : deux cases mémoire, pas une couverture =======================
- * Même dialogue que dialog-mem (un symbole s_t neuf par tick, historique vidé), mais la bonne
- * réponse est (s_{t-2} + 1) mod 16 ET la réponse au message d'avant (s_{t-1} + 1) est pénalisée :
- * crédit = c(réponse, s_{t-2}+1) − c(réponse, s_{t-1}+1), c = crédit gradué Hamming de dialog-mem.
- * Toute politique qui ne distingue pas s_{t-1} de s_{t-2} a une espérance nulle : sans mémoire
- * (0,2875 − 0,2875), mémoire d'un tick (s_{t-1} : 0,2875 − 1), et la couverture de dialog-mem
- * (garder une valeur 2 ticks et la répondre les deux fois) retombe à 0. Trou connu : une case + la
- * phase de l'ip (lire un tick sur deux, répondre autre chose que s_{t-1}+1 l'autre tick) plafonne à
- * (0,7125 + 0,2875) / 2 = 0,5 par émission ; c'est ce que l'évolution trouve depuis la seed.
- * Une lignée qui tient DEUX valeurs à la fois (A et B, A et un octet du génome via STORE/LOAD,
- * deux quartets dans un octet…) vise l'optimum 1 − 0,2875 = 0,7125. Seed-amorce = seed emit-dialog.
- * Taxe de silence : une créature-tick sans EMIT coûte 0,1, sinon se taire (0) égale le plafond et
- * l'évolution perd EMIT (mesuré : fitness 0, eval 0/0 dès ~2000 cycles sans la taxe).
- * Baseline : même pool, même graine, s_{t-2} remplacé par un faux tiré au hasard (pénalité inchangée). */
+/* ======================= dialog-lag2 : deux cases mémoire, question aléatoire q_t =======================
+ * Même dialogue que dialog-mem (un symbole s_t neuf par tick, historique vidé), mais chaque tick
+ * pose une question q_t ∈ {1, 2} tirée au hasard : la bonne réponse est (s_{t-q} + 1) mod 16 et
+ * la réponse à l'autre message est pénalisée :
+ *   crédit = c(réponse, s_{t-q}+1) − c(réponse, s_{t-q'}+1), q' = 3 − q, c = crédit gradué Hamming.
+ * La question est annoncée un tick d'avance, dans le bit 0x20 du stimulus (stimulus_t = s_t | 0x20
+ * si q_{t+1} = 2) : elle arrive avec s_{t-1}, au moment où la lignée lit, comme le reste du labo
+ * (réponse émise avant de relire). 0x20 et pas 0x10 : INC_A sur s = 15 déborde dans 0x10.
+ * Plafonds : sans mémoire 0 (0,2875 − 0,2875) ; mémoire d'un tick constante 0 ((0,7125 − 0,7125)/2) ;
+ * une case, avec ou sans phase de l'ip, ne tient qu'une des deux valeurs quand la question tombe
+ * (la phase est choisie, q_t ne l'est pas) : au mieux (0,7125 + 0,2875) / 2 = 0,5 par émission.
+ * Deux cases (A et B, un octet du génome en relais) : optimum 1 − 0,2875 = 0,7125, sur q = 1 et q = 2.
+ * PR #16 avait q ≡ 2 : l'évolution y a trouvé 1 case + phase (plafond 0,5) ; q_t aléatoire ferme ce trou
+ * de phase (gardé à 0,5 par construction, la seule montée au-dessus passe par deux cases).
+ * Taxe de silence : une créature-tick sans EMIT coûte 0,1 (sinon se taire égale les plafonds bas).
+ * Baseline : même pool, même graine, s_{t-q} remplacé par un faux tiré au hasard (pénalité inchangée). */
 #define D2_SILENCE 0.1
-typedef struct { int prev, prev2, fake, s; double credit, emits, exact2, hit1; } D2State;
+#define D2_QBIT    0x20
+/* Curriculum (fonction du cycle du labo, déterministe) : cycles 1..D2_N1 q ≡ 1 (une case suffit,
+ * gradient net vers la mémoire d'un tick) ; D2_N1..D2_N2 P(q = 2) monte linéairement de 0 à 1/2 ;
+ * après D2_N2 (et hors runner : eval tenue à l'écart, tests) q uniforme = barème final ci-dessus,
+ * plafonds inchangés (0,5 une case, 0,7125 deux cases). */
+double d2_q2_prob(uint32_t cycle) {
+    if (cycle == LAB_CYCLE_FINAL || cycle >= D2_N2) return 0.5;
+    if (cycle <= D2_N1) return 0.0;
+    return 0.5 * (double)(cycle - D2_N1) / (double)(D2_N2 - D2_N1);
+}
+/* Échelon de gradient (curriculum seulement) : quand q = 2, bonus = w × (D2_CBAR − c(réponse, s_{t-1}+1)).
+ * Espérance nulle pour une réponse qui ignore s_{t-1} (constante, hasard, silence : rien à gagner) ;
+ * positif seulement si la lignée ÉVITE activement s_{t-1}+1 (au plus w × 0,2875 = 0,2875) ; répondre
+ * s_{t-1}+1 coûte en plus w × 0,7125. Une case qui lit q : (0,7125 + 0,2875 + 0,2875 w) / 2 < 0,7125
+ * des deux cases pour w ≤ 1 (0,644 à w = 1). w = D2_W_AVOID sur N1..N2, décroît linéairement jusqu'à 0
+ * en N3, 0 ensuite et hors runner (eval tenue à l'écart, tests) : plafonds finaux inchangés. */
+double d2_avoid_w(uint32_t cycle) {
+    if (cycle == LAB_CYCLE_FINAL || cycle <= D2_N1 || cycle >= D2_N3) return 0.0;
+    if (cycle <= D2_N2) return D2_W_AVOID;
+    return D2_W_AVOID * (double)(D2_N3 - cycle) / (double)(D2_N3 - D2_N2);
+}
+static int d2_draw_q(const Lab *l, World *w) {
+    double p = d2_q2_prob(l->cycle);
+    if (p == 0.5) return 1 + (int)rng_below(w->rng, 2);           /* régime final : même tirage qu'avant */
+    return (int)rng_below(w->rng, 1000) < (int)(p * 1000) ? 2 : 1;   /* un tirage dans tous les cas */
+}
+typedef struct { int prev, prev2, fake, s, q, qn; double credit, emits, ex[3], n[3]; } D2State;
 static double d2_c(int v, int want) {
     int b = (v ^ want) & 15;
     b = (b & 1) + ((b >> 1) & 1) + ((b >> 2) & 1) + ((b >> 3) & 1);
@@ -1222,30 +1250,36 @@ static double d2_c(int v, int want) {
 void hl_d2_init(Lab *l, World *w) {
     D2State *s = xcalloc(1, sizeof *s);
     s->prev = (int)rng_below(w->rng, 16); s->prev2 = (int)rng_below(w->rng, 16);
+    s->qn = d2_draw_q(l, w);               /* question du tick 0 */
     l->ext = s;
 }
 void hl_d2_pre(Lab *l, World *w) {
     D2State *s = l->ext;
     if (w->t > 0) { s->prev2 = s->prev; s->prev = s->s; }
+    s->q = s->qn;                                        /* annoncée au tick d'avant */
     s->s = (int)rng_below(w->rng, 16);
     s->fake = (int)rng_below(w->rng, 16);                /* tiré dans les deux modes : rejeu apparié */
-    w->stimulus = s->s;
+    s->qn = d2_draw_q(l, w);               /* question du tick suivant, annoncée maintenant */
+    w->stimulus = s->s | (s->qn == 2 ? D2_QBIT : 0);
     w->hist_n = 0;
 }
 void hl_d2_post(Lab *l, World *w) {
     D2State *s = l->ext;
-    int want2 = ((l->counterfactual ? s->fake : s->prev2) + 1) & 15, want1 = (s->prev + 1) & 15;
+    int asked = s->q == 2 ? s->prev2 : s->prev, other = s->q == 2 ? s->prev : s->prev2;
+    int want = ((l->counterfactual ? s->fake : asked) + 1) & 15, wrong = (other + 1) & 15;
+    double aw = d2_avoid_w(l->cycle);
     for (int i = 0; i < w->nem; i++) {
         Creature *a = w->em[i].c;
         if (!a || a->species != 0) continue;
         int v = w->em[i].v & 15;
-        double c2 = d2_c(v, want2), c1 = d2_c(v, want1), c = c2 - c1;
+        double cw = d2_c(v, want), co = d2_c(v, wrong), c = cw - co;
+        if (s->q == 2 && aw > 0) c += aw * (D2_CBAR - co);   /* échelon : éviter s_{t-1}+1 (curriculum) */
         a->lscore += c;
-        int g = c2 == 1.0 ? 4 : c2 == 0.55 ? 2 : c2 == 0.20 ? 1 : 0;
-        a->e += g - 1 - (v == want1 && v != want2 ? 2 : 0);   /* répondre au message d'avant coûte */
+        int g = cw == 1.0 ? 4 : cw == 0.55 ? 2 : cw == 0.20 ? 1 : 0;
+        a->e += g - 1 - (v == wrong && v != want ? 2 : 0);   /* répondre à l'autre message coûte */
         cap_e(a);
         s->credit += c; s->emits += 1;
-        s->exact2 += v == want2 && v != want1; s->hit1 += v == want1;
+        s->ex[s->q] += v == want && v != wrong; s->n[s->q] += 1;
     }
     for (int i = 0; i < w->ncs; i++) {                    /* taxe de silence : se taire ne vaut pas 0 */
         Creature *c = w->cs[i];
@@ -1257,8 +1291,8 @@ double hl_d2_fit(Lab *l, World *w, int ticks) {
     D2State *s = l->ext;
     double f = s->credit / pop_ticks_h(l);
     l->extra[0] = s->emits > 0 ? s->credit / s->emits : 0;
-    l->extra[1] = s->emits > 0 ? s->exact2 / s->emits : 0;
-    l->extra[2] = s->emits > 0 ? s->hit1 / s->emits : 0;
+    l->extra[1] = s->n[1] > 0 ? s->ex[1] / s->n[1] : 0;
+    l->extra[2] = s->n[2] > 0 ? s->ex[2] / s->n[2] : 0;
     l->extra[3] = s->emits;
     if (!l->counterfactual) {
         double b = replay(l, ticks, NULL);
