@@ -58,7 +58,7 @@ int collect_foreign(const char *dir, PoolEntry *out) {
     for (int i = 1; i < N_CORE_LABS; i++) {            /* labos historiques sauf org-seeds, ordre du registre */
         char p[4096]; Checkpoint ck;
         snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
-        if (ck_load(p, &ck) == 0 && ck.has_best) out[n++] = ck.best;
+        if (ck_load(p, &ck) == 0 && ck.npool > 0) out[n++] = ck.pool[0];   /* pool en place, jamais un cycle rejeté */
     }
     /* Un champion humanité n'entre que si son dernier vs_baseline est positif.
      * Le génome importé est celui du pool (celui que la métrique a mesuré), pas le
@@ -67,14 +67,14 @@ int collect_foreign(const char *dir, PoolEntry *out) {
     for (int i = N_CORE_LABS; i < N_LABS; i++) {
         char p[4096]; Checkpoint ck;
         snprintf(p, sizeof p, "%s/%s/checkpoints/latest.ck", dir, LABS[i].name);
-        if (ck_load(p, &ck) || !ck.has_best) continue;
+        if (ck_load(p, &ck) || ck.npool == 0) continue;
         snprintf(p, sizeof p, "%s/%s/metrics.bin", dir, LABS[i].name);
         MetricRec *v = NULL; int m = met_read(p, &v);
         double gap = (m > 0) ? humanity_gap(i, &v[m - 1]) : 0;
         free(v);
         if (gap > best_gap) {
             best_gap = gap; have = 1;
-            champ = ck.npool > 0 ? ck.pool[0] : ck.best;
+            champ = ck.pool[0];
         }
     }
     if (have) {
@@ -121,12 +121,14 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
         memset(&ck, 0, sizeof ck);
         ck.lab_id = id;
         ck.npool = LABS[id].seeds(ck.pool);
+        ck.best_fitness = -INFINITY;               /* pas de champion tant que rien n'est accepté (fitness < 0 possible) */
     }
     uint64_t eng = engine_version();
     if (persist && ck.engine && ck.engine != eng && !o->quiet)
         printf("[popote] %s : moteur %010llx → %010llx (amélioration appliquée)\n", LABS[id].name,
                (unsigned long long)(ck.engine & 0xffffffffffULL), (unsigned long long)(eng & 0xffffffffffULL));
     if (persist && ck.engine && ck.engine != eng) {
+        ck.best_fitness = -INFINITY; ck.has_best = 0;   /* best d'un autre moteur (ou d'avant reseed) : périmé */
         /* Réensemencement au changement de moteur : si la seed du labo (peut-être améliorée par la
          * nouvelle popote) bat le pool en place sur les mêmes SEL_EVALS graines, elle le remplace.
          * Sinon une seed corrigée ne profiterait jamais aux labos qui tournent déjà. */
@@ -154,7 +156,7 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
     double fit = res.fitness;
     int accepted = 0;
     g_eval_new = g_eval_old = 0;
-    if (o->sel_legacy) accepted = res.nnew > 0 && fit >= ACCEPT_RATIO * ck.best_fitness;
+    if (o->sel_legacy) accepted = res.nnew > 0 && fit >= ck.best_fitness - (1 - ACCEPT_RATIO) * fabs(ck.best_fitness);   /* marge 10 % indépendante du signe */
     else if (res.nnew > 0) {
         /* Sélection appariée, robuste au bruit : le nouveau pool et le pool en place sont
          * réévalués sur les MÊMES SEL_EVALS graines (indépendantes de celle du cycle) ; on garde
@@ -169,7 +171,7 @@ static MetricRec run_lab_cycle(int id, const RunOpts *o, PoolEntry *foreign, int
     }
     if (accepted) { memcpy(ck.pool, res.newpool, sizeof(PoolEntry) * (size_t)res.nnew); ck.npool = res.nnew; }
     if (LABS[id].show_extra) fit = lab.extra[LABS[id].show_extra - 1];   /* general : fitness ET best = mémoire longue tenue à l'écart */
-    if (fit > ck.best_fitness && res.nnew > 0) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
+    if (accepted && fit > ck.best_fitness) { ck.best_fitness = fit; ck.best = res.newpool[0]; ck.has_best = 1; }
     ck.cycle = cycle; ck.engine = eng;
 
     MetricRec r; memset(&r, 0, sizeof r);
