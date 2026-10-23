@@ -1,0 +1,3 @@
+tirage 8192 bandes : 0 passent, seuil 16, meilleur réparées=4 (indice 4602), actives réglées=1109
+marche 32 × 16384 époques, mut 0.00024 : 0 passent, seuil 4, meilleur réparées=3
+verdict : non

@@ -65,3 +65,26 @@ make experiments/seul
 ./experiments/seul selftest
 ./experiments/seul > experiments/seul-duree/results.txt
 ```
+
+## Résultats
+
+Selftest d'abord, puis le tirage et la marche. Sortie brute : `results.txt`.
+Le binaire de cette mesure finit en 2,6 s.
+
+| contrôle | réparées | létales | passe |
+|---|---:|---:|---|
+| restaurateur fait main | 12 | 52 | oui |
+| le même sans `STORE` | — | — | non |
+| cristal `0x11` | — | — | non |
+| copieur fait main, seul (copieur sur 128) | 0 | 64 | non |
+| motif réplicateur de la soupe, seul | 48 | 15 | oui |
+| bruit, graine 1 | 0 | — | non |
+
+| bras | passent | seuil | meilleur nombre de cases réparées |
+|---|---:|---:|---:|
+| tirage, 8192 bandes | 0 | 16 | 4 (indice 4602, 60 cases létales) |
+| marche, 32 × 16384 époques | 0 | 4 | 3 |
+
+1109 bandes du tirage sont des points fixes actifs. Aucune n'atteint 8 cases réparées.
+
+**Verdict : non.** Le détecteur voit une organisation qui se répare, y compris le motif déjà trouvé dans la soupe quand on le laisse seul. Dans le bruit, et sous la mutation de fond de la soupe, cette organisation n'apparaît pas à ce volume.
