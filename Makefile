@@ -84,6 +84,8 @@ experiments/terrarium_lecture: experiments/terrarium.c $(CORE) include/octet.h e
 
 experiments/tronc-ligne/lecture.so: experiments/tronc-ligne/lecture.c experiments/tronc-ligne/loi.h
 	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+experiments/tronc-ligne/trace.so: experiments/tronc-ligne/trace.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
 
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h

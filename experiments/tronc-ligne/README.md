@@ -43,6 +43,12 @@ tirage, et sans retirer de brique.
 les briques posées et les carrés 2×2 mixtes, écrit l'événement
 `lecture`, puis se tait.
 
+`trace.so` est sur le fork seulement. À chaque relevé, chaque carré
+2×2 mixte encore visible reçoit la marque 2 sur son coin haut-gauche,
+celui que la dépense retire. La case (0,0) reste à l'héritage.
+L'événement `trace` part quand un relevé revoit au moins un carré,
+et se réarme si le suivant n'en a plus.
+
 Le contrat ne rejoue pas les processus d'origine. Les génomes de la
 soupe et de la compétition, les tables de lois locales, et la table
 d'opcodes de la recherche d'univers restent dehors. Ces fichiers
