@@ -52,8 +52,17 @@ static int profile_explicit, loading, extension_error, bypass;
 static Config configuration(int profile) {
     Config c = {0};
     c.profile = profile; c.reserve = 4; /* quart du cap, pas quatre individus */
+    /* Choix primaire conteste : cooldown=64 (mesure b129054c) refusait 56,8% des contacts
+     * geometriques pour la seule raison du repos (exchange_cooldown_refused / contacts,
+     * moyenne sur 8 graines, 4000 ticks, profil exchange), contre 0% a cooldown=0. Comme
+     * period=16, tout cooldown <= 16 est un no-op strict (tick - dernier < cooldown n'est
+     * jamais vrai au passage suivant) : 32 est la PLUS PETITE valeur qui protege reellement
+     * une paire contre sa propre reconduction immediate. A 32, le blocage mesure tombe a
+     * 42,3% (voir experiments/rencontres-ligne/RESULTATS.md) : la protection contre le
+     * couple fixe qui s'echange a chaque passage reste entiere, sans doubler le frein.
+     */
     c.exchange = (EchangeConfig){ .enabled = profile == EXCHANGE || profile == ALL,
-        .period = 16, .cost = 3, .cooldown = 64 };
+        .period = 16, .cost = 3, .cooldown = 32 };
     c.birth = (NaissanceConfig){ .enabled = profile == NURSERY || profile == ALL,
         .period = 16, .cost = 24, .food_cost = 2, .delay = 24,
         .season_period = 400, .season_open = 160, .mutation = 0.005 };
@@ -126,11 +135,17 @@ static void extra_after(void *ptr) {
     rendezvous_fields(w, &config.meeting, &e->meeting, NULL);
 }
 
-static const char *METRICS = "tick\tcontacts\tintra_contacts\tinter_contacts\texchanges\texchange_at_cap\tbytes_changed\teggs\thatched\tcrossed_children\tbirth_no_death\tcap_refused\tplace_refused\tenergy_refused\tseason_refused\treads\tmoves\tmove_energy\tpending\n";
+/* exchange_cooldown_refused/partner_refused/naissance_cooldown_refused/food_refused/
+ * queue_refused etaient deja comptes dans EchangeState/NaissanceState mais jamais ecrits
+ * ici ; RESULTATS.md le signalait comme limite ("ils ne sont pas estimes ici"). Sans eux,
+ * impossible de distinguer "peu d'echanges parce que peu de contacts" de "peu d'echanges
+ * parce que le repos bloque" : question posee par le choix primaire cooldown=64. */
+static const char *METRICS = "tick\tcontacts\tintra_contacts\tinter_contacts\texchanges\texchange_at_cap\tbytes_changed\teggs\thatched\tcrossed_children\tbirth_no_death\tcap_refused\tplace_refused\tenergy_refused\tseason_refused\treads\tmoves\tmove_energy\tpending\texchange_cooldown_refused\tpartner_refused\tnaissance_cooldown_refused\tfood_refused\tqueue_refused\n";
 static void extra_sample(void *ptr) {
     Terra *T = ptr;
     long ct = 0, in = 0, out = 0, xc = 0, full = 0, bytes = 0, eggs = 0, born = 0, cross = 0, nd = 0;
     long cap = 0, place = 0, energy = 0, season = 0, reads = 0, moves = 0, paid = 0, pending = 0;
+    long xcool = 0, partner = 0, bcool = 0, food = 0, queue = 0;
     for (int k = 0; k < T->P.K; k++) {
         ExtraIsland *e = extra_island(&T->I[k]);
         ct += e->contacts; in += e->intra; out += e->inter;
@@ -141,6 +156,9 @@ static void extra_sample(void *ptr) {
         season += e->birth.refused_season;
         reads += e->meeting.reads; moves += e->meeting.moves; paid += e->meeting.paid;
         pending += e->birth.npending;
+        xcool += e->exchange.cooldown_refused;
+        partner += e->birth.refused_partner; bcool += e->birth.refused_cooldown;
+        food += e->birth.refused_food; queue += e->birth.refused_queue;
     }
     if (!metrics && !extension_error) {
         char path[600]; snprintf(path, sizeof path, "%s/rencontres.tsv", T->dir);
@@ -151,8 +169,9 @@ static void extra_sample(void *ptr) {
         if (!loading || fresh) fputs(METRICS, metrics);
     }
     if (metrics) {
-        fprintf(metrics, "%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",
-            T->t, ct, in, out, xc, full, bytes, eggs, born, cross, nd, cap, place, energy, season, reads, moves, paid, pending);
+        fprintf(metrics, "%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\t%ld\n",
+            T->t, ct, in, out, xc, full, bytes, eggs, born, cross, nd, cap, place, energy, season, reads, moves, paid, pending,
+            xcool, partner, bcool, food, queue);
         if (fflush(metrics)) { extension_error = 1; stop_flag = 1; }
     }
     if (xc && !(announced & 1)) { event(T, "croisement_rencontre", "couples_modifies=%ld au_plafond=%ld", xc, full); announced |= 1; }
@@ -268,9 +287,41 @@ static int rencontres_selftest(void) {
 
 static int help(void) {
     fprintf(stderr, "rencontres run --dir CHEMIN_NEUF --profile control|exchange|nursery|meeting|all [options terrarium]\n"
+        "    [--exchange-period N] [--exchange-cost N] [--exchange-cooldown N]\n"
+        "    [--nursery-period N] [--nursery-cost N] [--nursery-food N] [--nursery-delay N]\n"
+        "    [--nursery-season-period N] [--nursery-season-open N] [--nursery-mutation F]\n"
+        "    [--meeting-period N] [--meeting-cost N]\n"
         "rencontres selftest | report DIR... | dump DIR\n"
-        "Pas d'import state.ck ancien ; pas de copie réelle, migration ou expansion dans cette expérience.\n");
+        "Pas d'import state.ck ancien ; pas de copie réelle, migration ou expansion dans cette expérience.\n"
+        "Les overrides ci-dessus ne s'appliquent qu'à un --dir neuf : une reprise relit la\n"
+        "configuration du checkpoint (même règle que --profile sur une reprise).\n");
     return 2;
+}
+
+/* Choix primaire conteste : avant ce commit, period/cost/cooldown/food_cost/delay/
+ * season_period/season_open/mutation etaient graves en dur dans configuration(),
+ * donc impossibles a balayer sans recompiler trois ELF differents. Ces overrides ne
+ * changent aucun defaut : sans drapeau, configuration(profile) reste inchangee. */
+typedef struct {
+    int has_xp, xp, has_xc, xc, has_xk, xk;
+    int has_bp, bp, has_bc, bc, has_bf, bf, has_bd, bd, has_bsp, bsp, has_bso, bso;
+    int has_bm; double bm;
+    int has_mp, mp, has_mc, mc;
+} Overrides;
+
+static void apply_overrides(const Overrides *o) {
+    if (o->has_xp) config.exchange.period = o->xp;
+    if (o->has_xc) config.exchange.cost = o->xc;
+    if (o->has_xk) config.exchange.cooldown = o->xk;
+    if (o->has_bp) config.birth.period = o->bp;
+    if (o->has_bc) config.birth.cost = o->bc;
+    if (o->has_bf) config.birth.food_cost = o->bf;
+    if (o->has_bd) config.birth.delay = o->bd;
+    if (o->has_bsp) config.birth.season_period = o->bsp;
+    if (o->has_bso) config.birth.season_open = o->bso;
+    if (o->has_bm) config.birth.mutation = o->bm;
+    if (o->has_mp) config.meeting.period = o->mp;
+    if (o->has_mc) config.meeting.cost = o->mc;
 }
 
 static int protected_world(const char *dir) {
@@ -296,17 +347,31 @@ int main(int argc, char **argv) {
     int profile = ALL; const char *dir = NULL;
     char **args = calloc((size_t)argc + 5, sizeof *args); if (!args) return 1;
     int n = 2; args[0] = argv[0]; args[1] = argv[1];
+    Overrides ov; memset(&ov, 0, sizeof ov);
     for (int i = 2; i < argc; i += 2) {
         if (i + 1 == argc) { free(args); return help(); }
-        if (!strcmp(argv[i], "--profile")) {
+        const char *a = argv[i], *v = argv[i + 1];
+        if (!strcmp(a, "--profile")) {
             profile = -1; profile_explicit = 1;
-            for (int j = 0; j < NPROFILE; j++) if (!strcmp(argv[i + 1], profiles[j])) profile = j;
+            for (int j = 0; j < NPROFILE; j++) if (!strcmp(v, profiles[j])) profile = j;
             if (profile < 0) { free(args); return help(); }
-        } else {
-            if (!strcmp(argv[i], "--dir")) dir = argv[i + 1];
-            if ((!strcmp(argv[i], "--migrate") || !strcmp(argv[i], "--expand-every")) && strcmp(argv[i + 1], "0")) { free(args); return help(); }
-            if (!strcmp(argv[i], "--forces") && atoi(argv[i + 1]) == 3) { free(args); return help(); }
-            if (!strcmp(argv[i], "--repro") && strcmp(argv[i + 1], "split")) { free(args); return help(); }
+        } else if (!strcmp(a, "--exchange-period")) { ov.has_xp = 1; ov.xp = atoi(v); }
+        else if (!strcmp(a, "--exchange-cost")) { ov.has_xc = 1; ov.xc = atoi(v); }
+        else if (!strcmp(a, "--exchange-cooldown")) { ov.has_xk = 1; ov.xk = atoi(v); }
+        else if (!strcmp(a, "--nursery-period")) { ov.has_bp = 1; ov.bp = atoi(v); }
+        else if (!strcmp(a, "--nursery-cost")) { ov.has_bc = 1; ov.bc = atoi(v); }
+        else if (!strcmp(a, "--nursery-food")) { ov.has_bf = 1; ov.bf = atoi(v); }
+        else if (!strcmp(a, "--nursery-delay")) { ov.has_bd = 1; ov.bd = atoi(v); }
+        else if (!strcmp(a, "--nursery-season-period")) { ov.has_bsp = 1; ov.bsp = atoi(v); }
+        else if (!strcmp(a, "--nursery-season-open")) { ov.has_bso = 1; ov.bso = atoi(v); }
+        else if (!strcmp(a, "--nursery-mutation")) { ov.has_bm = 1; ov.bm = atof(v); }
+        else if (!strcmp(a, "--meeting-period")) { ov.has_mp = 1; ov.mp = atoi(v); }
+        else if (!strcmp(a, "--meeting-cost")) { ov.has_mc = 1; ov.mc = atoi(v); }
+        else {
+            if (!strcmp(a, "--dir")) dir = v;
+            if ((!strcmp(a, "--migrate") || !strcmp(a, "--expand-every")) && strcmp(v, "0")) { free(args); return help(); }
+            if (!strcmp(a, "--forces") && atoi(v) == 3) { free(args); return help(); }
+            if (!strcmp(a, "--repro") && strcmp(v, "split")) { free(args); return help(); }
             args[n++] = argv[i]; args[n++] = argv[i + 1];
         }
     }
@@ -316,6 +381,9 @@ int main(int argc, char **argv) {
      * garde les îles fixes pour préserver cooldowns et parentés sans ambiguïté. */
     args[n++] = "--migrate"; args[n++] = "0"; args[n] = NULL;
     reset_extra(profile);
+    /* Fige les constantes avant le premier tick ; sans effet sur une reprise, où
+     * extra_load() relit la configuration sauvegardée (même règle que --profile). */
+    apply_overrides(&ov);
     if (mkdir(dir, 0755) && access(dir, F_OK)) { perror(dir); free(args); return 1; }
     char lockpath[600]; snprintf(lockpath, sizeof lockpath, "%s/rencontres.lock", dir);
     int lock = open(lockpath, O_CREAT | O_RDWR, 0600);
