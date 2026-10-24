@@ -66,6 +66,18 @@ experiments/terrarium_depense experiments/terrarium_causales experiments/terrari
 experiments/tronc-ligne/exemple.so: experiments/tronc-ligne/exemple.c experiments/tronc-ligne/loi.h
 	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
 
+# Lois branchables du tronc. Objets partagés seulement : ne pas lier un terrarium_*.
+experiments/tronc-ligne/osmo.so: experiments/tronc-ligne/osmo.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+experiments/tronc-ligne/competition.so: experiments/tronc-ligne/competition.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+experiments/tronc-ligne/heritage.so: experiments/tronc-ligne/heritage.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+experiments/tronc-ligne/memoire.so: experiments/tronc-ligne/memoire.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+experiments/tronc-ligne/renaissance.so: experiments/tronc-ligne/renaissance.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)

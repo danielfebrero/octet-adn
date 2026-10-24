@@ -17,9 +17,23 @@ appelle `loi_registre`. Le contrat est `loi.h` : version 1, un
 à une marque. Rien à relinker. Un fichier illisible est noté
 `loi_rejet` et le monde continue.
 
-`exemple.c` s'annonce une fois. Il n'est pas dans `lois/` tant qu'on
-ne l'y copie pas.
+`exemple.c` s'annonce une fois. Il n'est pas dans `lois/`.
 
-Les expériences plus anciennes (soupe, compétition, recherche
-d'univers, mémoire) ne sont pas rejouées dans ce processus. Elles
-entrent le jour où un `.so` les porte.
+Cinq lois y sont déposées. Chacune agit une fois par relevé, sans
+tirage, et sans retirer de brique.
+
+- `osmo.so` — osmotrophie de la soupe : une unité par île, d'une case
+  qui en a plus de 2 vers l'est, si l'est est sous 14. Somme conservée.
+- `competition.so` — une unité, de l'île la plus nourrie vers la plus
+  pauvre.
+- `heritage.so` — marque 1 réécrite sur la case (0,0) de chaque île.
+- `memoire.so` — une chaleur sur une case de l'île 0 si la population
+  a baissé depuis le relevé précédent. L'événement ne part qu'une fois,
+  et se réarme si la population remonte.
+- `renaissance.so` — en veille tant que la population est au moins
+  1000. En dessous, huit unités sur l'île 0.
+
+Le contrat ne rejoue pas les processus d'origine. Les génomes de la
+soupe et de la compétition, les tables de lois locales, et la table
+d'opcodes de la recherche d'univers restent dehors. Ces fichiers
+portent l'effet qui passe : nourriture, marque, chaleur.
