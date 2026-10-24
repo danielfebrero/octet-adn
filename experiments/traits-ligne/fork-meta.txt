@@ -1,0 +1,12 @@
+fork_t 50270000
+pop 32000
+K 32
+iso 2026-10-24T02:54Z
+source vie-attention pid 4041432 left alive
+originals 375 397 504 2649682 3134567 4041432
+fork_pid 571704
+flags --ticks 0 --traits 1
+binary terrarium_traits
+checkpoint OADNTER7 relu, écriture OADNTER8
+note premières caractéristiques à t=50272000 : STORE 0.738, TURN 0.852, STEP 0.260, EAT 0.732, MOV_BA 0.615, ATTACK 0.193, hesiste 0.102, entre_siens 0.146
+niches à t=50273800 : STORE+TURN 0.057 ; STORE+TURN+EAT 0.118 ; TURN+EAT+MOV_BA 0.078 ; STORE+TURN+EAT+MOV_BA 0.192 ; STORE+TURN+STEP+EAT+MOV_BA+ATTACK 0.071

@@ -55,6 +55,10 @@ experiments/terrarium_soc: experiments/terrarium.c $(CORE) include/octet.h
 experiments/terrarium_attn: experiments/terrarium.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
 
+# Découverte de caractéristiques. Binaire à part : ne pas remplacer les mondes vivants.
+experiments/terrarium_traits: experiments/terrarium.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
