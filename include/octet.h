@@ -26,7 +26,7 @@
 #define HIST_N        256
 #define GRID_W        64
 #define GRID_H        32
-#define CMAX          1024   /* plafond dur de créatures par liste */
+#define CMAX          4096   /* plafond dur de créatures par liste (1024 jusqu'à PR27) */
 #define N_EXTRA       6
 #define N_LABS        20
 #define N_CORE_LABS   10     /* les 10 labos historiques (org-seeds ne croise que leurs champions) */

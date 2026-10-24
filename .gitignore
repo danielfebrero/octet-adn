@@ -9,6 +9,7 @@
 /experiments/general_regs
 /experiments/gene_transplant
 /experiments/terrarium_run
+/experiments/terrarium_cmax
 # runner 24/7 : log et pid, où qu'ils soient
 runner.log
 runner.pid
@@ -43,5 +44,7 @@ TASK.md
 /experiments/vie-causes-ctrl/
 /experiments/vie-briques/
 /experiments/vie-briques-ctrl/
+/experiments/vie-cmax/
+/experiments/vie-cmax-ctrl/
 /experiments/motif_artefact
 /experiments/univers_innovant
