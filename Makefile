@@ -43,6 +43,10 @@ experiments/gene_transplant: experiments/gene_transplant.c $(CORE) include/octet
 experiments/terrarium_run: experiments/terrarium.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
 
+# Recettes + CMAX. Binaire à part : ne pas remplacer terrarium_run (mondes vivants).
+experiments/terrarium_cmax: experiments/terrarium.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)

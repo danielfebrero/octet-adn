@@ -23,9 +23,10 @@
  *  - cycles : autocorrélation de la population et des niches.
  *  Événements (events.tsv) : signal social significatif, nouvelle niche stable, cycle, extinction.
  *
- * --forces 3 : EMIT pose une brique (recette = YIELD/XOR/ATTACK du germen). 64 briques
- * ouvrent une île vide (KMAX 32). Un 2×2 de recettes distinctes irrigue. Le plafond
- * 4×1000 est un bouchon de labo ; l'espace se bâtit dans les octets.
+ * --forces 3 : EMIT pose une brique (recette = YIELD/XOR/ATTACK/LOOP/NEURAL/SENSE).
+ * 64 briques ouvrent une île vide (KMAX 32). Un 2×2 de recettes distinctes irrigue.
+ * CMAX 4096 : le plafond par île se lève via --max-pop (choc à la reprise).
+ * Les checkpoints OADNTER4 (World à 1024) se relisent ; l'écriture est OADNTER5.
  *
  *   ./experiments/terrarium_run run --dir D [options]   (reprend tout seul depuis D/state.ck)
  *   ./experiments/terrarium_run report D [D...]          (résumé des séries)
@@ -117,7 +118,7 @@ typedef struct {
     long rep_try, rep_ok, pred_hits;
     long cause_yield, cause_attr, cause_rep, cause_drain;
     int celln[GRID_H][GRID_W]; Creature *cellv[GRID_H][GRID_W][4];
-    uint8_t brick[GRID_H][GRID_W];                    /* 0 vide ; bit0 pose, bit1 YIELD, bit2 XOR, bit3 ATTACK */
+    uint8_t brick[GRID_H][GRID_W];                    /* bit0 pose, 1 YIELD, 2 XOR, 3 ATTACK, 4 LOOP, 5 NEURAL, 6 SENSE */
     long brick_place, brick_farm, brick_expand, brick_tech;
     const Params *P;
     long t_end;
@@ -222,10 +223,16 @@ static void hook(World *w, Creature *c) {
             if (has[OP_YIELD]) t |= 2;
             if (has[OP_XOR]) t |= 4;
             if (has[OP_ATTACK]) t |= 8;
+            if (has[OP_LOOP]) t |= 16;
+            if (has[OP_NEURAL]) t |= 32;
+            if (has[OP_SENSE]) t |= 64;
             I->brick[c->y][c->x] = t;
             c->e -= 2;
             I->brick_place++;
         }
+        uint8_t b = I->brick[c->y][c->x];
+        if ((b & 16) && c->e < 160) c->e++;           /* LOOP : sol motorisé, annule le métabolisme */
+        /* NEURAL (bit 32) : puits dans island_tick, une fois par case, comme la ferme YIELD */
     }
     c->ls[0] = c->steps; c->ls[1] = c->eaten; c->ls[2] = c->splits; c->ls[3] = c->d; c->ls[5] = (int)w->t;
     int cand_v[36], m = 0, W = w->cfg.w, H = w->cfg.h;
@@ -366,6 +373,7 @@ static void island_tick(Island *I) {
             uint8_t b = I->brick[y][x];
             if (!b) continue;
             if ((b & 2) && w->food[y][x] < 14) { w->food[y][x]++; I->brick_farm++; }
+            if ((b & 32) && w->food[y][x] < 8) { w->food[y][x]++; I->brick_farm++; }
         }
         for (int y = 0; y < H - 1; y++) for (int x = 0; x < W - 1; x++) {
             uint8_t a = I->brick[y][x], b = I->brick[y][x + 1], c2 = I->brick[y + 1][x], d = I->brick[y + 1][x + 1];
@@ -667,12 +675,44 @@ static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshad
 /* ---- checkpoint ---- */
 #define TMAGIC3 "OADNTER3"
 #define TMAGIC4 "OADNTER4"
+#define TMAGIC5 "OADNTER5"
+#define CMAX_LEGACY 1024
+typedef struct {
+    WorldConfig cfg;
+    Rng *rng;
+    struct Lab *lab;
+    uint8_t food[GRID_H][GRID_W];
+    int occ[GRID_H][GRID_W];
+    long t;
+    int nid, stimulus;
+    uint8_t hist[HIST_N];
+    int hist_n, hist_pos;
+    Emission em[CMAX_LEGACY]; int nem;
+    Stats st;
+    Creature *cs[CMAX_LEGACY]; int ncs;
+    Creature *nb[CMAX_LEGACY]; int nnb;
+    void (*before_vm)(struct World *w, Creature *c);
+} WorldLegacy;
 static int wr(FILE *f, const void *p, size_t n) { return fwrite(p, 1, n, f) == n; }
 static int rd(FILE *f, void *p, size_t n) { return fread(p, 1, n, f) == n; }
+static int load_world(FILE *f, World *w, int legacy) {
+    memset(w, 0, sizeof *w);
+    if (!legacy) return rd(f, w, sizeof(World));
+    WorldLegacy old;
+    if (!rd(f, &old, sizeof old)) return 0;
+    w->cfg = old.cfg;
+    memcpy(w->food, old.food, sizeof w->food);
+    memcpy(w->occ, old.occ, sizeof w->occ);
+    w->t = old.t; w->nid = old.nid; w->stimulus = old.stimulus;
+    memcpy(w->hist, old.hist, sizeof w->hist);
+    w->hist_n = old.hist_n; w->hist_pos = old.hist_pos;
+    w->st = old.st; w->ncs = old.ncs; w->nnb = 0; w->nem = 0;
+    return w->ncs >= 0 && w->ncs <= CMAX_LEGACY;
+}
 static int save(Terra *T) {
     char tmp[600], path[600]; snprintf(tmp, sizeof tmp, "%s/state.ck.tmp", T->dir); snprintf(path, sizeof path, "%s/state.ck", T->dir);
     FILE *f = fopen(tmp, "wb"); if (!f) return 0;
-    int ok = wr(f, TMAGIC4, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
+    int ok = wr(f, TMAGIC5, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
              wr(f, &T->sample_i, sizeof T->sample_i) && wr(f, &T->founders_done, sizeof(int)) &&
              wr(f, T->niche, sizeof T->niche) && wr(f, T->pop_ring, sizeof T->pop_ring) && wr(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              wr(f, T->cyc_niche, sizeof T->cyc_niche) && wr(f, &T->soc_streak, sizeof(int)) && wr(f, &T->soc_on, sizeof(int)) &&
@@ -703,9 +743,9 @@ static void island_alloc(Island *I) {
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
     char m[8]; int ok = rd(f, m, 8);
-    int v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
-    if (!v3 && !v4) { fclose(f); return 0; }
-    if (v4) ok = rd(f, &T->P, sizeof T->P);
+    int v5 = ok && !memcmp(m, TMAGIC5, 8), v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
+    if (!v3 && !v4 && !v5) { fclose(f); return 0; }
+    if (v5 || v4) ok = rd(f, &T->P, sizeof T->P);
     else {
         memset(&T->P, 0, sizeof T->P);
         ok = rd(f, &T->P, offsetof(Params, forces));
@@ -726,7 +766,7 @@ static int load(Terra *T, const char *path) {
     for (int k = 0; k < T->P.K && ok; k++) {
         Island *I = &T->I[k]; island_alloc(I); I->idx = k; I->P = &T->P;
         I->w = malloc(sizeof(World));
-        ok = rd(f, I->w, sizeof(World)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
+        ok = load_world(f, I->w, !v5) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
              rd(f, &I->nsh, sizeof(int)) && rd(f, &I->sh_next, sizeof(uint64_t)) && I->nsh <= 2 * CMAX &&
              rd(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh) &&
              rd(f, &I->sr, sizeof(Rng)) && rd(f, &I->rr, sizeof(Rng)) && rd(f, &I->npred, sizeof(int)) && rd(f, I->px, sizeof I->px) &&
@@ -734,6 +774,7 @@ static int load(Terra *T, const char *path) {
         for (int i = 0; i < I->nsg && ok; i++) ok = rd(f, &I->sg[i].species, sizeof(int)) && rd(f, &I->sg[i].len, sizeof(int)) &&
                                                    I->sg[i].len >= 0 && I->sg[i].len <= MAX_LEN && rd(f, I->sg[i].dna, (size_t)I->sg[i].len);
         World *w = I->w; w->rng = &I->wr; w->lab = NULL; w->before_vm = hook; w->nnb = 0; w->nem = 0;
+        if (w->ncs < 0 || w->ncs > CMAX) ok = 0;
         for (int i = 0; i < w->ncs && ok; i++) { w->cs[i] = malloc(sizeof(Creature)); ok = rd(f, w->cs[i], sizeof(Creature)); }
         if (T->P.forces >= 3) ok = ok && rd(f, I->brick, sizeof I->brick);
     }
@@ -992,7 +1033,7 @@ static int usage(void) {
 static int cmd_run(int argc, char **argv) {
     Params P = defaults(); const char *dir = NULL; long ticks = 20000;
     int got_season_amp = 0, got_season_period = 0, got_pred = 0, got_pred_dmg = 0, got_pred_every = 0, got_regrow = 0;
-    int got_forces = 0, got_expand = 0;
+    int got_forces = 0, got_expand = 0, got_max_pop = 0;
     for (int i = 2; i < argc; i++) {
         const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!v) return usage();
@@ -1000,7 +1041,7 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--islands")) P.K = atoi(v);
         else if (!strcmp(a, "--w")) P.w = atoi(v);
         else if (!strcmp(a, "--h")) P.h = atoi(v);
-        else if (!strcmp(a, "--max-pop")) P.max_pop = atoi(v);
+        else if (!strcmp(a, "--max-pop")) { P.max_pop = atoi(v); got_max_pop = 1; }
         else if (!strcmp(a, "--regrow")) { P.regrow = atoi(v); got_regrow = 1; }
         else if (!strcmp(a, "--pop0")) P.pop0 = atoi(v);
         else if (!strcmp(a, "--ticks")) ticks = atol(v);
@@ -1056,6 +1097,10 @@ static int cmd_run(int argc, char **argv) {
         }
         if (got_forces) T.P.forces = P.forces;
         if (got_expand) T.P.expand_every = P.expand_every;
+        if (got_max_pop) {
+            T.P.max_pop = P.max_pop;
+            for (int k = 0; k < T.P.K; k++) T.I[k].w->cfg.max_pop = P.max_pop;
+        }
         if (got_pred_dmg) T.P.pred_dmg = P.pred_dmg;
         if (got_pred_every) T.P.pred_every = P.pred_every;
         if (got_pred) {
@@ -1070,11 +1115,11 @@ static int cmd_run(int argc, char **argv) {
             }
         }
         fprintf(stderr, "reprise de %s au tick %ld", ck, T.t);
-        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand)
-            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d)",
-                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every);
+        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand || got_max_pop)
+            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d max_pop=%d)",
+                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every, T.P.max_pop);
         else
-            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every comptent)");
+            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every/--max-pop comptent)");
         fprintf(stderr, "\n");
     } else {
         terra_new(&T, &P);
@@ -1141,11 +1186,17 @@ static int selftest(void) {
         int he[OP_COUNT], hi[OP_COUNT];
         uint8_t e[] = { OP_EMIT, OP_YIELD }, im[] = { OP_STORE, OP_EMIT };
         tape_scan(e, 2, he); tape_scan(im, 2, hi);
-        printf("selftest forces : opcode ATTACK %s, immédiat %s ; YIELD opcode %s immédiat %s ; EMIT opcode %s immédiat %s\n",
+        int hl[OP_COUNT], hn[OP_COUNT];
+        uint8_t lp[] = { OP_LOOP, OP_SENSE, OP_NEURAL, 0 }, li[] = { OP_STORE, OP_LOOP };
+        tape_scan(lp, 4, hl); tape_scan(li, 2, hn);
+        printf("selftest forces : opcode ATTACK %s, immédiat %s ; YIELD opcode %s immédiat %s ; EMIT opcode %s immédiat %s ; LOOP/NEURAL/SENSE %s immédiat LOOP %s\n",
                ha ? "détecté" : "MANQUE", hb ? "FAUX POSITIF" : "ignoré",
                hy[OP_YIELD] ? "détecté" : "MANQUE", hz[OP_YIELD] ? "FAUX POSITIF" : "ignoré",
-               he[OP_EMIT] ? "détecté" : "MANQUE", hi[OP_EMIT] ? "FAUX POSITIF" : "ignoré");
-        ok &= ha && !hb && hy[OP_YIELD] && hy[OP_XOR] && !hz[OP_YIELD] && he[OP_EMIT] && he[OP_YIELD] && !hi[OP_EMIT];
+               he[OP_EMIT] ? "détecté" : "MANQUE", hi[OP_EMIT] ? "FAUX POSITIF" : "ignoré",
+               hl[OP_LOOP] && hl[OP_NEURAL] && hl[OP_SENSE] ? "détectés" : "MANQUE",
+               hn[OP_LOOP] ? "FAUX POSITIF" : "ignoré");
+        ok &= ha && !hb && hy[OP_YIELD] && hy[OP_XOR] && !hz[OP_YIELD] && he[OP_EMIT] && he[OP_YIELD] && !hi[OP_EMIT]
+              && hl[OP_LOOP] && hl[OP_NEURAL] && hl[OP_SENSE] && !hn[OP_LOOP];
     }
     return ok ? 0 : 1;
 }
@@ -1301,8 +1352,15 @@ static int cmd_dump(int argc, char **argv) {
             }
         }
         int br = 0, H = w->cfg.h, W = w->cfg.w;
-        for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) br += T.I[k].brick[y][x] != 0;
-        printf("  ile %d ncs=%d sp1=%d attacks_cum=%ld briques=%d\n", k, w->ncs, sp1, atk, br);
+        int rb[7] = { 0 };
+        for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) {
+            uint8_t bk = T.I[k].brick[y][x];
+            if (!bk) continue;
+            br++;
+            for (int b = 0; b < 7; b++) rb[b] += (bk >> b) & 1;
+        }
+        printf("  ile %d ncs=%d sp1=%d attacks_cum=%ld briques=%d YIELD=%d XOR=%d ATTACK=%d LOOP=%d NEURAL=%d SENSE=%d\n",
+               k, w->ncs, sp1, atk, br, rb[1], rb[2], rb[3], rb[4], rb[5], rb[6]);
     }
     printf("porteurs d'opcode (sur %d) :\n", N);
     for (int o = 1; o < OP_COUNT; o++)
