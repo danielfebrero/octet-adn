@@ -1,0 +1,34 @@
+# briques sur le vivant forces, fork t=48544000 pop=1000 K=16, --ticks 0
+# source : experiments/vie-forces (pid 397 intact)
+# fork : experiments/vie-forces-briques pid 2649682 PPID 1
+# originaux 375 et 504 intacts
+# binaire : terrarium_briques (loi recettes, CMAX 4096). terrarium_run non remplacé.
+# choc : --forces 3 --expand-every 0. max_pop 1000 et regrow 20 viennent du checkpoint.
+fork_t	48544000
+fork_pop	1000
+fork_K	16
+k32_t	48547200
+delta_ticks_k32	3200
+end_snapshot_t	48595000
+end_pop	32000
+end_sp1	31989
+end_K	32
+end_bricks	64907
+end_cells	65536
+expansions	16
+place_first_200t	1629
+farm_per_200t	8616599
+tech_per_200t	1825200
+place_when_full	0
+verdict	plafond_atteint+carte_pavee+vivant
+
+# neurone au cliché du fork (1000 germes)
+# NEURAL opcode    995
+# adresse 26       663
+# adresse 154      329
+# valeur utilisée  985 germes (ablation NOP alignée change le trajet)
+# passagers        10
+# politique        NEURAL 26 ; TURN ; JNZ 14 ; ATTACK
+# poids            food +126, voisins -95, énergie +68, stimulus 0, biais +4
+# A=0              attaque (foule, pas de nourriture)
+# A≠0              tourne (A%4) et saute l'attaque

@@ -1,0 +1,11 @@
+fork_t	48544000
+fork_pop	1000
+fork_K	16
+fork_iso	2026-10-24T00:38:00Z
+source	experiments/vie-forces state.ck (pid 397 laissé vivant)
+originals	375 vie-monde, 397 vie-forces, 504 vie-causes
+fork_pid	2649682
+target	experiments/vie-forces-briques
+flags	--ticks 0 --forces 3 --expand-every 0
+binary	experiments/terrarium_briques
+note	choc forces 1→3, horloge d'expansion coupée, le reste du checkpoint reste
