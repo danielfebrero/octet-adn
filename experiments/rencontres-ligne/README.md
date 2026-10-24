@@ -18,19 +18,53 @@ fondateurs conçus ne prouvent pas une émergence spontanée.
 ## Les trois leviers
 
 Les échanges passent tous les 16 ticks : un partenaire au plus par individu,
-repos de 64 ticks, coût de 3 unités pour chacun. Une paire sans différence ne
+repos de 32 ticks, coût de 3 unités pour chacun. Une paire sans différence ne
 paie rien et ne compte pas comme échange réussi. Les adresses et longueurs
-restent fixes ; au plus huit adresses contiguës sont échangées réciproquement.
+restent fixes ; au plus huit adresses changent, en **bouclant modulo la
+longueur partagée** (comme `STORE`/`LOAD` adressent déjà le génome par `k % len`
+dans `src/vm.c`) : un octet n'est plus avantagé ou pénalisé selon sa position.
 Les rencontres sont toriques, sans restriction à la même espèce. La population,
 les naissances et les décès ne sont pas modifiés par l'échange. Les génomes
 réellement changés et les échanges faits au vrai plafond sont comptés séparément.
+
+**Choix primaires contestés (ordre 70000966, 2026-10-24), mesures dans
+[RESULTATS.md](RESULTATS.md) :**
+- *Fenêtre non bouclée (corrigée).* Avant ce commit, la fenêtre de huit octets
+  s'arrêtait à la fin du segment partagé au lieu de boucler : un locus proche
+  de la fin recevait une fenêtre plus courte (longueur moyenne mesurée 4,5 sur
+  les 248 premiers octets d'un génome de 256, contre 2,75 sur les 8 derniers,
+  jusqu'à 1 pile sur le dernier octet). Corrigé par bouclage modulo `n`.
+- *Repos 64 → 32.* Mesuré sur 8 graines, profil `exchange`, 4000 ticks : à
+  64 ticks, 56,8 % des contacts géométriques étaient refusés pour la seule
+  raison du repos (`exchange_cooldown_refused`/`contacts`), contre 0 % à
+  cooldown 0. Comme la période est 16, tout cooldown ≤ 16 est un no-op strict
+  (`tick - dernier < cooldown` n'est jamais vrai au passage suivant) : 32 est
+  la plus petite valeur qui protège réellement une paire contre sa propre
+  reconduction immédiate, et son blocage mesuré tombe à 42,3 %.
+- Les constantes des trois leviers (periodes, coûts, cooldown, nurserie :
+  food/delay/season/mutation) sont désormais surchargeables en ligne de
+  commande (`--exchange-*`, `--nursery-*`, `--meeting-*`, voir `--help`),
+  **seulement sur un `--dir` neuf** : une reprise relit la configuration du
+  checkpoint, comme `--profile`. Avant, elles n'étaient lisibles que dans
+  `configuration()`, et aucun balayage n'était possible sans recompiler.
+- `rencontres.tsv` expose maintenant `exchange_cooldown_refused`,
+  `partner_refused`, `naissance_cooldown_refused`, `food_refused` et
+  `queue_refused` : ces compteurs existaient déjà dans `EchangeState` et
+  `NaissanceState`, mais n'étaient pas écrits (RESULTATS.md le signalait comme
+  limite explicite : « ils ne sont pas estimés ici »).
 
 La nurserie ouvre la conception pendant les 160 premiers ticks d'une saison de
 400, avec une tentative tous les 16 ticks. Deux parents distincts, à distance
 torique de Chebyshev ≤ 1, paient chacun 24 unités d'énergie ; le nid consomme
 deux unités de nourriture. L'œuf porte cet apport parental, un segment de chaque
 parent, puis des substitutions de probabilité 0,005 par octet. Il mûrit en 24
-ticks. Les parents observent un repos avant de reconcevoir.
+ticks. Les parents observent un repos avant de reconcevoir. **Choix primaire
+réexaminé, non changé** : le ratio saison ouverte/fermée (160/400) ne cache pas
+de seuil surprenant — `eggs` croît **linéairement** avec `season_open`
+(mesuré 80→6,8 œufs, 160→16,4, 240→24,8, 400→31,8 en moyenne sur 5 graines,
+soit ~0,08-0,10 œuf par tick ouvert, sans palier) et `hatched == eggs` partout
+dans ces essais (aucun refus de place/plafond observé à cette densité). C'est
+un échec honnête de la contestation : rien à corriger ici, voir RESULTATS.md.
 
 Un quart du plafond est réservé au moteur différé pendant la VM ; cela n'ajoute
 aucune place au vrai plafond. L'éclosion demande une case voisine du nid
@@ -52,6 +86,23 @@ vie-lecture ; `trace.so` n'est ni compilée ni copiée.
 
 L'ABI existante ne donne accès ni aux créatures ni aux partenaires : une simple
 loi `.so` ne pouvait pas ouvrir ces chemins de reproduction et de recombinaison.
+
+**Porte « capable » réexaminée, non changée.** Hypothèse testée : la présence
+statique (n'importe où dans le génome) est un portail presque toujours ouvert,
+qui ne distingue rien. Mesuré : 14/16 seeds du dépôt la passent dès l'origine
+(`LOAD`, qui appartient à la famille SENSE, et `STEP` sont deux des opcodes
+les plus communs du jeu). Une variante plus stricte — exiger un SENSE réel suivi d'un
+STEP réel à ≤ 16 instructions, dans l'ordre du programme — a été codée et
+mesurée hors dépôt : elle ne change presque rien (14/16 aussi), et sur 60
+générations de dérive mutationnelle réelle (`mutate()`, 16 lignées issues des
+seeds, taux du monde 0,02/0,05) les deux portes restent saturées autour de
+14-15/16 à chaque génération. **Ce n'est pas la position ni l'ordre qui rend
+la porte quasi vide, c'est la fréquence des deux opcodes eux-mêmes dans un
+génome qui bouge.** Durcir le test de présence ne règle pas ce que le README
+signalait déjà (« pas une preuve que ces instructions ont été exécutées ce
+tick ») ; le rendre réellement comportemental demanderait un tick témoin
+isolé (bac à sable, comme `gn_life` du labo `general`), hors budget de cette
+mission. Aucun code changé ici : échec honnête.
 
 ## Construire sans relinker un vivant
 

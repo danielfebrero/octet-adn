@@ -212,3 +212,133 @@ d'émergence n'est tirée de leur comparaison. Les événements sociaux sont les
 déclenchements du détecteur défini ci-dessus, pas une validation indépendante
 d'une société. Les effets explicitement observés sont les échanges d'ADN, les
 naissances avec deux parents et les actions payées à la lecture d'une marque.
+
+## Contestation des choix primaires (Sonnet, ordre 70000966, 24 octobre 2026)
+
+Base `00f1593` (travail Codex b129054c déjà sur `origin/main`). Quatre choix
+primaires réexaminés, deux diffs appliqués et mesurés, deux échecs honnêtes
+documentés sans changement de code. Tous les runs ci-dessous utilisent le
+même ELF neuf, un seul monde de mesure (1 île, 32×16, plafond 160, pop0 32,
+regrow 80, `--stress 1 --founders seeds --migrate 0`), jamais un répertoire
+protégé. Les sorties brutes des trois balayages restent hors dépôt (TSV dans
+`/tmp`, comme pour l'essai b129054c) ; les tableaux ci-dessous sont les
+agrégats effectivement lus dans `rencontres.tsv`.
+
+### 1. La fenêtre d'échange ne bouclait pas (corrigé)
+
+Le reste du moteur adresse le génome de façon circulaire (`k % len` pour
+`STORE`/`LOAD`, `src/vm.c`). `reciprocal()` dans `echange.c` ne le faisait
+pas : `hi = n - locus < 8 ? n - locus : 8` tronquait la fenêtre au lieu de
+boucler. Mesure analytique (2 000 000 tirages, `rng_below` réel, n=256) :
+
+| plage du locus | longueur moyenne mesurée | attendu si bouclé (8+1)/2 |
+|---|---:|---:|
+| 0..247 (248 premiers octets) | 4,501 | 4,5 |
+| 248..255 (les 8 derniers) | 2,748 (jusqu'à 1,000 pile sur le dernier octet) | 4,5 |
+
+Corrigé : `i = (locus + k) % n`. Preuve dans `echange_selftest()` : deux
+génomes ne différant qu'aux positions 0 et 15 (longueur 16) ; sous l'ancien
+code, ces deux positions ne pouvaient **jamais** être échangées ensemble
+(locus 0 n'atteint jamais l'index 15 sans dépasser 8 ; locus 15 n'a qu'une
+longueur de 1) — `changed` restait ≤ 2. Avec le bouclage, `changed == 4`
+apparaît dès qu'un tirage démarre à 15 avec une longueur ≥ 2 (observé sur
+l'échantillon de graines du selftest). Les runs de population complets
+divergent ensuite de façon chaotique (sensibilité attendue d'un système
+évolutif stochastique sur 4000 ticks, pas un signe d'erreur) ; la preuve
+retenue est la mesure analytique ci-dessus, indépendante du chaos de
+population.
+
+### 2. Le repos d'échange (64 → 32), avec les refus enfin visibles
+
+`EchangeState.cooldown_refused` et plusieurs compteurs de `NaissanceState`
+existaient déjà mais n'étaient jamais écrits dans `rencontres.tsv` (limite
+documentée plus haut : « ils ne sont pas estimés ici »). Ajoutés :
+`exchange_cooldown_refused`, `partner_refused`, `naissance_cooldown_refused`,
+`food_refused`, `queue_refused`. Nouveaux drapeaux (`--exchange-period`,
+`--exchange-cost`, `--exchange-cooldown`, `--nursery-*`, `--meeting-period`,
+`--meeting-cost`, actifs seulement sur un `--dir` neuf) pour les balayer sans
+recompiler.
+
+Balayage : profil `exchange`, 8 graines (1-8), 4000 ticks, cooldown ∈
+{0, 32, 64, 128, 256} (16 est un no-op strict car la période est 16 : le
+premier passage suivant donne toujours `tick - dernier == 16`, jamais `< 16`).
+Moyennes des fractions **par contact** (robuste au chaos de population, qui
+fait varier `contacts` d'un facteur 50 entre graines à cooldown égal) :
+
+| cooldown | contacts bloqués par le repos seul | taux de réussite (échanges/contacts) |
+|---:|---:|---:|
+| 0 | 0,0 % | 43,6 % |
+| 32 | 42,3 % | 29,0 % |
+| **64 (ancien défaut)** | **56,8 %** | **22,3 %** |
+| 128 | 69,0 % | 16,7 % |
+| 256 | 73,4 % | 14,5 % |
+
+Le défaut `64` refusait plus de la moitié de tous les contacts physiques pour
+la seule raison du repos — près de 2,5× le taux à cooldown nul. `32` est la
+plus petite valeur qui protège réellement une paire fixe contre sa propre
+reconduction à chaque passage (ce que le cooldown est censé faire), tout en
+récupérant une bonne partie du taux de réussite perdu à 64. **Nouveau défaut :
+32**, posé dans `configuration()`. Vérifié : un run sans drapeau donne des
+chiffres identiques, octet pour octet dans `rencontres.tsv`, à un run explicite
+`--exchange-cooldown 32` (même graine, même durée).
+
+### 3. La saison de nurserie (160/400) : échec honnête, aucun changement
+
+Balayage : profil `nursery`, 5 graines (1-5), 4000 ticks,
+`--nursery-season-open` ∈ {80, 160, 240, 400} (400 = `season_period`, donc
+« toujours ouvert »).
+
+| season_open | œufs moyens | éclosions moyennes |
+|---:|---:|---:|
+| 80 | 6,8 | 6,8 |
+| **160 (défaut)** | **16,4** | **16,4** |
+| 240 | 24,8 | 24,8 |
+| 400 | 31,8 | 31,8 |
+
+Relation linéaire propre (~0,08-0,10 œuf conçu par tick de saison ouverte),
+sans palier ni seuil caché. `hatched == eggs` sur toutes les 20 lignes : à
+cette densité (plafond 160 sur 512 cases, ~31 %), aucun œuf mûr n'est jamais
+refusé par manque de case voisine vide ou par plafond — la limite déjà
+documentée plus haut (refus jamais observés dans les essais b129054c) se
+confirme ici aussi, y compris en poussant `season_open` jusqu'à 400. Rien à
+contester : la constante fixe une fécondité proportionnelle prévisible, pas
+un goulot caché. Note indépendante : la graine 4 s'éteint (pop finale 1)
+**identiquement** à chacune des quatre valeurs de `season_open` testées,
+confirmant que ce n'est pas lié à la nurserie mais à la dynamique générale
+de cette graine sur ce monde.
+
+### 4. La porte « capable » des rendez-vous (SENSE + STEP présents) : échec honnête
+
+Hypothèse : la présence statique (n'importe où dans le génome, sans tenir
+compte de l'ordre ni de l'exécution réelle) est un portail presque toujours
+ouvert. Mesuré hors dépôt (duplication fidèle de `capable()`, jamais commitée) :
+
+- 14 seeds sur 16 du dépôt passent `capable()` dès l'origine, sans mutation.
+- Une variante plus stricte (SENSE réel suivi d'un STEP réel à ≤ 16
+  instructions, dans l'ordre du programme, sans tenir compte des sauts) donne
+  **le même total : 14/16.**
+- Sur 60 générations de dérive mutationnelle réelle (`mutate()` du moteur,
+  16 lignées issues des seeds, taux 0,02 substitution / 0,05 duplication par
+  division — les taux par défaut de `cfg_default()`), les deux portes restent
+  saturées entre 14 et 15 sur 16 à chaque génération, sans tendance.
+
+Conclusion : ce n'est pas la position des deux opcodes qui rend la porte
+quasi vide, c'est leur fréquence intrinsèque (`LOAD`, qui appartient à la
+famille SENSE, et `STEP` sont deux des opcodes les plus communs du jeu). Durcir le
+test statique ne change rien de mesurable. Le README documentait déjà cette
+porte comme « une loi de reconnaissance du génome, pas une preuve que ces
+instructions ont été exécutées ce tick » ; cette mesure confirme que la
+reformuler plus strictement, tout en restant statique, ne suffit pas à la
+rendre sélective. Aucun code changé pour ce point.
+
+### Validation
+
+`experiments/rencontres-build/sonnet-v4/terrarium selftest` : tous les modules
+OK, y compris la nouvelle assertion de bouclage et la reprise identique
+(monde, RNG, œufs, cooldowns, marques, et les quatre fichiers TSV octet pour
+octet). `Params` toujours 416 octets. `src/`, `include/`, `seeds/` non
+touchés ; aucun opcode ajouté. Sanity-check des quatre profils (`control`,
+`nursery`, `meeting`, `all`) sur 1000 ticks : aucun crash. Les gardes
+existantes (refus `--forces 3`, `--migrate` non nul, répertoires des douze
+anciens mondes) répondent toujours par un code de sortie non nul, vérifié
+explicitement sur `experiments/vie-tronc` (refusé, rien créé).
