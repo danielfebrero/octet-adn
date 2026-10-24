@@ -78,6 +78,27 @@
 #include "octet.h"
 #include "tronc-ligne/loi.h"
 
+/* Points d'extension à la compilation pour un ELF expérimental séparé.
+ * Sans définition par l'incluant : aucun état, appel, tirage ni octet de checkpoint. */
+#ifndef TERRA_BEFORE_WORLD
+#define TERRA_BEFORE_WORLD(I) ((void)0)
+#endif
+#ifndef TERRA_AFTER_WORLD
+#define TERRA_AFTER_WORLD(I) ((void)0)
+#endif
+#ifndef TERRA_AFTER_HOOK
+#define TERRA_AFTER_HOOK(I, c) ((void)0)
+#endif
+#ifndef TERRA_AFTER_SAMPLE
+#define TERRA_AFTER_SAMPLE(T) ((void)0)
+#endif
+#ifndef TERRA_SAVE_EXTRA
+#define TERRA_SAVE_EXTRA(f, T) 1
+#endif
+#ifndef TERRA_LOAD_EXTRA
+#define TERRA_LOAD_EXTRA(f, T) 1
+#endif
+
 void world_eat(World *w, Creature *c);
 
 #define KMAX    32
@@ -435,6 +456,7 @@ static void hook(World *w, Creature *c) {
     }
     w->stimulus = (high << 4) | low;
     if (I->P->stress) world_set_mut_scale(stress_scale(stress_of(w, c)));
+    TERRA_AFTER_HOOK(I, c);
 }
 
 /* prédateur : un pas (4-voisinage) vers la case la plus peuplée (3×3) avec p = 0.7, sinon au hasard */
@@ -614,7 +636,9 @@ static void island_tick(Island *I) {
     int n_before = w->ncs;
     if (I->traits) vm_set_watch(trait_watch);
     else if (P->attention) vm_set_watch(attn_watch);
+    TERRA_BEFORE_WORLD(I);
     world_step(w);
+    TERRA_AFTER_WORLD(I);
     if (I->traits || P->attention) vm_set_watch(NULL);
     if (P->attention) attn_apply(I);
     if (P->stress) {
@@ -1281,6 +1305,7 @@ static void sample(Terra *T) {
     }
     lois_brancher(T);
     T->sample_i++;
+    TERRA_AFTER_SAMPLE(T);
 }
 
 static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshadow_cum\tnew_persist\tpersist_alive\tlen_mean\tlen_max\tcoding_mean"
@@ -1376,6 +1401,7 @@ static int save(Terra *T) {
         }
         ok = ok && wr(f, &bits, sizeof bits);
     }
+    if (ok) ok = TERRA_SAVE_EXTRA(f, T);
     ok = fclose(f) == 0 && ok;
     return ok && rename(tmp, path) == 0;
 }
@@ -1466,6 +1492,7 @@ static int load(Terra *T, const char *path) {
             T->saison = (bits & 4) != 0; T->tronc = (bits & 8) != 0;
         }
     }
+    if (ok) ok = TERRA_LOAD_EXTRA(f, T);
     fclose(f);
     return ok;
 }

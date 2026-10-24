@@ -5,6 +5,25 @@ CFLAGS  += -Iinclude
 LDFLAGS ?=
 LDLIBS  := -lm
 
+# Toujours un répertoire de build NEUF. Aucun objet partagé avec un ELF vivant.
+# Exemple : make experiments/rencontres-build/essai-001/terrarium
+RENCONTRES_SRC := experiments/rencontres.c experiments/terrarium.c $(wildcard experiments/rencontres-ligne/*.[ch])
+RENCONTRES_CORE := src/rng.c src/isa.c src/vm.c src/mutate.c src/world.c src/labs.c src/store.c src/runner.c src/seeds.S src/labs_h.c src/novelty.c src/soup.c
+experiments/rencontres-build/%/terrarium: $(RENCONTRES_SRC) $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -pthread -o $@ experiments/rencontres.c experiments/rencontres-ligne/echange.c experiments/rencontres-ligne/naissance.c experiments/rencontres-ligne/rendezvous.c $(RENCONTRES_CORE) $(LDLIBS) -ldl
+
+experiments/rencontres-build/%/garde: experiments/rencontres-ligne/garde.c
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $<
+
+experiments/rencontres-build/%/test-garde: experiments/rencontres-ligne/test_garde.c
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $<
+
 CORE := src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o
 SEEDS := $(wildcard seeds/*.adn)
 
