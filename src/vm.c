@@ -12,6 +12,9 @@ static inline int s8(uint8_t b) { return b > 127 ? (int)b - 256 : (int)b; }
 static inline int floordiv16(int v) { return v >= 0 ? v / 16 : -((-v + 15) / 16); }
 static inline int imin(int a, int b) { return a < b ? a : b; }
 
+static __thread void (*vm_watch)(Creature *c, uint8_t op);
+void vm_set_watch(void (*fn)(Creature *c, uint8_t op)) { vm_watch = fn; }
+
 /* Un neurone : 4 entrées capteurs (0..15) × 4 poids int8 + biais → A (0..255). */
 static int neural(const Creature *c, const World *w, int addr) {
     int L = c->len;
@@ -63,6 +66,7 @@ int vm_run(Creature *c, World *w) {
             continue;
         }
         budget--;
+        if (vm_watch) vm_watch(c, op);
         switch (op) {
         case OP_INC_A: c->a++; break;
         case OP_DEC_A: c->a--; break;

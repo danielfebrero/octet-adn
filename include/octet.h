@@ -145,6 +145,8 @@ void     world_spawn(World *w, Creature *c);   /* ajoute une créature (rejoint 
 
 /* VM : exécute un tick ; 0 = la créature meurt */
 int vm_run(Creature *c, World *w);
+/* NULL = aucun appel. Posé par un monde qui veut voir les opcodes, sans changer l'état ni l'aléa. */
+void vm_set_watch(void (*fn)(Creature *c, uint8_t op));
 
 /* mutations */
 int mutate(const uint8_t *in, int n, Rng *r, double rate, double dup_rate, uint8_t *out);

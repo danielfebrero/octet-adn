@@ -29,8 +29,18 @@
  * (énergie basse, case pauvre, voisins denses). Calme → le taux d'avant. L'espèce
  * est le masque ATTACK/YIELD/EMIT/XOR/AND/SUB/NEURAL/ADD. societies.tsv sépare
  * l'excès social intra et inter. Stress 0 : mêmes tirages, même series.tsv.
+ * --attention 1 : le sol garde une chaleur (0..15) et l'écho du dernier choix.
+ * Le processus (opcodes avant le premier STEP/TURN/EAT/SPLIT/EMIT/ATTACK/YIELD)
+ * dépose cette chaleur à la case de départ. Un choix sur une case chaude la
+ * dépense : STEP pose 1 nourriture à l'arrivée, TURN pousse 1 chaleur devant,
+ * EAT laisse 1 nourriture derrière, EMIT réchauffe les 4 voisins, SPLIT offre
+ * 2 à la case de l'enfant, ATTACK refroidit de moitié, YIELD n'écrit que l'écho.
+ * Un réflexe sur sol froid ne reçoit rien. Le quartet haut du stimulus devient
+ * l'écho s'il y en a un, sinon la chaleur. Attention 0 : aucun relevé, mêmes tirages.
  * CMAX 4096 : le plafond par île se lève via --max-pop (choc à la reprise).
- * Les checkpoints OADNTER4 (World à 1024) et OADNTER5 se relisent ; l'écriture est OADNTER6.
+ * Les checkpoints OADNTER4 (World à 1024), OADNTER5 et OADNTER6 se relisent ;
+ * l'écriture est OADNTER7 (chaleur et écho par case). Attention tient dans le
+ * bourrage de Params : un OADNTER6 relu garde attention = 0.
  *
  *   ./experiments/terrarium_run run --dir D [options]   (reprend tout seul depuis D/state.ck)
  *   ./experiments/terrarium_run report D [D...]          (résumé des séries)
@@ -78,7 +88,11 @@ typedef struct {               /* paramètres (sauvés dans le checkpoint) */
     int forces;                 /* 0 héritage ; 1 = espèce ATTACK ; 2 = + causes ; 3 = + briques (EMIT pose, recettes, espace) */
     int expand_every;           /* 0 = K fixe ; N = +1 île vide tous les N ticks (horloge), jusqu'à KMAX */
     int stress;                 /* OADNTER6, en queue. 0 = loi d'avant ; 1 = mutation ∝ stress, espèce = masque */
+    int attention;              /* OADNTER7, dans le bourrage. 0 = loi d'avant ; 1 = le monde répond au choix */
 } Params;
+_Static_assert(offsetof(Params, stress) == 408, "stress bouge");
+_Static_assert(offsetof(Params, attention) == 412, "attention hors bourrage");
+_Static_assert(sizeof(Params) == 416, "Params a grandi");
 enum { F_SEEDS, F_RANDOM, F_SOUP, F_HANDMADE };
 
 /* ---- codeur adaptatif hiérarchique (Dirichlet, comptes hachés) ---- */
@@ -130,6 +144,9 @@ typedef struct {
     int celln[GRID_H][GRID_W]; Creature *cellv[GRID_H][GRID_W][4];
     uint8_t brick[GRID_H][GRID_W];                    /* bit0 pose, 1 YIELD, 2 XOR, 3 ATTACK, 4 LOOP, 5 NEURAL, 6 SENSE */
     long brick_place, brick_farm, brick_expand, brick_tech;
+    uint8_t att[GRID_H][GRID_W];                      /* chaleur déposée par le processus de choix, 0..15 */
+    uint8_t echo[GRID_H][GRID_W];                     /* opcode du dernier choix, 0 si hésitation */
+    long attn_depth, attn_choice, attn_hes, attn_yield;
     const Params *P;
     long t_end;
 } Island;
@@ -222,8 +239,22 @@ static void genotype(Creature *c) {
     c->ls[4] = 1;
 }
 
+static int attn_is_commit(uint8_t op) {
+    return op == OP_STEP || op == OP_TURN || op == OP_EAT || op == OP_SPLIT
+        || op == OP_EMIT || op == OP_ATTACK || op == OP_YIELD;
+}
+/* opcodes exécutés avant le premier choix. win[15] déjà posé : la suite ne compte plus. */
+static void attn_watch(Creature *c, uint8_t op) {
+    if (c->win[15]) return;
+    if (attn_is_commit(op)) c->win[15] = op;
+    else if (c->win[14] < 255) c->win[14]++;
+}
 static void hook(World *w, Creature *c) {
     Island *I = cur;
+    if (I->P->attention) {                        /* relevé du processus, case de départ */
+        c->win[14] = 0; c->win[15] = 0;
+        c->win[26] = (uint8_t)c->x; c->win[27] = (uint8_t)c->y;
+    }
     if (I->P->stress) {                               /* espèce = masque de rôle du germen */
         int sp = role_mask(c->germ, c->germ_len);
         if (c->species != sp) { c->species = sp; if (c->ls[4]) genotype(c); }
@@ -297,6 +328,13 @@ static void hook(World *w, Creature *c) {
     if (I->P->stress) c->win[31] = (uint8_t)esp;
     c->win[0] = (uint8_t)sig; c->win[1] = (uint8_t)nsig;
     int low = (I->P->channel && sig) ? sig - 1 : I->env, high = I->env;
+    if (I->P->attention) {
+        uint8_t heat = I->att[c->y][c->x];
+        if (heat) {
+            uint8_t echo = I->echo[c->y][c->x];
+            high = echo ? (echo & 15) : (heat & 15);
+        }
+    }
     if (I->npred) {                                   /* zone de mort : Chebyshev ≤ 1 (tore) ; perçue directement (quartet haut = 15) */
         for (int q = 0; q < I->npred; q++) {
             int dx = abs(c->x - I->px[q]), dy = abs(c->y - I->py[q]);
@@ -367,7 +405,71 @@ static int find_parent(const Island *I, int id) {
     return -1;
 }
 
+/* La chaleur du tick précédent est déjà lisible. On la laisse refroidir, puis le tick
+ * qui vient de finir dépose la sienne. Un choix ne répond que si la case est chaude. */
+static void attn_apply(Island *I) {
+    World *w = I->w; int H = w->cfg.h, W = w->cfg.w;
+    for (int y = 0; y < H; y++) for (int x = 0; x < W; x++)
+        if (I->att[y][x] && --I->att[y][x] == 0) I->echo[y][x] = 0;
+    for (int i = 0; i < w->ncs; i++) {
+        Creature *c = w->cs[i];
+        if (c->ls[5] != (int)w->t) continue;
+        int depth = c->win[14], commit = c->win[15];
+        int y = c->win[27], x = c->win[26];
+        if (y < 0 || x < 0 || y >= H || x >= W) continue;
+        I->attn_depth += depth;
+        int heat = I->att[y][x] + (depth > 15 ? 15 : depth);
+        if (heat > 15) heat = 15;
+        I->att[y][x] = (uint8_t)heat;
+        if (!commit) {
+            if (depth) { I->echo[y][x] = 0; I->attn_hes++; }
+            continue;
+        }
+        if (commit == OP_YIELD) {
+            if (I->att[y][x]) { I->echo[y][x] = (uint8_t)OP_YIELD; I->attn_yield++; }
+            continue;
+        }
+        if (!I->att[y][x]) continue;
+        I->att[y][x]--;
+        I->echo[y][x] = I->att[y][x] ? (uint8_t)commit : 0;
+        I->attn_choice++;
+        switch (commit) {
+        case OP_STEP:
+            if (w->food[c->y][c->x] < 14) w->food[c->y][c->x]++;
+            break;
+        case OP_TURN: {
+            int nx = (x + TDX[c->d] + W) % W, ny = (y + TDY[c->d] + H) % H;
+            if (I->att[ny][nx] < 15) I->att[ny][nx]++;
+            break;
+        }
+        case OP_EAT: {
+            int bd = (c->d + 2) & 3;
+            int nx = (x + TDX[bd] + W) % W, ny = (y + TDY[bd] + H) % H;
+            if (w->food[ny][nx] < 14) w->food[ny][nx]++;
+            break;
+        }
+        case OP_EMIT:
+            for (int d = 0; d < 4; d++) {
+                int nx = (x + TDX[d] + W) % W, ny = (y + TDY[d] + H) % H;
+                if (I->att[ny][nx] < 15) I->att[ny][nx]++;
+            }
+            break;
+        case OP_SPLIT: {
+            int bd = (c->d + 1) & 3;
+            int nx = (x + TDX[bd] + W) % W, ny = (y + TDY[bd] + H) % H;
+            int v = I->att[ny][nx] + 2; if (v > 15) v = 15;
+            I->att[ny][nx] = (uint8_t)v;
+            break;
+        }
+        case OP_ATTACK:
+            I->att[y][x] = (uint8_t)(I->att[y][x] / 2);
+            break;
+        }
+    }
+}
+
 static void island_tick(Island *I) {
+    cur = I;
     World *w = I->w; const Params *P = I->P;
     if (rng_below(&I->tr, 50) == 0) I->env = (int)rng_below(&I->tr, P->pred ? 15 : 16);   /* 15 = danger, réservé */
     if (I->npred && w->t % P->pred_every == 0) pred_move(I);
@@ -389,7 +491,9 @@ static void island_tick(Island *I) {
         if (I->celln[c->y][c->x] < 4) I->cellv[c->y][c->x][I->celln[c->y][c->x]++] = c;
     }
     int n_before = w->ncs;
+    if (P->attention) vm_set_watch(attn_watch);
     world_step(w);
+    if (P->attention) { vm_set_watch(NULL); attn_apply(I); }
     if (P->stress) {
         double ms = 0; long mn = 0;
         world_take_birth_mut(&ms, &mn);
@@ -542,8 +646,8 @@ typedef struct {
     int soc_out_streak, soc_out_on; long soc_out_events;
     long n_events;
     long emits_prev;
-    FILE *series, *events, *forces_out, *societies; char dir[512];
-    int saw_sp1;
+    FILE *series, *events, *forces_out, *societies, *attention; char dir[512];
+    int saw_sp1, saw_attn;
 } Terra;
 
 static void event(Terra *T, const char *type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
@@ -582,6 +686,7 @@ static void sample(Terra *T) {
     int spc[256]; memset(spc, 0, sizeof spc);
     long pin = 0, pout = 0; double iL0 = 0, iLr = 0, iLn = 0, oL0 = 0, oLr = 0, oLn = 0;
     double mut_sum = 0; long mut_n = 0;
+    long depth_s = 0, choice_s = 0, hes_s = 0, yield_s = 0; int att_sum = 0, echo_n = 0;
     for (int k = 0; k < P->K; k++) {
         Island *I = &T->I[k]; World *w = I->w;
         for (int i = 0; i < w->ncs; i++) {
@@ -603,6 +708,14 @@ static void sample(Terra *T) {
         pin += I->soc_in.pairs; iL0 += I->soc_in.L0; iLr += I->soc_in.Lr; iLn += I->soc_in.Ln;
         pout += I->soc_out.pairs; oL0 += I->soc_out.L0; oLr += I->soc_out.Lr; oLn += I->soc_out.Ln;
         mut_sum += I->mut_sum; mut_n += I->mut_n; I->mut_sum = 0; I->mut_n = 0;
+        depth_s += I->attn_depth; choice_s += I->attn_choice; hes_s += I->attn_hes; yield_s += I->attn_yield;
+        I->attn_depth = I->attn_choice = I->attn_hes = I->attn_yield = 0;
+        if (P->attention) {
+            int H = w->cfg.h, W = w->cfg.w;
+            for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) {
+                att_sum += I->att[y][x]; echo_n += I->echo[y][x] != 0;
+            }
+        }
         memset(&I->soc, 0, sizeof I->soc); memset(&I->soc_in, 0, sizeof I->soc_in); memset(&I->soc_out, 0, sizeof I->soc_out);
         tab_clear(&I->tab);
     }
@@ -718,6 +831,16 @@ static void sample(Terra *T) {
                 T->t, nsp, Hs, mut_n ? mut_sum / mut_n : -1.0, pin, ex_in, pout, ex_out);
         fflush(T->societies);
     }
+    if (T->attention) {
+        fprintf(T->attention, "%ld\t%d\t%d\t%ld\t%ld\t%ld\t%ld\n",
+                T->t, att_sum, echo_n, depth_s, choice_s, hes_s, yield_s);
+        fflush(T->attention);
+        if (choice_s && !T->saw_attn) {
+            T->saw_attn = 1;
+            event(T, "attention", "choix=%ld profondeur=%ld hesitations=%ld yields=%ld chaleur=%d",
+                  choice_s, depth_s, hes_s, yield_s, att_sum);
+        }
+    }
     if (N == 0) event(T, "extinction", "pop=0");
     fprintf(T->series, "%ld\t%d\t%d\t%.4f\t%d\t%ld\t%ld\t%d\t%d\t%.2f\t%d\t%.2f\t%d\t%d\t%.4f\t%ld\t%.5f\t%.5f\t%.5f\t%ld\t%ld\t%ld\t%d\t%.1f\t%ld\t%d\t%d"
                        "\t%ld\t%ld\t%.3f\t%d\t%ld\t%ld\t%d\t%d\n",
@@ -773,6 +896,7 @@ static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshad
 #define TMAGIC4 "OADNTER4"
 #define TMAGIC5 "OADNTER5"
 #define TMAGIC6 "OADNTER6"
+#define TMAGIC7 "OADNTER7"
 #define CMAX_LEGACY 1024
 typedef struct {
     WorldConfig cfg;
@@ -809,7 +933,7 @@ static int load_world(FILE *f, World *w, int legacy) {
 static int save(Terra *T) {
     char tmp[600], path[600]; snprintf(tmp, sizeof tmp, "%s/state.ck.tmp", T->dir); snprintf(path, sizeof path, "%s/state.ck", T->dir);
     FILE *f = fopen(tmp, "wb"); if (!f) return 0;
-    int ok = wr(f, TMAGIC6, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
+    int ok = wr(f, TMAGIC7, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
              wr(f, &T->sample_i, sizeof T->sample_i) && wr(f, &T->founders_done, sizeof(int)) &&
              wr(f, T->niche, sizeof T->niche) && wr(f, T->pop_ring, sizeof T->pop_ring) && wr(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              wr(f, T->cyc_niche, sizeof T->cyc_niche) && wr(f, &T->soc_streak, sizeof(int)) && wr(f, &T->soc_on, sizeof(int)) &&
@@ -828,6 +952,7 @@ static int save(Terra *T) {
         for (int i = 0; i < I->nsg && ok; i++) ok = wr(f, &I->sg[i].species, sizeof(int)) && wr(f, &I->sg[i].len, sizeof(int)) && wr(f, I->sg[i].dna, (size_t)I->sg[i].len);
         for (int i = 0; i < I->w->ncs && ok; i++) ok = wr(f, I->w->cs[i], sizeof(Creature));
         if (T->P.forces >= 3) ok = ok && wr(f, I->brick, sizeof I->brick);
+        ok = ok && wr(f, I->att, sizeof I->att) && wr(f, I->echo, sizeof I->echo);
     }
     ok = fclose(f) == 0 && ok;
     return ok && rename(tmp, path) == 0;
@@ -838,14 +963,19 @@ static void island_alloc(Island *I) {
     I->sg = malloc(sizeof(struct SG) * 2 * CMAX);
     memset(I->brick, 0, sizeof I->brick);
     I->brick_place = I->brick_farm = I->brick_expand = I->brick_tech = 0;
+    memset(I->att, 0, sizeof I->att); memset(I->echo, 0, sizeof I->echo);
+    I->attn_depth = I->attn_choice = I->attn_hes = I->attn_yield = 0;
 }
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
     char m[8]; int ok = rd(f, m, 8);
-    int v6 = ok && !memcmp(m, TMAGIC6, 8), v5 = ok && !memcmp(m, TMAGIC5, 8), v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
-    if (!v3 && !v4 && !v5 && !v6) { fclose(f); return 0; }
-    if (v6) ok = rd(f, &T->P, sizeof T->P);
-    else if (v5 || v4) {
+    int v7 = ok && !memcmp(m, TMAGIC7, 8), v6 = ok && !memcmp(m, TMAGIC6, 8);
+    int v5 = ok && !memcmp(m, TMAGIC5, 8), v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
+    if (!v3 && !v4 && !v5 && !v6 && !v7) { fclose(f); return 0; }
+    if (v7 || v6) {
+        ok = rd(f, &T->P, sizeof T->P);
+        if (v6) T->P.attention = 0;                   /* bourrage d'OADNTER6, pas un flag */
+    } else if (v5 || v4) {
         memset(&T->P, 0, sizeof T->P);
         ok = rd(f, &T->P, offsetof(Params, stress));   /* blob v5 : stress reste 0 */
     } else {
@@ -859,7 +989,7 @@ static int load(Terra *T, const char *path) {
              rd(f, T->cyc_niche, sizeof T->cyc_niche) && rd(f, &T->soc_streak, sizeof(int)) && rd(f, &T->soc_on, sizeof(int)) &&
              rd(f, &T->soc_events, sizeof(long)) && rd(f, &T->n_events, sizeof(long)) && rd(f, &T->emits_prev, sizeof(long)) &&
              rd(f, &T->sgr, sizeof(Rng)) && rd(f, &T->last_ess, sizeof(int));
-    if (v6) ok = ok && rd(f, &T->soc_in_streak, sizeof(int)) && rd(f, &T->soc_in_on, sizeof(int)) && rd(f, &T->soc_in_events, sizeof(long)) &&
+    if (v7 || v6) ok = ok && rd(f, &T->soc_in_streak, sizeof(int)) && rd(f, &T->soc_in_on, sizeof(int)) && rd(f, &T->soc_in_events, sizeof(long)) &&
                        rd(f, &T->soc_out_streak, sizeof(int)) && rd(f, &T->soc_out_on, sizeof(int)) && rd(f, &T->soc_out_events, sizeof(long));
     Lins *ls[4] = { &T->geno, &T->shadow, &T->comp, &T->scomp };
     for (int i = 0; i < 4 && ok; i++) {
@@ -870,7 +1000,7 @@ static int load(Terra *T, const char *path) {
     for (int k = 0; k < T->P.K && ok; k++) {
         Island *I = &T->I[k]; island_alloc(I); I->idx = k; I->P = &T->P;
         I->w = malloc(sizeof(World));
-        ok = load_world(f, I->w, !(v5 || v6)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
+        ok = load_world(f, I->w, !(v5 || v6 || v7)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
              rd(f, &I->nsh, sizeof(int)) && rd(f, &I->sh_next, sizeof(uint64_t)) && I->nsh <= 2 * CMAX &&
              rd(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh) &&
              rd(f, &I->sr, sizeof(Rng)) && rd(f, &I->rr, sizeof(Rng)) && rd(f, &I->npred, sizeof(int)) && rd(f, I->px, sizeof I->px) &&
@@ -881,6 +1011,7 @@ static int load(Terra *T, const char *path) {
         if (w->ncs < 0 || w->ncs > CMAX) ok = 0;
         for (int i = 0; i < w->ncs && ok; i++) { w->cs[i] = malloc(sizeof(Creature)); ok = rd(f, w->cs[i], sizeof(Creature)); }
         if (T->P.forces >= 3) ok = ok && rd(f, I->brick, sizeof I->brick);
+        if (v7) ok = ok && rd(f, I->att, sizeof I->att) && rd(f, I->echo, sizeof I->echo);
     }
     fclose(f);
     return ok;
@@ -1116,6 +1247,15 @@ static int open_outputs(Terra *T, int resumed) {
         if (!resumed || fresh)
             fputs("tick\tn_species\tH_species\tmut_mean\tsoc_intra_pairs\tsoc_intra_excess\tsoc_inter_pairs\tsoc_inter_excess\n", T->societies);
     }
+    T->attention = NULL;
+    if (T->P.attention) {
+        snprintf(p, sizeof p, "%s/attention.tsv", T->dir); if (resumed) truncate_tsv(p, T->t);
+        int fresh = access(p, F_OK) != 0;
+        T->attention = fopen(p, resumed && !fresh ? "a" : "w");
+        if (!T->attention) return 0;
+        if (!resumed || fresh)
+            fputs("tick\tchaleur\techos\tprofondeur\tchoix\thesitations\tyields\n", T->attention);
+    }
     return 1;
 }
 
@@ -1124,7 +1264,7 @@ static Params defaults(void) {
                  .channel = 1, .founders = 0, .pop0 = 64, .mut = 0.02, .dup = 0.05, .season_amp = 0, .season_period = 4000, .soc_thr = 0.05, .seed = 1,
                  .repro = 0, .rep_steps = 8192, .rep_cost = 2, .rep_energy = 70, .rep_p = 1, .rep_mut = 0.005,
                  .pred = 0, .pred_dmg = 25, .pred_every = 2, .osmo = 0,
-                 .forces = 0, .expand_every = 0, .stress = 0 };
+                 .forces = 0, .expand_every = 0, .stress = 0, .attention = 0 };
     return P;
 }
 
@@ -1136,7 +1276,8 @@ static int usage(void) {
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
                     "                       [--forces 0|1|2|3] [--expand-every T (0 = K fixe, multiple de --sample)] [--stress 0|1]\n"
-                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every / --stress\n"
+                    "                       [--attention 0|1]\n"
+                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every / --stress / --attention\n"
                     "        terrarium_run dump DIR              (germens d'un checkpoint : opcodes, consensus)\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
@@ -1146,7 +1287,7 @@ static int usage(void) {
 static int cmd_run(int argc, char **argv) {
     Params P = defaults(); const char *dir = NULL; long ticks = 20000;
     int got_season_amp = 0, got_season_period = 0, got_pred = 0, got_pred_dmg = 0, got_pred_every = 0, got_regrow = 0;
-    int got_forces = 0, got_expand = 0, got_max_pop = 0, got_stress = 0;
+    int got_forces = 0, got_expand = 0, got_max_pop = 0, got_stress = 0, got_attention = 0;
     for (int i = 2; i < argc; i++) {
         const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!v) return usage();
@@ -1188,13 +1329,15 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--forces")) { P.forces = atoi(v); got_forces = 1; }
         else if (!strcmp(a, "--expand-every")) { P.expand_every = atoi(v); got_expand = 1; }
         else if (!strcmp(a, "--stress")) { P.stress = atoi(v); got_stress = 1; }
+        else if (!strcmp(a, "--attention")) { P.attention = atoi(v); got_attention = 1; }
         else return usage();
         i++;
     }
     if (!dir || P.K < 1 || P.K > KMAX || P.sample < 1 || P.ck_every % P.sample || P.w < 4 || P.h < 4 || P.w > GRID_W || P.h > GRID_H ||
         P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
         (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1 ||
-        P.forces < 0 || P.forces > 3 || P.stress < 0 || P.stress > 1 || P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
+        P.forces < 0 || P.forces > 3 || P.stress < 0 || P.stress > 1 || P.attention < 0 || P.attention > 1 ||
+        P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
     if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
     static Terra T; char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
@@ -1212,6 +1355,7 @@ static int cmd_run(int argc, char **argv) {
         if (got_forces) T.P.forces = P.forces;
         if (got_expand) T.P.expand_every = P.expand_every;
         if (got_stress) T.P.stress = P.stress;
+        if (got_attention) T.P.attention = P.attention;
         if (got_max_pop) {
             T.P.max_pop = P.max_pop;
             for (int k = 0; k < T.P.K; k++) T.I[k].w->cfg.max_pop = P.max_pop;
@@ -1230,11 +1374,11 @@ static int cmd_run(int argc, char **argv) {
             }
         }
         fprintf(stderr, "reprise de %s au tick %ld", ck, T.t);
-        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand || got_max_pop || got_stress)
-            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d max_pop=%d stress=%d)",
-                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every, T.P.max_pop, T.P.stress);
+        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand || got_max_pop || got_stress || got_attention)
+            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d max_pop=%d stress=%d attention=%d)",
+                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every, T.P.max_pop, T.P.stress, T.P.attention);
         else
-            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every/--max-pop/--stress comptent)");
+            fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every/--max-pop/--stress/--attention comptent)");
         fprintf(stderr, "\n");
     } else {
         terra_new(&T, &P);
@@ -1249,7 +1393,7 @@ static int cmd_run(int argc, char **argv) {
     signal(SIGINT, on_sig); signal(SIGTERM, on_sig);
     int rc = terra_run(&T, ticks, 0);
     fprintf(stderr, "fin : t=%ld pop=%d événements=%ld (checkpoint %s)\n", T.t, total_pop(&T), T.n_events, ck);
-    fclose(T.series); fclose(T.events); if (T.forces_out) fclose(T.forces_out); if (T.societies) fclose(T.societies); terra_free(&T);
+    fclose(T.series); fclose(T.events); if (T.forces_out) fclose(T.forces_out); if (T.societies) fclose(T.societies); if (T.attention) fclose(T.attention); terra_free(&T);
     return rc;
 }
 
@@ -1264,6 +1408,40 @@ static char *slurp(const char *p) {
     char *s = malloc((size_t)n + 1); if (fread(s, 1, (size_t)n, f) != (size_t)n) n = 0; s[n] = 0; fclose(f); return s;
 }
 static int resume_check(const Params *P, long t1, long t2, const char *label, int *pop_end, long *births);
+
+/* Une créature, un tick, regrow 0. food renvoyé = arrivée si elle a bougé, piste ouest si on avait
+ * posé de la nourriture, sinon la case de départ. */
+static int attn_probe(const uint8_t *dna, int len, int heat, int echo0, int food0,
+                      int *out_food, int *out_att, int *out_echo, int *out_emit,
+                      int *out_steps, int *out_x, int *out_y) {
+    Params P = defaults();
+    P.attention = 1; P.K = 1; P.w = 8; P.h = 8; P.max_pop = 4; P.pop0 = 1;
+    P.regrow = 0; P.sample = 50; P.ck_every = 50; P.migrate = 0; P.seed = 3;
+    P.channel = 1; P.forces = 0; P.stress = 0; P.pred = 0;
+    static Terra T;
+    terra_new(&T, &P);
+    Island *I = &T.I[0]; World *w = I->w;
+    w->cfg.food_regrow = 0;
+    for (int y = 0; y < w->cfg.h; y++) for (int x = 0; x < w->cfg.w; x++) w->food[y][x] = 0;
+    Creature *c = w->cs[0];
+    w->occ[c->y][c->x]--; c->x = 3; c->y = 3; w->occ[3][3]++;
+    memcpy(c->dna, dna, (size_t)len); c->len = len; c->ip = 0;
+    c->e = 120; c->d = 1; c->a = 0; c->b = 0; c->emitted = -1; c->steps = 0; c->eaten = 0;
+    c->ls[4] = 1;
+    memset(I->att, 0, sizeof I->att); memset(I->echo, 0, sizeof I->echo);
+    I->att[3][3] = (uint8_t)heat; I->echo[3][3] = (uint8_t)echo0;
+    w->food[3][3] = (uint8_t)food0;
+    island_tick(I);
+    *out_att = I->att[3][3]; *out_echo = I->echo[3][3];
+    *out_x = c->x; *out_y = c->y; *out_steps = c->steps; *out_emit = c->emitted;
+    if (c->x != 3 || c->y != 3) *out_food = w->food[c->y][c->x];
+    else if (food0) *out_food = w->food[3][2];        /* piste : d=1, derrière = ouest */
+    else *out_food = w->food[3][3];
+    int alive = c->e > 0;
+    terra_free(&T);
+    return alive;
+}
+
 static int selftest(void) {
     int ok = 1;
     /* 1. codeur social : flux dépendant → excès net ; flux indépendant → excès ~ 0 */
@@ -1337,6 +1515,7 @@ static int selftest(void) {
         if (S.events) fclose(S.events);
         if (S.forces_out) fclose(S.forces_out);
         if (S.societies) fclose(S.societies);
+        if (S.attention) fclose(S.attention);
         terra_free(&S);
         char path[160]; snprintf(path, sizeof path, "%s/societies.tsv", ds);
         char *ss = slurp(path);
@@ -1344,6 +1523,35 @@ static int selftest(void) {
         int file_ok = ran && ss && rows >= 2 && strstr(ss, "n_species");
         printf("selftest stress run : societies.tsv %d lignes → %s\n", rows, file_ok ? "OK" : "ÉCHEC");
         ok &= file_ok; free(ss); if (system(cmd)) {}
+    }
+    /* 6. attention : le processus dépose, le choix dépense, le réflexe sur sol froid ne reçoit rien */
+    {
+        uint8_t step[] = { OP_SENSE, OP_STEP, OP_YIELD };
+        uint8_t reflex[] = { OP_STEP, OP_YIELD };
+        uint8_t proc[] = { OP_SENSE, OP_SENSE_NB, OP_YIELD };
+        uint8_t look[] = { OP_SENSE_STIM, OP_EMIT, OP_YIELD };
+        uint8_t eat[] = { OP_SENSE, OP_EAT, OP_YIELD };
+        int food = 0, att = 0, echo = 0, emit = 0, steps = 0, x = 0, y = 0, look_hi = -1;
+        int a = attn_probe(step, 3, 3, 0, 0, &food, &att, &echo, &emit, &steps, &x, &y);
+        int deliber = a && steps == 1 && x == 4 && y == 3 && food == 1 && att == 2 && echo == OP_STEP;
+        int fa = food, aa = att, ea = echo;
+        int b = attn_probe(reflex, 3, 0, 0, 0, &food, &att, &echo, &emit, &steps, &x, &y);
+        int cold = b && steps == 1 && food == 0 && att == 0 && echo == 0;
+        int fr = food;
+        int c = attn_probe(proc, 3, 0, 0, 0, &food, &att, &echo, &emit, &steps, &x, &y);
+        int hesit = c && steps == 0 && food == 0 && att == 2 && echo == OP_YIELD;
+        int ap = att, ep = echo;
+        int d = attn_probe(look, 3, 4, OP_STEP, 0, &food, &att, &echo, &emit, &steps, &x, &y);
+        look_hi = (emit >> 4) & 15;
+        int sensed = d && look_hi == (OP_STEP & 15);
+        int e = attn_probe(eat, 3, 0, 0, 6, &food, &att, &echo, &emit, &steps, &x, &y);
+        int grazed = e && food == 1;
+        int good = deliber && cold && hesit && sensed && grazed;
+        printf("selftest attention : délibéré food=%d att=%d echo=%d ; réflexe food=%d ; processus att=%d echo=%d ; stimulus %d ; piste=%d → %s\n",
+               fa, aa, ea, fr, ap, ep, look_hi, grazed, good ? "OK" : "ÉCHEC");
+        if (!good) printf("  détail délibéré=%d réflexe=%d processus=%d stimulus=%d piste=%d\n",
+                          deliber, cold, hesit, sensed, grazed);
+        ok &= good;
     }
     return ok ? 0 : 1;
 }
@@ -1456,13 +1664,13 @@ static int resume_check(const Params *P, long t1, long t2, const char *label, in
     mkdir(da, 0755); mkdir(db, 0755);
     static Terra A, B;
     terra_new(&A, P); snprintf(A.dir, sizeof A.dir, "%s", da); open_outputs(&A, 0); terra_run(&A, t2, 1);
-    uint64_t ha = terra_hash(&A); *pop_end = total_pop(&A); fclose(A.series); fclose(A.events); if (A.forces_out) fclose(A.forces_out); if (A.societies) fclose(A.societies); terra_free(&A);
+    uint64_t ha = terra_hash(&A); *pop_end = total_pop(&A); fclose(A.series); fclose(A.events); if (A.forces_out) fclose(A.forces_out); if (A.societies) fclose(A.societies); if (A.attention) fclose(A.attention); terra_free(&A);
     terra_new(&B, P); snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 0); terra_run(&B, t1, 1);
-    fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); if (B.societies) fclose(B.societies); terra_free(&B);
+    fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); if (B.societies) fclose(B.societies); if (B.attention) fclose(B.attention); terra_free(&B);
     { char p[600]; snprintf(p, sizeof p, "%s/state.ck", db); memset(&B, 0, sizeof B);
       if (!load(&B, p)) { printf("selftest : checkpoint illisible\n"); return 0; } }
     snprintf(B.dir, sizeof B.dir, "%s", db); open_outputs(&B, 1); terra_run(&B, t2, 1);
-    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); if (B.societies) fclose(B.societies); terra_free(&B);
+    uint64_t hb = terra_hash(&B); fclose(B.series); fclose(B.events); if (B.forces_out) fclose(B.forces_out); if (B.societies) fclose(B.societies); if (B.attention) fclose(B.attention); terra_free(&B);
     char pa[600], pb[600]; snprintf(pa, sizeof pa, "%s/series.tsv", da); snprintf(pb, sizeof pb, "%s/series.tsv", db);
     char *sa = slurp(pa), *sb = slurp(pb);
     int same = ha == hb && sa && sb && !strcmp(sa, sb) && strlen(sa) > 100;

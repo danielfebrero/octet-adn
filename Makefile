@@ -51,6 +51,10 @@ experiments/terrarium_cmax: experiments/terrarium.c $(CORE) include/octet.h
 experiments/terrarium_soc: experiments/terrarium.c $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
 
+# Attention : réponse au choix et au processus qui y mène. Binaire à part.
+experiments/terrarium_attn: experiments/terrarium.c $(CORE) include/octet.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS)
+
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)

@@ -1,0 +1,11 @@
+fork_t	49784000
+fork_pop	32000
+fork_K	32
+fork_iso	2026-10-24T02:00:40Z
+source	experiments/vie-forces-societes state.ck (pid 3134567 laissé vivant)
+originals	375 vie-monde, 397 vie-forces, 504 vie-causes, 2649682 vie-forces-briques, 3134567 vie-forces-societes
+fork_pid	4041432
+target	experiments/vie-attention
+flags	--ticks 0 --attention 1
+binary	experiments/terrarium_attn
+note	choc attention 0→1. stress 1, forces 3, expand_every 0 restent ceux du checkpoint. OADNTER7. Premier événement attention à t=49784200 : choix=5447996, profondeur=27026540, hésitations=629807, yields=6278, chaleur=293105. pop=32000, ~155 ticks/s.
