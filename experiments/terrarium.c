@@ -45,6 +45,15 @@
  * de ces caractéristiques, à la place de la grille fixe bouge/mange/tourne/
  * divise/émet. --traits 0 : pas de relevé, mêmes tirages, checkpoint OADNTER7.
  * Traits tient hors de Params. L'écriture avec traits est OADNTER8.
+ * --depense 1 : archipel plein (KMAX), un 2×2 mixte n'irrigue plus et,
+ * une fois par relevé et par île, retire une brique. --causales 1 : le
+ * signal aux siens déplace une nourriture vers un voisin de l'espèce ;
+ * le signal aux autres pose une marque lisible dans le stimulus.
+ * --saison 1 : le facteur de saison gate la ferme et la technologie
+ * (creux seulement ; amplitude 0 = toutes les cases). --tronc 1 : au
+ * relevé, charge les .so neufs de <dir>/lois (loi.h). Ces quatre
+ * drapeaux sont hors Params. 0 = aucun effet, aucun tirage. Dès que
+ * l'un est allumé, l'écriture est OADNTER9.
  * CMAX 4096 : le plafond par île se lève via --max-pop (choc à la reprise).
  * Les checkpoints OADNTER4 (World à 1024), OADNTER5 et OADNTER6 se relisent ;
  * l'écriture sans traits est OADNTER7 (chaleur et écho par case). Attention
@@ -54,6 +63,8 @@
  *   ./experiments/terrarium_run report D [D...]          (résumé des séries)
  *   ./experiments/terrarium_run selftest */
 #define _GNU_SOURCE
+#include <dirent.h>
+#include <dlfcn.h>
 #include <math.h>
 #include <pthread.h>
 #include <signal.h>
@@ -65,6 +76,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "octet.h"
+#include "tronc-ligne/loi.h"
 
 void world_eat(World *w, Creature *c);
 
@@ -161,15 +173,63 @@ typedef struct {
     int celln[GRID_H][GRID_W]; Creature *cellv[GRID_H][GRID_W][4];
     uint8_t brick[GRID_H][GRID_W];                    /* bit0 pose, 1 YIELD, 2 XOR, 3 ATTACK, 4 LOOP, 5 NEURAL, 6 SENSE */
     long brick_place, brick_farm, brick_expand, brick_tech;
+    long brick_spend, partage, marques;
     uint8_t att[GRID_H][GRID_W];                      /* chaleur déposée par le processus de choix, 0..15 */
     uint8_t echo[GRID_H][GRID_W];                     /* opcode du dernier choix, 0 si hésitation */
+    uint8_t mark[GRID_H][GRID_W];                     /* causales : quartet de l'autre espèce, 0 si rien */
     long attn_depth, attn_choice, attn_hes, attn_yield;
     const Params *P;
     int traits;                                   /* copie de Terra.traits pour le thread. 0 = loi d'avant */
+    int depense, causales, saison;
     long t_end;
 } Island;
 
 static __thread Island *cur;
+
+/* Creux de saison : 1 si la case reçoit la pompe. Amplitude 0 ou drapeau
+ * éteint : toujours 1. Au-dessus de 1, la pompe ne dépasse pas son plein. */
+static int pompe_passe(const Island *I, int x, int y) {
+    if (!I->saison) return 1;
+    const Params *P = I->P;
+    if (P->season_amp <= 0 || P->season_period < 1) return 1;
+    double f = 1.0 + P->season_amp * sin(2.0 * M_PI * (double)I->w->t / (double)P->season_period);
+    if (f < 0) f = 0;
+    int milli = (int)lround(f * 1000.0);
+    if (milli >= 1000) return 1;
+    if (milli <= 0) return 0;
+    int h = (x * 17 + y * 31 + (int)I->w->t) % 1000;
+    if (h < 0) h += 1000;
+    return h < milli;
+}
+
+/* Signal du tick. Aux siens : une nourriture se déplace vers un voisin
+ * de l'espèce. Aux autres : une marque (1..15) sur la case. Aucun tirage. */
+static void causales_appliquer(Island *I, Creature *c, int sig, int esp) {
+    World *w = I->w;
+    if (!sig || c->species < 0 || c->species > 255) return;
+    if (esp == c->species) {
+        int W = w->cfg.w, H = w->cfg.h;
+        if (w->food[c->y][c->x] <= 0) return;
+        for (int d = 0; d < 4; d++) {
+            int x = (c->x + TDX[d] + W) % W, y = (c->y + TDY[d] + H) % H;
+            int hit = 0;
+            for (int q = 0; q < I->celln[y][x]; q++) {
+                Creature *o = I->cellv[y][x][q];
+                if (o && o != c && o->species == c->species) { hit = 1; break; }
+            }
+            if (hit && w->food[y][x] < 14) {
+                w->food[c->y][c->x]--;
+                w->food[y][x]++;
+                I->partage++;
+                return;
+            }
+        }
+    } else if (esp) {
+        int nib = esp & 15; if (!nib) nib = 1;
+        I->mark[c->y][c->x] = (uint8_t)nib;
+        I->marques++;
+    }
+}
 
 /* opcodes du germen (pas un immédiat) : la force naît de la seed */
 static int tape_scan(const uint8_t *g, int len, int has[OP_COUNT]) {
@@ -363,6 +423,8 @@ static void hook(World *w, Creature *c) {
             high = echo ? (echo & 15) : (heat & 15);
         }
     }
+    if (I->causales && I->P->stress) causales_appliquer(I, c, sig, esp);
+    if (I->causales && I->mark[c->y][c->x]) high = I->mark[c->y][c->x] & 15;
     if (I->npred) {                                   /* zone de mort : Chebyshev ≤ 1 (tore) ; perçue directement (quartet haut = 15) */
         for (int q = 0; q < I->npred; q++) {
             int dx = abs(c->x - I->px[q]), dy = abs(c->y - I->py[q]);
@@ -496,6 +558,37 @@ static void attn_apply(Island *I) {
     }
 }
 
+static void briques_pompes(Island *I) {
+    World *w = I->w; int W = w->cfg.w, H = w->cfg.h;
+    for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) {
+        uint8_t b = I->brick[y][x];
+        if (!b) continue;
+        if ((b & 2) && w->food[y][x] < 14 && pompe_passe(I, x, y)) { w->food[y][x]++; I->brick_farm++; }
+        if ((b & 32) && w->food[y][x] < 8 && pompe_passe(I, x, y)) { w->food[y][x]++; I->brick_farm++; }
+    }
+    int spent = 0;
+    int plein = I->depense && I->P->K >= KMAX;
+    int periode = I->P->sample > 0 ? I->P->sample : 1;
+    for (int y = 0; y < H - 1; y++) for (int x = 0; x < W - 1; x++) {
+        uint8_t a = I->brick[y][x], b = I->brick[y][x + 1], c2 = I->brick[y + 1][x], d = I->brick[y + 1][x + 1];
+        if (!a || !b || !c2 || !d) continue;
+        if (a == b && a == c2 && a == d) continue;
+        I->brick_tech++;
+        if (plein) {
+            if (!spent && (w->t % periode) == 0) {
+                I->brick[y][x] = 0;
+                I->brick_spend++;
+                spent = 1;
+            }
+        } else {
+            if (w->food[y][x] < 14 && pompe_passe(I, x, y)) w->food[y][x]++;
+            if (w->food[y][x + 1] < 14 && pompe_passe(I, x + 1, y)) w->food[y][x + 1]++;
+            if (w->food[y + 1][x] < 14 && pompe_passe(I, x, y + 1)) w->food[y + 1][x]++;
+            if (w->food[y + 1][x + 1] < 14 && pompe_passe(I, x + 1, y + 1)) w->food[y + 1][x + 1]++;
+        }
+    }
+}
+
 static void island_tick(Island *I) {
     cur = I;
     World *w = I->w; const Params *P = I->P;
@@ -579,25 +672,7 @@ static void island_tick(Island *I) {
         }
         c->lscore = a + 1;
     }
-    if (P->forces >= 3) {
-        int W = w->cfg.w, H = w->cfg.h;
-        for (int y = 0; y < H; y++) for (int x = 0; x < W; x++) {
-            uint8_t b = I->brick[y][x];
-            if (!b) continue;
-            if ((b & 2) && w->food[y][x] < 14) { w->food[y][x]++; I->brick_farm++; }
-            if ((b & 32) && w->food[y][x] < 8) { w->food[y][x]++; I->brick_farm++; }
-        }
-        for (int y = 0; y < H - 1; y++) for (int x = 0; x < W - 1; x++) {
-            uint8_t a = I->brick[y][x], b = I->brick[y][x + 1], c2 = I->brick[y + 1][x], d = I->brick[y + 1][x + 1];
-            if (!a || !b || !c2 || !d) continue;
-            if (a == b && a == c2 && a == d) continue;
-            I->brick_tech++;
-            if (w->food[y][x] < 14) w->food[y][x]++;
-            if (w->food[y][x + 1] < 14) w->food[y][x + 1]++;
-            if (w->food[y + 1][x] < 14) w->food[y + 1][x]++;
-            if (w->food[y + 1][x + 1] < 14) w->food[y + 1][x + 1]++;
-        }
-    }
+    if (P->forces >= 3) briques_pompes(I);
     int dead = n_before + born - w->ncs;
     I->births += born; I->deaths += dead; I->novel += novel;
     /* ombre neutre : mêmes morts, mêmes naissances, autant d'innovations, parents tirés au hasard */
@@ -689,13 +764,19 @@ typedef struct {
     int soc_out_streak, soc_out_on; long soc_out_events;
     long n_events;
     long emits_prev;
-    FILE *series, *events, *forces_out, *societies, *attention, *traits_out; char dir[512];
+    FILE *series, *events, *forces_out, *societies, *attention, *traits_out, *lois_out; char dir[512];
     int saw_sp1, saw_attn;
     /* Découverte. Hors Params et hors du corps OADNTER7 : traits 0 n'écrit rien de plus. */
     int traits;
     int trait_hi[NFACT], trait_lo[NFACT], trait_on[NFACT], trait_slot[NFACT];
     Niche dniche[DNICHE];
     Cyc cyc_dniche[DNICHE];
+    /* Stimulations et tronc. Hors Params. 0 = le chemin d'avant. */
+    int depense, causales, saison, tronc;
+    void *loi_h[32];
+    void (*loi_fn[32])(const LoiMonde *);
+    char loi_nom[32][64];
+    int nloi;
 } Terra;
 
 static void event(Terra *T, const char *type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
@@ -901,6 +982,71 @@ static void trait_sample(Terra *T, long pos, int *occ_out, int *nstable_out, dou
         fflush(T->traits_out);
     }
     *occ_out = occ; *nstable_out = nstable; *Hb_out = Hb;
+}
+
+static Terra *loi_courant;
+static void loi_evt(const char *type, const char *detail) {
+    if (loi_courant && type && detail) event(loi_courant, type, "%s", detail);
+}
+static int loi_ile_ok(int ile, int x, int y, Island **out) {
+    Terra *T = loi_courant;
+    if (!T || ile < 0 || ile >= T->P.K) return 0;
+    Island *I = &T->I[ile];
+    if (!I->w || x < 0 || y < 0 || x >= I->w->cfg.w || y >= I->w->cfg.h) return 0;
+    *out = I;
+    return 1;
+}
+static int loi_lire(int ile, int x, int y) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return 0; return I->w->food[y][x];
+}
+static void loi_food(int ile, int x, int y, int delta) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return;
+    int v = I->w->food[y][x] + delta; if (v < 0) v = 0; if (v > 14) v = 14; I->w->food[y][x] = (uint8_t)v;
+}
+static void loi_brique(int ile, int x, int y) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return; I->brick[y][x] = 0;
+}
+static void loi_chaleur(int ile, int x, int y, int delta) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return;
+    int v = I->att[y][x] + delta; if (v < 0) v = 0; if (v > 15) v = 15; I->att[y][x] = (uint8_t)v;
+}
+static void loi_marque(int ile, int x, int y, int valeur) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return; I->mark[y][x] = (uint8_t)(valeur & 15);
+}
+static void lois_brancher(Terra *T) {
+    if (!T->tronc || !T->dir[0]) return;
+    char dir[600]; snprintf(dir, sizeof dir, "%s/lois", T->dir);
+    DIR *d = opendir(dir); if (!d) return;
+    struct dirent *de;
+    while ((de = readdir(d))) {
+        const char *nm = de->d_name; size_t n = strlen(nm);
+        if (n < 4 || strcmp(nm + n - 3, ".so") != 0) continue;
+        int deja = 0;
+        for (int i = 0; i < T->nloi; i++) if (!strcmp(T->loi_nom[i], nm)) deja = 1;
+        if (deja) continue;
+        if (T->nloi >= 32) { event(T, "loi_rejet", "%s : 32 lois deja chargees", nm); continue; }
+        char full[700]; snprintf(full, sizeof full, "%s/%s", dir, nm);
+        void *h = dlopen(full, RTLD_NOW | RTLD_LOCAL);
+        if (!h) { const char *e = dlerror(); event(T, "loi_rejet", "%s", e ? e : nm); continue; }
+        const Loi *(*reg)(void) = (const Loi *(*)(void))dlsym(h, "loi_registre");
+        const Loi *L = reg ? reg() : NULL;
+        if (!L || L->version != 1 || !L->echantillon || !L->nom) {
+            event(T, "loi_rejet", "%s : registre absent ou version autre que 1", nm);
+            dlclose(h); continue;
+        }
+        int i = T->nloi++;
+        T->loi_h[i] = h; T->loi_fn[i] = L->echantillon;
+        snprintf(T->loi_nom[i], sizeof T->loi_nom[i], "%s", nm);
+        event(T, "loi", "%s branchee", L->nom);
+    }
+    closedir(d);
+    if (!T->nloi) return;
+    LoiMonde M = { .tick = T->t, .pop = total_pop(T), .K = T->P.K, .evenement = loi_evt,
+                   .lire_nourriture = loi_lire, .ajouter_nourriture = loi_food, .retirer_brique = loi_brique,
+                   .ajouter_chaleur = loi_chaleur, .poser_marque = loi_marque };
+    loi_courant = T;
+    for (int i = 0; i < T->nloi; i++) T->loi_fn[i](&M);
+    loi_courant = NULL;
 }
 
 static void sample(Terra *T) {
@@ -1111,6 +1257,25 @@ static void sample(Terra *T) {
         fflush(T->forces_out);
         if (sp1 && !T->saw_sp1) { T->saw_sp1 = 1; event(T, "forces", "sp1=%d pop=%d attacks=%ld K=%d", sp1, N, attacks, P->K); }
     }
+    {
+        long spend = 0, part = 0, marq = 0;
+        for (int k = 0; k < P->K; k++) {
+            spend += T->I[k].brick_spend; part += T->I[k].partage; marq += T->I[k].marques;
+            T->I[k].brick_spend = T->I[k].partage = T->I[k].marques = 0;
+        }
+        if (T->lois_out) {
+            int milli = 1000;
+            if (T->saison && P->season_amp > 0 && P->season_period > 0) {
+                double f = 1.0 + P->season_amp * sin(2.0 * M_PI * (double)T->t / (double)P->season_period);
+                if (f < 0) f = 0;
+                milli = (int)lround(f * 1000.0);
+                if (milli > 1000) milli = 1000;
+            }
+            fprintf(T->lois_out, "%ld\t%ld\t%ld\t%ld\t%d\t%d\n", T->t, spend, part, marq, milli, T->nloi);
+            fflush(T->lois_out);
+        }
+    }
+    lois_brancher(T);
     T->sample_i++;
 }
 
@@ -1126,6 +1291,7 @@ static const char *HEADER = "tick\tpop\tn_geno\tH_geno\tn_raw\tpersist_cum\tshad
 #define TMAGIC6 "OADNTER6"
 #define TMAGIC7 "OADNTER7"
 #define TMAGIC8 "OADNTER8"
+#define TMAGIC9 "OADNTER9"
 #define CMAX_LEGACY 1024
 typedef struct {
     WorldConfig cfg;
@@ -1162,7 +1328,8 @@ static int load_world(FILE *f, World *w, int legacy) {
 static int save(Terra *T) {
     char tmp[600], path[600]; snprintf(tmp, sizeof tmp, "%s/state.ck.tmp", T->dir); snprintf(path, sizeof path, "%s/state.ck", T->dir);
     FILE *f = fopen(tmp, "wb"); if (!f) return 0;
-    int ok = wr(f, T->traits ? TMAGIC8 : TMAGIC7, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
+    int lois = T->depense || T->causales || T->saison || T->tronc;
+    int ok = wr(f, lois ? TMAGIC9 : T->traits ? TMAGIC8 : TMAGIC7, 8) && wr(f, &T->P, sizeof T->P) && wr(f, &T->gr, sizeof T->gr) && wr(f, &T->t, sizeof T->t) &&
              wr(f, &T->sample_i, sizeof T->sample_i) && wr(f, &T->founders_done, sizeof(int)) &&
              wr(f, T->niche, sizeof T->niche) && wr(f, T->pop_ring, sizeof T->pop_ring) && wr(f, &T->cyc_pop, sizeof T->cyc_pop) &&
              wr(f, T->cyc_niche, sizeof T->cyc_niche) && wr(f, &T->soc_streak, sizeof(int)) && wr(f, &T->soc_on, sizeof(int)) &&
@@ -1183,13 +1350,27 @@ static int save(Terra *T) {
         if (T->P.forces >= 3) ok = ok && wr(f, I->brick, sizeof I->brick);
         ok = ok && wr(f, I->att, sizeof I->att) && wr(f, I->echo, sizeof I->echo);
     }
-    if (ok && T->traits) {
+    if (ok && T->traits && !lois) {
         int non = NFACT, dn = DNICHE;
         ok = wr(f, &non, sizeof non) && wr(f, T->trait_hi, sizeof T->trait_hi) && wr(f, T->trait_lo, sizeof T->trait_lo) &&
              wr(f, T->trait_on, sizeof T->trait_on) && wr(f, T->trait_slot, sizeof T->trait_slot) && wr(f, &dn, sizeof dn);
         for (int n = 0; n < DNICHE && ok; n++)
             ok = wr(f, &T->dniche[n].stable, sizeof(int)) && wr(f, &T->dniche[n].hi, sizeof(int)) &&
                  wr(f, &T->dniche[n].lo, sizeof(int)) && wr(f, &T->dniche[n].first_stable, sizeof(long));
+    }
+    if (ok && lois) {
+        int tp = T->traits ? 1 : 0;
+        int bits = (T->depense ? 1 : 0) | (T->causales ? 2 : 0) | (T->saison ? 4 : 0) | (T->tronc ? 8 : 0);
+        ok = wr(f, &tp, sizeof tp);
+        if (ok && tp) {
+            int non = NFACT, dn = DNICHE;
+            ok = wr(f, &non, sizeof non) && wr(f, T->trait_hi, sizeof T->trait_hi) && wr(f, T->trait_lo, sizeof T->trait_lo) &&
+                 wr(f, T->trait_on, sizeof T->trait_on) && wr(f, T->trait_slot, sizeof T->trait_slot) && wr(f, &dn, sizeof dn);
+            for (int n = 0; n < DNICHE && ok; n++)
+                ok = wr(f, &T->dniche[n].stable, sizeof(int)) && wr(f, &T->dniche[n].hi, sizeof(int)) &&
+                     wr(f, &T->dniche[n].lo, sizeof(int)) && wr(f, &T->dniche[n].first_stable, sizeof(long));
+        }
+        ok = ok && wr(f, &bits, sizeof bits);
     }
     ok = fclose(f) == 0 && ok;
     return ok && rename(tmp, path) == 0;
@@ -1200,16 +1381,17 @@ static void island_alloc(Island *I) {
     I->sg = malloc(sizeof(struct SG) * 2 * CMAX);
     memset(I->brick, 0, sizeof I->brick);
     I->brick_place = I->brick_farm = I->brick_expand = I->brick_tech = 0;
-    memset(I->att, 0, sizeof I->att); memset(I->echo, 0, sizeof I->echo);
+    I->brick_spend = I->partage = I->marques = 0;
+    memset(I->att, 0, sizeof I->att); memset(I->echo, 0, sizeof I->echo); memset(I->mark, 0, sizeof I->mark);
     I->attn_depth = I->attn_choice = I->attn_hes = I->attn_yield = 0;
 }
 static int load(Terra *T, const char *path) {
     FILE *f = fopen(path, "rb"); if (!f) return 0;
     char m[8]; int ok = rd(f, m, 8);
-    int v8 = ok && !memcmp(m, TMAGIC8, 8), v7 = ok && !memcmp(m, TMAGIC7, 8), v6 = ok && !memcmp(m, TMAGIC6, 8);
+    int v9 = ok && !memcmp(m, TMAGIC9, 8), v8 = ok && !memcmp(m, TMAGIC8, 8), v7 = ok && !memcmp(m, TMAGIC7, 8), v6 = ok && !memcmp(m, TMAGIC6, 8);
     int v5 = ok && !memcmp(m, TMAGIC5, 8), v4 = ok && !memcmp(m, TMAGIC4, 8), v3 = ok && !memcmp(m, TMAGIC3, 8);
-    if (!v3 && !v4 && !v5 && !v6 && !v7 && !v8) { fclose(f); return 0; }
-    if (v8 || v7 || v6) {
+    if (!v3 && !v4 && !v5 && !v6 && !v7 && !v8 && !v9) { fclose(f); return 0; }
+    if (v9 || v8 || v7 || v6) {
         ok = rd(f, &T->P, sizeof T->P);
         if (v6) T->P.attention = 0;                   /* bourrage d'OADNTER6, pas un flag */
     } else if (v5 || v4) {
@@ -1226,7 +1408,7 @@ static int load(Terra *T, const char *path) {
              rd(f, T->cyc_niche, sizeof T->cyc_niche) && rd(f, &T->soc_streak, sizeof(int)) && rd(f, &T->soc_on, sizeof(int)) &&
              rd(f, &T->soc_events, sizeof(long)) && rd(f, &T->n_events, sizeof(long)) && rd(f, &T->emits_prev, sizeof(long)) &&
              rd(f, &T->sgr, sizeof(Rng)) && rd(f, &T->last_ess, sizeof(int));
-    if (v8 || v7 || v6) ok = ok && rd(f, &T->soc_in_streak, sizeof(int)) && rd(f, &T->soc_in_on, sizeof(int)) && rd(f, &T->soc_in_events, sizeof(long)) &&
+    if (v9 || v8 || v7 || v6) ok = ok && rd(f, &T->soc_in_streak, sizeof(int)) && rd(f, &T->soc_in_on, sizeof(int)) && rd(f, &T->soc_in_events, sizeof(long)) &&
                             rd(f, &T->soc_out_streak, sizeof(int)) && rd(f, &T->soc_out_on, sizeof(int)) && rd(f, &T->soc_out_events, sizeof(long));
     Lins *ls[4] = { &T->geno, &T->shadow, &T->comp, &T->scomp };
     for (int i = 0; i < 4 && ok; i++) {
@@ -1237,7 +1419,7 @@ static int load(Terra *T, const char *path) {
     for (int k = 0; k < T->P.K && ok; k++) {
         Island *I = &T->I[k]; island_alloc(I); I->idx = k; I->P = &T->P;
         I->w = malloc(sizeof(World));
-        ok = load_world(f, I->w, !(v5 || v6 || v7 || v8)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
+        ok = load_world(f, I->w, !(v5 || v6 || v7 || v8 || v9)) && rd(f, &I->wr, sizeof(Rng)) && rd(f, &I->tr, sizeof(Rng)) && rd(f, &I->env, sizeof(int)) &&
              rd(f, &I->nsh, sizeof(int)) && rd(f, &I->sh_next, sizeof(uint64_t)) && I->nsh <= 2 * CMAX &&
              rd(f, I->sh, sizeof(uint64_t) * (size_t)I->nsh) &&
              rd(f, &I->sr, sizeof(Rng)) && rd(f, &I->rr, sizeof(Rng)) && rd(f, &I->npred, sizeof(int)) && rd(f, I->px, sizeof I->px) &&
@@ -1248,7 +1430,7 @@ static int load(Terra *T, const char *path) {
         if (w->ncs < 0 || w->ncs > CMAX) ok = 0;
         for (int i = 0; i < w->ncs && ok; i++) { w->cs[i] = malloc(sizeof(Creature)); ok = rd(f, w->cs[i], sizeof(Creature)); }
         if (T->P.forces >= 3) ok = ok && rd(f, I->brick, sizeof I->brick);
-        if (v7 || v8) ok = ok && rd(f, I->att, sizeof I->att) && rd(f, I->echo, sizeof I->echo);
+        if (v7 || v8 || v9) ok = ok && rd(f, I->att, sizeof I->att) && rd(f, I->echo, sizeof I->echo);
     }
     T->traits = 0;
     if (v8) {
@@ -1260,6 +1442,25 @@ static int load(Terra *T, const char *path) {
             ok = rd(f, &T->dniche[n].stable, sizeof(int)) && rd(f, &T->dniche[n].hi, sizeof(int)) &&
                  rd(f, &T->dniche[n].lo, sizeof(int)) && rd(f, &T->dniche[n].first_stable, sizeof(long));
         if (ok) T->traits = 1;
+    }
+    T->depense = T->causales = T->saison = T->tronc = 0;
+    if (v9) {
+        int tp = 0, bits = 0, non = 0, dn = 0;
+        ok = ok && rd(f, &tp, sizeof tp);
+        if (ok && tp) {
+            ok = rd(f, &non, sizeof non) && non == NFACT && rd(f, T->trait_hi, sizeof T->trait_hi) &&
+                 rd(f, T->trait_lo, sizeof T->trait_lo) && rd(f, T->trait_on, sizeof T->trait_on) &&
+                 rd(f, T->trait_slot, sizeof T->trait_slot) && rd(f, &dn, sizeof dn) && dn == DNICHE;
+            for (int n = 0; n < DNICHE && ok; n++)
+                ok = rd(f, &T->dniche[n].stable, sizeof(int)) && rd(f, &T->dniche[n].hi, sizeof(int)) &&
+                     rd(f, &T->dniche[n].lo, sizeof(int)) && rd(f, &T->dniche[n].first_stable, sizeof(long));
+            if (ok) T->traits = 1;
+        }
+        ok = ok && rd(f, &bits, sizeof bits);
+        if (ok) {
+            T->depense = (bits & 1) != 0; T->causales = (bits & 2) != 0;
+            T->saison = (bits & 4) != 0; T->tronc = (bits & 8) != 0;
+        }
     }
     fclose(f);
     return ok;
@@ -1323,6 +1524,7 @@ static void terra_new(Terra *T, const Params *P) {
 static void terra_free(Terra *T) {
     for (int k = 0; k < T->P.K; k++) { world_free(T->I[k].w); free(T->I[k].tab.t); free(T->I[k].tab.used); free(T->I[k].sh); free(T->I[k].sg); }
     free(T->geno.v); free(T->shadow.v); free(T->comp.v); free(T->scomp.v);
+    for (int i = 0; i < T->nloi; i++) if (T->loi_h[i]) dlclose(T->loi_h[i]);
 }
 
 /* migration en anneau : ~1 % de chaque île part chez la voisine (et autant d'étiquettes d'ombre) */
@@ -1429,7 +1631,10 @@ static int terra_run(Terra *T, long t_target, int quiet) {
         long b = next_boundary(T, T->t);
         if (t_target && b > t_target) b = t_target;
         pthread_t th[KMAX];
-        for (int k = 0; k < P->K; k++) { T->I[k].traits = T->traits; T->I[k].t_end = b; pthread_create(&th[k], NULL, island_run, &T->I[k]); }
+        for (int k = 0; k < P->K; k++) {
+            T->I[k].traits = T->traits; T->I[k].depense = T->depense; T->I[k].causales = T->causales; T->I[k].saison = T->saison;
+            T->I[k].t_end = b; pthread_create(&th[k], NULL, island_run, &T->I[k]);
+        }
         for (int k = 0; k < P->K; k++) pthread_join(th[k], NULL);
         T->t = b;
         if (P->migrate > 0 && T->t % P->migrate == 0) migrate(T);
@@ -1512,6 +1717,15 @@ static int open_outputs(Terra *T, int resumed) {
         if (!T->traits_out) return 0;
         if (!resumed || fresh) fputs("tick\tn_traits\ttenues\tessayees\n", T->traits_out);
     }
+    T->lois_out = NULL;
+    if (T->depense || T->causales || T->saison || T->tronc) {
+        snprintf(p, sizeof p, "%s/lois.tsv", T->dir); if (resumed) truncate_tsv(p, T->t);
+        int fresh = access(p, F_OK) != 0;
+        T->lois_out = fopen(p, resumed && !fresh ? "a" : "w");
+        if (!T->lois_out) return 0;
+        if (!resumed || fresh) fputs("tick\tspend\tpartage\tmarques\tpompe_milli\tlois\n", T->lois_out);
+        if (T->tronc) { char ld[600]; snprintf(ld, sizeof ld, "%s/lois", T->dir); mkdir(ld, 0755); }
+    }
     return 1;
 }
 
@@ -1532,8 +1746,8 @@ static int usage(void) {
                     "                       [--pred N (prédateurs par île)] [--pred-dmg E] [--pred-every T] [--osmo U (absorption passive)]\n"
                     "                       [--season-amp a --season-period p] [--soc-thr bits]\n"
                     "                       [--forces 0|1|2|3] [--expand-every T (0 = K fixe, multiple de --sample)] [--stress 0|1]\n"
-                    "                       [--attention 0|1] [--traits 0|1]\n"
-                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every / --stress / --attention / --traits\n"
+                    "                       [--attention 0|1] [--traits 0|1] [--depense 0|1] [--causales 0|1] [--saison 0|1] [--tronc 0|1]\n"
+                    "        reprise : --ticks, et chocs --season-amp / --pred / --regrow / --forces / --expand-every / --stress / --attention / --traits / --depense / --causales / --saison / --tronc\n"
                     "        terrarium_run dump DIR              (germens d'un checkpoint : opcodes, consensus)\n"
                     "        terrarium_run report DIR [DIR...]   (résumé par quarts)\n"
                     "        terrarium_run selftest\n");
@@ -1544,7 +1758,8 @@ static int cmd_run(int argc, char **argv) {
     Params P = defaults(); const char *dir = NULL; long ticks = 20000;
     int got_season_amp = 0, got_season_period = 0, got_pred = 0, got_pred_dmg = 0, got_pred_every = 0, got_regrow = 0;
     int got_forces = 0, got_expand = 0, got_max_pop = 0, got_stress = 0, got_attention = 0, got_traits = 0;
-    int traits_flag = 0;
+    int got_depense = 0, got_causales = 0, got_saison = 0, got_tronc = 0;
+    int traits_flag = 0, depense_flag = 0, causales_flag = 0, saison_flag = 0, tronc_flag = 0;
     for (int i = 2; i < argc; i++) {
         const char *a = argv[i], *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!v) return usage();
@@ -1588,6 +1803,10 @@ static int cmd_run(int argc, char **argv) {
         else if (!strcmp(a, "--stress")) { P.stress = atoi(v); got_stress = 1; }
         else if (!strcmp(a, "--attention")) { P.attention = atoi(v); got_attention = 1; }
         else if (!strcmp(a, "--traits")) { traits_flag = atoi(v); got_traits = 1; }
+        else if (!strcmp(a, "--depense")) { depense_flag = atoi(v); got_depense = 1; }
+        else if (!strcmp(a, "--causales")) { causales_flag = atoi(v); got_causales = 1; }
+        else if (!strcmp(a, "--saison")) { saison_flag = atoi(v); got_saison = 1; }
+        else if (!strcmp(a, "--tronc")) { tronc_flag = atoi(v); got_tronc = 1; }
         else return usage();
         i++;
     }
@@ -1595,7 +1814,8 @@ static int cmd_run(int argc, char **argv) {
         P.max_pop < 1 || P.max_pop > CMAX - 24 || P.pop0 < 1 || P.pop0 > P.max_pop || P.season_period < 1 ||
         (P.repro && P.founders == F_SEEDS) || P.pred < 0 || P.pred > 16 || P.pred_every < 1 || P.rep_steps < 1 || P.rep_energy < 1 ||
         P.forces < 0 || P.forces > 3 || P.stress < 0 || P.stress > 1 || P.attention < 0 || P.attention > 1 ||
-        traits_flag < 0 || traits_flag > 1 ||
+        traits_flag < 0 || traits_flag > 1 || depense_flag < 0 || depense_flag > 1 ||
+        causales_flag < 0 || causales_flag > 1 || saison_flag < 0 || saison_flag > 1 || tronc_flag < 0 || tronc_flag > 1 ||
         P.expand_every < 0 || (P.expand_every > 0 && P.expand_every % P.sample)) return usage();
     if (P.founders == F_SOUP && !load_soup(P.ffile)) { fprintf(stderr, "soupe %s illisible (N × 64 octets attendus)\n", P.ffile); return 1; }
     mkdir(dir, 0755);
@@ -1619,6 +1839,10 @@ static int cmd_run(int argc, char **argv) {
             if (traits_flag && !T.traits) trait_arm(&T);
             T.traits = traits_flag;
         }
+        if (got_depense) T.depense = depense_flag;
+        if (got_causales) T.causales = causales_flag;
+        if (got_saison) T.saison = saison_flag;
+        if (got_tronc) T.tronc = tronc_flag;
         if (got_max_pop) {
             T.P.max_pop = P.max_pop;
             for (int k = 0; k < T.P.K; k++) T.I[k].w->cfg.max_pop = P.max_pop;
@@ -1637,15 +1861,16 @@ static int cmd_run(int argc, char **argv) {
             }
         }
         fprintf(stderr, "reprise de %s au tick %ld", ck, T.t);
-        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand || got_max_pop || got_stress || got_attention || got_traits)
-            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d max_pop=%d stress=%d attention=%d traits=%d)",
-                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every, T.P.max_pop, T.P.stress, T.P.attention, T.traits);
+        if (got_season_amp || got_pred || got_regrow || got_forces || got_expand || got_max_pop || got_stress || got_attention || got_traits || got_depense || got_causales || got_saison || got_tronc)
+            fprintf(stderr, " (choc : season_amp=%.2f pred=%d regrow=%d forces=%d expand_every=%d max_pop=%d stress=%d attention=%d traits=%d depense=%d causales=%d saison=%d tronc=%d)",
+                    T.P.season_amp, T.P.pred, T.P.regrow, T.P.forces, T.P.expand_every, T.P.max_pop, T.P.stress, T.P.attention, T.traits, T.depense, T.causales, T.saison, T.tronc);
         else
             fprintf(stderr, " (paramètres du checkpoint ; --ticks et les chocs --season-amp/--pred/--regrow/--forces/--expand-every/--max-pop/--stress/--attention/--traits comptent)");
         fprintf(stderr, "\n");
     } else {
         terra_new(&T, &P);
         if (traits_flag) { T.traits = 1; trait_arm(&T); }
+        T.depense = depense_flag; T.causales = causales_flag; T.saison = saison_flag; T.tronc = tronc_flag;
         if (P.repro || P.founders >= F_SOUP) {           /* part de copieurs vérifiés parmi les fondateurs */
             SoupCfg sc = { .addr_b = 1, .no_store = 0, .steps = P.rep_steps }; int n = 0, cop = 0;
             for (int k = 0; k < P.K; k++) for (int i = 0; i < T.I[k].w->ncs; i++, n++) cop += soup_copier(T.I[k].w->cs[i]->germ, &sc) > 0;
@@ -1657,7 +1882,7 @@ static int cmd_run(int argc, char **argv) {
     signal(SIGINT, on_sig); signal(SIGTERM, on_sig);
     int rc = terra_run(&T, ticks, 0);
     fprintf(stderr, "fin : t=%ld pop=%d événements=%ld (checkpoint %s)\n", T.t, total_pop(&T), T.n_events, ck);
-    fclose(T.series); fclose(T.events); if (T.forces_out) fclose(T.forces_out); if (T.societies) fclose(T.societies); if (T.attention) fclose(T.attention); if (T.traits_out) fclose(T.traits_out); terra_free(&T);
+    fclose(T.series); fclose(T.events); if (T.forces_out) fclose(T.forces_out); if (T.societies) fclose(T.societies); if (T.attention) fclose(T.attention); if (T.traits_out) fclose(T.traits_out); if (T.lois_out) fclose(T.lois_out); terra_free(&T);
     return rc;
 }
 
@@ -1882,6 +2107,63 @@ static int selftest(void) {
         fclose(U.series); fclose(U.events); if (U.forces_out) fclose(U.forces_out); if (U.societies) fclose(U.societies); if (U.attention) fclose(U.attention); if (U.traits_out) fclose(U.traits_out); terra_free(&U);
         fclose(V.series); fclose(V.events); if (V.forces_out) fclose(V.forces_out); if (V.societies) fclose(V.societies); if (V.attention) fclose(V.attention); if (V.traits_out) fclose(V.traits_out); terra_free(&V);
         free(ts); if (system(cmd)) {}
+    }
+    /* 8. dépense retire une brique sans irriguer ; causales déplace ou marque ; saison muette si amplitude 0 ; un .so se branche */
+    {
+        Params P = defaults();
+        P.K = 1; P.w = 8; P.h = 8; P.pop0 = 2; P.max_pop = 8; P.stress = 1; P.forces = 3;
+        P.sample = 200; P.ck_every = 200; P.migrate = 0; P.regrow = 0; P.seed = 4; P.season_amp = 0;
+        static Terra D;
+        terra_new(&D, &P);
+        Island *I = &D.I[0];
+        I->depense = 1; I->saison = 1; D.P.K = KMAX; I->P = &D.P;
+        World *w = I->w; w->t = 0;
+        memset(w->food, 0, sizeof w->food);
+        memset(I->brick, 0, sizeof I->brick);
+        I->brick[0][0] = 1; I->brick[0][1] = 2; I->brick[1][0] = 4; I->brick[1][1] = 8;
+        briques_pompes(I);
+        /* ferme YIELD encore active (food 0,1) ; technologie coupée (les trois autres cases) ; une brique retirée */
+        int dep = I->brick[0][0] == 0 && I->brick_spend == 1
+            && w->food[0][0] == 0 && w->food[0][1] == 1 && w->food[1][0] == 0 && w->food[1][1] == 0;
+        I->depense = 0; D.P.K = 1; I->brick_tech = 0;
+        I->brick[0][0] = 1;
+        briques_pompes(I);
+        int irr = I->brick_tech == 1 && w->food[0][0] == 1 && I->brick_spend == 1;
+        Creature *a = w->cs[0], *b = w->cs[1];
+        a->species = b->species = 3; a->x = 1; a->y = 1; b->x = 2; b->y = 1;
+        w->food[1][1] = 5; w->food[1][2] = 1;
+        memset(I->celln, 0, sizeof I->celln);
+        I->celln[1][2] = 1; I->cellv[1][2][0] = b;
+        I->causales = 1;
+        causales_appliquer(I, a, 1, 3);
+        int part = w->food[1][1] == 4 && w->food[1][2] == 2 && I->partage == 1;
+        causales_appliquer(I, a, 1, 9);
+        int mrk = I->mark[1][1] == 9 && I->marques == 1;
+        I->saison = 0; int passe = pompe_passe(I, 1, 1);
+        I->saison = 1; D.P.season_amp = 1; D.P.season_period = 4; w->t = 3;
+        int creux = pompe_passe(I, 0, 0) == 0;
+        const char *so = "experiments/tronc-ligne/exemple.so";
+        const char *ld = "/tmp/terrarium-selftest-lois/lois";
+        char cmd[240]; snprintf(cmd, sizeof cmd, "rm -rf /tmp/terrarium-selftest-lois && mkdir -p %s && cp %s %s/exemple.so", ld, so, ld);
+        int copie = system(cmd) == 0;
+        static Terra R;
+        memset(&R, 0, sizeof R);
+        /* K = 0 : aucune île allouée. total_pop ne doit pas déréférencer un monde absent. */
+        R.tronc = 1; R.P.K = 0; R.t = 10; snprintf(R.dir, sizeof R.dir, "/tmp/terrarium-selftest-lois");
+        R.events = fopen("/tmp/terrarium-selftest-lois/events.tsv", "w");
+        if (R.events) fputs("tick\ttype\tdetail\n", R.events);
+        if (copie) lois_brancher(&R);
+        int branche = R.nloi == 1 && R.n_events >= 1;
+        if (copie) lois_brancher(&R);
+        int une = R.nloi == 1;
+        printf("selftest lois : depense %d irrigue %d partage %d marque %d passe %d creux %d branche %d une_fois %d → %s\n",
+               dep, irr, part, mrk, passe, creux, branche, une,
+               dep && irr && part && mrk && passe && creux && branche && une ? "OK" : "ÉCHEC");
+        ok &= dep && irr && part && mrk && passe && creux && branche && une;
+        if (R.events) fclose(R.events);
+        D.P.K = 1; R.P.K = 0;
+        terra_free(&D); terra_free(&R);
+        if (system("rm -rf /tmp/terrarium-selftest-lois")) {}
     }
     return ok ? 0 : 1;
 }
