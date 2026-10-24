@@ -1,0 +1,57 @@
+# recettes + CMAX, fork t=21298000 pop=3765, 80000 ticks
+# témoin : experiments/vie-cmax-ctrl
+# cmax : experiments/vie-cmax  --forces 3 --max-pop 2000
+# originaux pid 375, forces 397, causes 504 laissés vivants (binaire terrarium_run)
+# binaire d'expérience : terrarium_cmax (CMAX 4096, OADNTER5)
+fork_t	21298000
+fork_pop	3765
+fork_K	4
+fork_EMIT_pct	0.3
+fork_NEURAL_pct	0.3
+fork_LOOP_pct	99.8
+fork_SENSE_pct	100.0
+fork_YIELD_pct	0.3
+fork_ATTACK_pct	0.0
+fork_XOR_pct	79.6
+ctrl_end_t	21378000
+ctrl_end_pop	3800
+ctrl_min	3721
+ctrl_max	3911
+ctrl_K	4
+ctrl_stable_niches	3
+ctrl_EMIT_pct	1.0
+ctrl_NEURAL_pct	0.2
+ctrl_YIELD_pct	0.4
+ctrl_ATTACK_pct	0.6
+cmax_end_t	21378000
+cmax_end_pop	63999
+cmax_min	4655
+cmax_max	64000
+cmax_K	32
+cmax_isles	32
+cmax_max_ncs	2000
+cmax_stable_niches	4
+cmax_end_sp1	54208
+cmax_end_sp1_pct	84.70
+cmax_end_EMIT_pct	87.3
+cmax_end_LOOP_pct	94.9
+cmax_end_NEURAL_pct	57.7
+cmax_end_SENSE_pct	75.1
+cmax_end_YIELD_pct	2.7
+cmax_end_XOR_pct	7.3
+cmax_end_ATTACK_pct	84.7
+cmax_end_bricks	60829
+cmax_sum_place	61725
+cmax_sum_farm	1973433348
+cmax_sum_expand	28
+cmax_sum_tech	1527373246
+cmax_first_expand_t	21298200
+cmax_KMAX_t	21303600
+verdict	plateau_leve+espace_bati+ile_plus_dense+recettes_actives
+
+# portes (dernière époque)
+# extinction          non
+# tenue               oui (63999/3765)
+# recettes_actives    oui (LOOP 94.9 % NEURAL 57.7 % SENSE 75.1 % dans les germens ; briques LOOP/SENSE/NEURAL par île)
+# ile_plus_dense      oui (32 îles à 2000)
+# plateau_leve        oui (63999 = 32 × 2000)

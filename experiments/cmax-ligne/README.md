@@ -41,3 +41,16 @@ Portes, à la dernière époque :
 ./experiments/terrarium_cmax run --dir experiments/vie-cmax-ctrl --ticks T
 ./experiments/terrarium_cmax run --dir experiments/vie-cmax --ticks T --forces 3 --max-pop 2000
 ```
+
+## Résultats
+
+Course unique, fork t = 21 298 000, pop = 3 765. Pids 375 / 397 / 504 intacts (`terrarium_run`).
+
+| bras | pop | K | ncs max | EMIT | LOOP | NEURAL | porte |
+|---|---:|---:|---:|---:|---:|---:|---|
+| témoin | 3 800 | 4 | 961 | 1,0 % | 99,7 % | 0,2 % | tenue |
+| `--forces 3 --max-pop 2000` | **63 999** | **32** | **2 000** | **87,3 %** | 94,9 % | **57,7 %** | plateau_leve + ile_plus_dense + recettes_actives |
+
+28 îles ouvertes en 5 600 ticks. Chaque île tient 2 000 (le bouchon 1 000 est levé). `EMIT` 0,3 → 87 %. `NEURAL` 0,3 → 58 %. Le témoin, même checkpoint, reste à 4 × 1 000.
+
+Sortie brute : `results.txt`. Selftest `18547e045a455586` / `a3a8de23aa3dde95`.
