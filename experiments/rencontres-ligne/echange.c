@@ -49,7 +49,14 @@ static void history_record(EchangeState *S, int id, long tick) {
 
 /* Choisir une adresse ou au moins un des deux stocks differe. Pas de
  * substitution : la somme des alleles de la paire est conservee exactement.
- * Au plus huit adresses contigues changent, sans decaler les immediats.
+ * Au plus huit adresses changent, en bouclant modulo n (comme le reste du
+ * moteur adresse le genome : STORE/LOAD font deja `k % len` dans src/vm.c).
+ * Choix primaire conteste et corrige ici : la version precedente tronquait
+ * la fenetre sans boucler (`hi = n - locus < 8 ? n - locus : 8`), si bien que
+ * les loci proches de la fin de n recevaient une fenetre plus courte (mesure :
+ * longueur moyenne 4,5 pour les 248 premiers octets d'un genome de 256,
+ * contre 2,75 pour les 8 derniers, jusqu'a 1,0 pile sur le dernier octet).
+ * Rien n'empeche desormais un octet d'etre touche a cause de sa position.
  */
 static int reciprocal(Creature *a, Creature *b, Rng *r) {
     int n = a->len;
@@ -63,9 +70,10 @@ static int reciprocal(Creature *a, Creature *b, Rng *r) {
         if (rng_below(r, (uint32_t)++differences) == 0) locus = i;
     }
     if (locus < 0) return 0;
-    int hi = n - locus < 8 ? n - locus : 8;
+    int hi = n < 8 ? n : 8;
     int length = 1 + (int)rng_below(r, (uint32_t)hi), changed = 0;
-    for (int i = locus; i < locus + length; i++) {
+    for (int k = 0; k < length; k++) {
+        int i = (locus + k) % n;
         uint8_t t = a->dna[i];
         if (t != b->dna[i]) {
             a->dna[i] = b->dna[i]; b->dna[i] = t;
@@ -249,6 +257,29 @@ int echange_selftest(void) {
     ECHECK("determinisme de l'etat et des deux stocks", !memcmp(&S, &T, sizeof S)
            && !memcmp(w->cs[0], v->cs[0], sizeof(Creature)) && !memcmp(w->cs[1], v->cs[1], sizeof(Creature)));
     world_free(w); world_free(v);
+
+    /* Choix primaire conteste : la fenetre d'echange boucle-t-elle modulo n, comme le
+     * reste du moteur adresse le genome (STORE/LOAD font `k % len`) ? Seules les positions
+     * 0 et 15 different (len 16) ; sous l'ancienne version (fenetre tronquee, jamais
+     * bouclee), le locus 0 ne pouvait atteindre que les index 0..7 et le locus 15 ne
+     * pouvait avoir qu'une longueur 1 : les DEUX positions ne pouvaient donc jamais etre
+     * echangees ensemble (changed restait <= 2). Avec le bouclage, locus 15 + longueur >= 2
+     * atteint l'index 0 : changed == 4 doit apparaitre sur un echantillon de graines. */
+    {
+        int wrapped = 0;
+        for (uint64_t seed = 0; seed < 500 && !wrapped; seed++) {
+            World *ww = test_pair(0);
+            Creature *x = ww->cs[0], *y = ww->cs[1];
+            x->dna[0] = OP_SENSE; y->dna[0] = OP_EAT;
+            x->dna[15] = OP_EAT; y->dna[15] = OP_STEP;
+            memcpy(x->germ, x->dna, 16); memcpy(y->germ, y->dna, 16);
+            Rng rr; rng_seed(&rr, seed);
+            int changed = reciprocal(x, y, &rr);
+            if (changed == 4) wrapped = 1;
+            world_free(ww);
+        }
+        ECHECK("fenetre d'echange bouclee modulo n (positions 0 et 15 echangees ensemble)", wrapped);
+    }
     return ok ? 0 : 1;
 }
 #undef ECHECK
