@@ -134,6 +134,8 @@ typedef struct { int species, len; uint8_t dna[MAX_LEN]; } PoolEntry;
 World   *world_new(const PoolEntry *genomes, int n, Rng *rng, const WorldConfig *cfg, struct Lab *lab);
 void     world_free(World *w);
 void     world_step(World *w);
+void     world_set_mut_scale(double s); /* 0 = mut_rate du monde ; >0 = mut_rate × s (aucun tirage de plus) */
+void     world_take_birth_mut(double *sum, long *n); /* naissances SPLIT depuis le dernier appel, puis remise à zéro */
 uint64_t world_hash(const World *w);
 Creature *creature_new(int x, int y, const uint8_t *dna, int len, int e, int id, int species, int parent);
 int      food_ahead(const World *w, const Creature *c);

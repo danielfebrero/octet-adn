@@ -1,0 +1,17 @@
+2026-10-24 01:04Z. Fork pid 3134567 PPID 1, binaire terrarium_soc.
+Reprise t=49054000, choc stress=1, forces=3, expand_every=0, regrow=20, max_pop=1000, K=32.
+Selftest du binaire : series.tsv identiques à stress 0 ; masque ATTACK=1, immédiat=0, ATTACK|YIELD=3 ; échelle 1 et 8.
+
+Loi. À la naissance, taux = base × (1 + 7×stress). stress = moyenne (énergie basse, case pauvre, voisins denses). Calme = taux d'avant (0.005 en copie). Espèce = masque ATTACK YIELD EMIT XOR AND SUB NEURAL ADD. societies.tsv sépare l'excès intra et inter. Seuil d'événement : 3 fenêtres, ≥1000 paires, excès > 0.05.
+
+Cliché t=49067000 (65 fenêtres, ~226 ticks/s, pop 31999) :
+n_species 37 dès t=49054200, puis 32. H_species 1.55 → 1.39.
+mut_mean moyen 0.0272 (×5.4 sur 0.005, stress ~0.63).
+paires intra 8390 → 61308, excès max 0.013.
+paires inter 11643 → 5573, excès max 0.012.
+Aucun societe_intra ni societe_inter.
+n_geno 6834 → 9662, H_geno 9.07 → 10.13.
+forces : sp1=31997, briques 65536/65536, place=0, ferme et tech toujours actifs, expand=0.
+
+Verdict : especes_deja_la + mutation_au_stress + signaux_intra_et_inter + exces_sous_le_seuil.
+Les 37 espèces du premier échantillon sont le masque des octets déjà écrits, que l'ancienne loi binaire (attaque ou non) écrasait. La mutation au stress ouvre ensuite les génotypes. Le canal social est chargé, l'excès reste celui du témoin.

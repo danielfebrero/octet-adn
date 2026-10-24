@@ -4,6 +4,15 @@
 #include "octet.h"
 
 static const int DX[4] = { 0, 1, 0, -1 }, DY[4] = { -1, 0, 1, 0 };
+/* 0 : world_split passe mut_rate tel quel (mêmes tirages). >0 : mut_rate × échelle, posée par le hook. */
+static __thread double split_mut_scale;
+static __thread double tls_birth_mut_sum;
+static __thread long tls_birth_mut_n;
+void world_set_mut_scale(double s) { split_mut_scale = s; }
+void world_take_birth_mut(double *sum, long *n) {
+    *sum += tls_birth_mut_sum; *n += tls_birth_mut_n;
+    tls_birth_mut_sum = 0; tls_birth_mut_n = 0;
+}
 void lab_pre(struct Lab *l, World *w);
 void lab_post(struct Lab *l, World *w);
 
@@ -120,8 +129,10 @@ void world_split(World *w, Creature *c) {
         }
     }
     int m;
+    double rate = w->cfg.mut_rate;
+    if (split_mut_scale > 0) rate *= split_mut_scale;
     if (w->cfg.self_evo) m = mutate_evo(tmp, n, w->rng, &ep, child);
-    else m = mutate(tmp, n, w->rng, w->cfg.mut_rate, w->cfg.dup_rate, child);
+    else m = mutate(tmp, n, w->rng, rate, w->cfg.dup_rate, child);
     /* general seulement. delay_rate à 0 : aucun tirage, les labos historiques ne bougent pas. */
     if (w->cfg.delay_rate > 0) {
         if (rng_double(w->rng) < w->cfg.delay_rate) stagger_cell(child, m);
@@ -133,7 +144,10 @@ void world_split(World *w, Creature *c) {
     int born_before = w->nnb;
     add(w, creature_new((c->x + DX[d] + w->cfg.w) % w->cfg.w, (c->y + DY[d] + w->cfg.h) % w->cfg.h,
                         child, m, give, w->nid++, c->species, c->id));
-    if (w->nnb > born_before) c->splits++;
+    if (w->nnb > born_before) {
+        c->splits++;
+        if (split_mut_scale > 0) { tls_birth_mut_sum += rate; tls_birth_mut_n++; }
+    }
     c->e -= give + 8 + ep.prot / 4;                      /* self-evolve : la protection coûte (0 ailleurs) */
     w->st.born++;
 }
@@ -175,6 +189,7 @@ void world_step(World *w) {
     int nl = 0, ng = 0;
     for (int i = 0; i < w->ncs; i++) {
         Creature *c = w->cs[i];
+        split_mut_scale = 0;
         if (w->before_vm) w->before_vm(w, c);
         int ok = vm_run(c, w);
         if (ok && c->species != 0) {                 /* prédateurs : coût de vie + vieillissement */

@@ -1,0 +1,11 @@
+fork_t	49054000
+fork_pop	32000
+fork_K	32
+fork_iso	2026-10-24T01:03:00Z
+source	experiments/vie-forces-briques state.ck (pid 2649682 laissé vivant)
+originals	375 vie-monde, 397 vie-forces, 504 vie-causes, 2649682 vie-forces-briques
+fork_pid	3134567
+target	experiments/vie-forces-societes
+flags	--ticks 0 --stress 1
+binary	experiments/terrarium_soc
+note	choc stress 0→1. forces 3 et expand_every 0 restent ceux du checkpoint. OADNTER6.
