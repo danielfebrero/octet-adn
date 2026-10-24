@@ -15,6 +15,10 @@ typedef struct LoiMonde {
     void (*retirer_brique)(int ile, int x, int y);
     void (*ajouter_chaleur)(int ile, int x, int y, int delta);
     void (*poser_marque)(int ile, int x, int y, int valeur);
+    /* En queue, pour que les .so déjà compilés gardent leurs offsets.
+     * NULL chez un hôte ancien : ne pas déposer un .so qui le lit
+     * dans le dossier lois/ de ce processus. */
+    int (*lire_brique)(int ile, int x, int y);
 } LoiMonde;
 typedef struct Loi {
     const char *nom;

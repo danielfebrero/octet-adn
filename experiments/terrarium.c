@@ -1006,6 +1006,9 @@ static void loi_food(int ile, int x, int y, int delta) {
 static void loi_brique(int ile, int x, int y) {
     Island *I; if (!loi_ile_ok(ile, x, y, &I)) return; I->brick[y][x] = 0;
 }
+static int loi_brique_lire(int ile, int x, int y) {
+    Island *I; if (!loi_ile_ok(ile, x, y, &I)) return 0; return I->brick[y][x];
+}
 static void loi_chaleur(int ile, int x, int y, int delta) {
     Island *I; if (!loi_ile_ok(ile, x, y, &I)) return;
     int v = I->att[y][x] + delta; if (v < 0) v = 0; if (v > 15) v = 15; I->att[y][x] = (uint8_t)v;
@@ -1043,7 +1046,8 @@ static void lois_brancher(Terra *T) {
     if (!T->nloi) return;
     LoiMonde M = { .tick = T->t, .pop = total_pop(T), .K = T->P.K, .evenement = loi_evt,
                    .lire_nourriture = loi_lire, .ajouter_nourriture = loi_food, .retirer_brique = loi_brique,
-                   .ajouter_chaleur = loi_chaleur, .poser_marque = loi_marque };
+                   .ajouter_chaleur = loi_chaleur, .poser_marque = loi_marque,
+                   .lire_brique = loi_brique_lire };
     loi_courant = T;
     for (int i = 0; i < T->nloi; i++) T->loi_fn[i](&M);
     loi_courant = NULL;
@@ -2142,6 +2146,13 @@ static int selftest(void) {
         I->saison = 0; int passe = pompe_passe(I, 1, 1);
         I->saison = 1; D.P.season_amp = 1; D.P.season_period = 4; w->t = 3;
         int creux = pompe_passe(I, 0, 0) == 0;
+        I->brick[2][3] = 42;
+        loi_courant = &D;
+        int lu = loi_brique_lire(0, 3, 2);
+        int hors = loi_brique_lire(-1, 0, 0) | loi_brique_lire(0, 8, 0) | loi_brique_lire(0, 0, 8);
+        loi_courant = NULL;
+        I->brick[2][3] = 0;
+        int lect = lu == 42 && hors == 0;
         const char *so = "experiments/tronc-ligne/exemple.so";
         const char *ld = "/tmp/terrarium-selftest-lois/lois";
         char cmd[240]; snprintf(cmd, sizeof cmd, "rm -rf /tmp/terrarium-selftest-lois && mkdir -p %s && cp %s %s/exemple.so", ld, so, ld);
@@ -2156,10 +2167,10 @@ static int selftest(void) {
         int branche = R.nloi == 1 && R.n_events >= 1;
         if (copie) lois_brancher(&R);
         int une = R.nloi == 1;
-        printf("selftest lois : depense %d irrigue %d partage %d marque %d passe %d creux %d branche %d une_fois %d → %s\n",
-               dep, irr, part, mrk, passe, creux, branche, une,
-               dep && irr && part && mrk && passe && creux && branche && une ? "OK" : "ÉCHEC");
-        ok &= dep && irr && part && mrk && passe && creux && branche && une;
+        printf("selftest lois : depense %d irrigue %d partage %d marque %d passe %d creux %d lecture %d branche %d une_fois %d → %s\n",
+               dep, irr, part, mrk, passe, creux, lect, branche, une,
+               dep && irr && part && mrk && passe && creux && lect && branche && une ? "OK" : "ÉCHEC");
+        ok &= dep && irr && part && mrk && passe && creux && lect && branche && une;
         if (R.events) fclose(R.events);
         D.P.K = 1; R.P.K = 0;
         terra_free(&D); terra_free(&R);

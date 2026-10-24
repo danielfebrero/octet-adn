@@ -78,6 +78,13 @@ experiments/tronc-ligne/memoire.so: experiments/tronc-ligne/memoire.c experiment
 experiments/tronc-ligne/renaissance.so: experiments/tronc-ligne/renaissance.c experiments/tronc-ligne/loi.h
 	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
 
+# Lecture de brique. Binaire à part : ne pas remplacer les mondes vivants.
+experiments/terrarium_lecture: experiments/terrarium.c $(CORE) include/octet.h experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(CORE) $(LDLIBS) -ldl
+
+experiments/tronc-ligne/lecture.so: experiments/tronc-ligne/lecture.c experiments/tronc-ligne/loi.h
+	$(CC) $(CFLAGS) -Iexperiments/tronc-ligne -shared -fPIC -o $@ $<
+
 # Détecteur de vie par information mutuelle (branche feat/mi-detector), aveugle au code.
 experiments/mi_detector: experiments/mi_detector.c experiments/lifeprobe.h $(CORE) include/octet.h
 	$(CC) $(CFLAGS) -o $@ $< $(CORE) $(LDLIBS)
