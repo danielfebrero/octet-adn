@@ -29,6 +29,38 @@ experiments/rencontres-build/%/diagnostic: experiments/rencontres-ligne/diagnost
 	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) -Iexperiments/rencontres-ligne -o $@ experiments/rencontres-ligne/diagnostic.c experiments/rencontres-ligne/rendezvous.c experiments/rencontres-ligne/naissance.c $(RENCONTRES_CORE) $(LDLIBS)
 
+# Ordre 0996a2cd : trois éprouvettes séparées, jamais les objets des vivants.
+experiments/approches-build/%/perception-sequence: experiments/perception_sequence.c $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(RENCONTRES_CORE) $(LDLIBS)
+
+experiments/approches-build/%/selection-episodes: experiments/selection_episodes.c $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -pthread -o $@ $< $(RENCONTRES_CORE) $(LDLIBS)
+
+# symbiose_metabolique.c inclut world.c sous renommage de deux effets du milieu.
+experiments/approches-build/%/symbiose-metabolique: experiments/symbiose_metabolique.c $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $< $(filter-out src/world.c,$(RENCONTRES_CORE)) $(LDLIBS)
+
+experiments/approches-build/%/corrections: experiments/corrections-0996a2cd/corrections.c $(RENCONTRES_SRC) $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $< experiments/rencontres-ligne/rendezvous.c experiments/rencontres-ligne/naissance.c $(RENCONTRES_CORE) $(LDLIBS)
+
+experiments/approches-build/%/historiques: experiments/corrections-0996a2cd/historiques.c tests/test_vm.c $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $< $(RENCONTRES_CORE) $(LDLIBS)
+
+experiments/approches-build/%/sonde-phase: experiments/sonde_phase.c experiments/seul.c $(RENCONTRES_CORE) include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -o $@ $< $(RENCONTRES_CORE) $(LDLIBS)
+
 CORE := src/rng.o src/isa.o src/vm.o src/mutate.o src/world.o src/labs.o src/store.o src/runner.o src/seeds.o src/labs_h.o src/novelty.o src/soup.o
 SEEDS := $(wildcard seeds/*.adn)
 

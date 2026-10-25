@@ -1,0 +1,19 @@
+# ELF relatif au dépôt | répertoire de monde relatif au dépôt
+experiments/terrarium_run experiments/vie-monde
+experiments/terrarium_run experiments/vie-forces
+experiments/terrarium_run experiments/vie-causes
+experiments/terrarium_briques experiments/vie-forces-briques
+experiments/terrarium_soc experiments/vie-forces-societes
+experiments/terrarium_attn experiments/vie-attention
+experiments/terrarium_traits experiments/vie-traits
+experiments/terrarium_causales experiments/vie-causales
+experiments/terrarium_depense experiments/vie-depense
+experiments/terrarium_saison experiments/vie-saison
+experiments/terrarium_tronc experiments/vie-tronc
+experiments/terrarium_lecture experiments/vie-lecture
+experiments/rencontres-build/b129054c/terrarium experiments/vie-rencontres-b129054c
+experiments/rencontres-build/sonnet-41ab85e/terrarium experiments/vie-rencontres-sonnet-41ab85e
+experiments/rencontres-build/claude-3a1923e/terrarium experiments/vie-rencontres-claude-3a1923e
+experiments/rencontres-build/claude-3a1923e/terrarium experiments/vie-capture-3a1923e
+experiments/rencontres-build/claude-3a1923e/terrarium experiments/vie-parente-3a1923e
+experiments/rencontres-build/claude-3a1923e/terrarium experiments/vie-senescence-3a1923e

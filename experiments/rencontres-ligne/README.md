@@ -203,3 +203,10 @@ refus, les opcodes/immediats, les flags éteints et la reprise continue contre
 checkpoint (monde, RNG, état des trois mécanismes et TSV identiques). Les treize
 fixtures de garde vérifient aussi les refus sans création d'une fausse preuve.
 Voir [RESULTATS.md](RESULTATS.md) pour les mesures et leurs limites.
+
+## Autres approches intégrées
+
+Voir `../perception-sequence/README.md`, `../selection-episodes/README.md` et
+`../symbiose-metabolique/README.md`. Les corrections de main restent la référence :
+porte historique pour les anciens checkpoints et tick témoin isolé pour les nouveaux.
+Aucun ELF vivant n’est reconstruit.

@@ -293,3 +293,25 @@ appel réseau.**
 - Le moteur est du C compilé, pas de l'assembleur écrit à la main octet par octet : ce qui
   est « octet only », ce sont le produit livré (un ELF), les génomes et toutes les données.
 - Labos humanité (40 cycles, graines 0,1,2, eval 8 graines tenues à l'écart, mesures d'avant le classement par contribution) : `fold`, `antibiotic`, `commons`, `code-repair` et `pandemic` battent leur baseline. Les pools évolués de `pandemic` battaient la seed (0.60 à 0.76 contre 0.44). **`code-repair`** : sur 12 cycles le pool était encore la seed, écart aux flips +0.329 sur 8 graines tenues à l'écart ; sur 24 cycles, 0 acceptation. `org-seeds` importe le génome du pool, pas le sommet d'un cycle refusé. **`self-evolve`** : mètre actuel (4 paires, régimes de 50 ticks, mort à 60). La seed à mutation ≈ 4 % fait +0.033 sur les 4 graines du test. La même seed gelée à mut = indel = 0 tombe à 0.147 (−0.063). Un gel par STORE à chaque tick faisait −0.010 : il ne bat pas le moteur fixe. Dérive méta 3 % ±1/±3 → 8 % ±4/±16 (pools de 40 cycles, graines 0..15, eval 8 graines tenues à l'écart) : écart moyen aux paramètres fixes −0.024 → −0.003, mut descend vers 0.025-0.029 ; toujours pas au-dessus du moteur fixe.
+
+## Trois éprouvettes et corrections — ordre 0996a2cd
+
+Protocoles committés avant les mesures, en C séparé du runner et sans opcode ajouté :
+
+| approche | résultat à son seuil pré-enregistré | dossier |
+|---|---|---|
+| perception par rejeu de la séquence exacte des actions | non : 4/32 graines, seuil 24 | [perception-sequence](experiments/perception-sequence/README.md) |
+| sélection lexicase par épisodes d'apprentissage | non : 0/32 mémoires jointes, seuil 8 et avance de 6 sur la moyenne | [selection-episodes](experiments/selection-episodes/README.md) |
+| recyclage de métabolites entre deux classes héréditaires | oui : 10/32 communautés reproductrices dépendantes, seuil 8 | [symbiose-metabolique](experiments/symbiose-metabolique/README.md) |
+
+Le oui métabolique porte sur une chimie et deux classes offertes, sans preuve
+que la mutation ait inventé une nouvelle capacité ou la coopération.
+[Corrections mesurées](experiments/corrections-0996a2cd/README.md) : tick témoin
+isolé pour les rendez-vous, refus de nurserie exercés au plafond 4096,
+protection des 14 noms de mondes ; sonde-phase v2 existante revalidée.
+
+Construire chaque ELF dans un chemin **jamais utilisé**, sans `make` nu ni
+`make test` sur un hôte où des mondes vivent. Les cibles
+`experiments/approches-build/IDENTIFIANT_NEUF/{perception-sequence,selection-episodes,symbiose-metabolique,corrections,historiques,sonde-phase}`
+compilent directement les sources et refusent d'écraser un ELF. Aucun `.so`,
+état de monde ou fichier de run n'est nécessaire pour ces mesures.

@@ -76,4 +76,8 @@ TASK.md
 /experiments/tronc-ligne/trace.so
 /experiments/vie-lecture/
 /experiments/rencontres-build/
+/experiments/approches-build/
 /experiments/vie-rencontres-*/
+
+# Verrou local du superviseur des mondes
+.octet-mondes-superviseur.lock

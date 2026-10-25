@@ -122,6 +122,8 @@ int main(int argc, char **argv) {
     makeproc(113, names[12], 11300, 'S', 1);
     run("treize seuls refusés", procroot, "snapshot", proof, 1, 1);
     makeproc(114, names[13], 11400, 'S', 1);
+    run("quatorze seuls refusés", procroot, "snapshot", proof, 1, 1);
+    for (int i = 14; i < OCTET_NMONDES; i++) makeproc(101 + i, names[i], (101 + i) * 100, 'S', 1);
     run("snapshot complet", procroot, "snapshot", proof, 0, 0);
     run("check identique", procroot, "check", proof, 0, 0);
     run("preuve existante refusée", procroot, "snapshot", proof, 1, 0);
