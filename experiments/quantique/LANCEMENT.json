@@ -1,0 +1,162 @@
+{
+  "verified_at": "2026-10-25T12:52:32.239828+00:00",
+  "worlds": [
+    {
+      "container": "octet-quantique-p4",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 4148568,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-10-25T12:51:19.767029368Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "manifest": {
+        "created_at": "2026-10-25T12:51:19.603278+00:00",
+        "seed": 101,
+        "period": 4,
+        "octets": 64,
+        "modes": 256,
+        "grid": 4,
+        "dt": 0.02,
+        "image": "sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587",
+        "elf": "experiments/quantique-build/20261025-q1/monde",
+        "pause_ms_per_128_ticks": 1000,
+        "cpus": 0.15,
+        "commit": "a289f8f44502935714898621c0378205a409036d",
+        "sha256": {
+          "experiments/quantique-build/20261025-q1/monde": "2b215fa5d5c5ad1e0359a7d0db263d4022b3234ea9418feb36a680330b603a93",
+          "experiments/quantique/monde.cpp": "8956923cf0cbe78d442add4b91952ba0440e7b2b55bef78ca50501b6cc617b29",
+          "experiments/quantique/PROTOCOLE.md": "c8f2c4e9d9752837d35a14fa7826cee952b27aade45677fd2f0ce700d9206345"
+        }
+      },
+      "latest": {
+        "t": "3712",
+        "projections": "24734",
+        "liens": "769",
+        "plus_grand": "64",
+        "maximum_assemblage": "64",
+        "maximum_boucle": "4",
+        "erreur_norme": "5.149214388211476e-13",
+        "energie_cinetique": "426.74065329275339"
+      }
+    },
+    {
+      "container": "octet-quantique-p16",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 4149012,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-10-25T12:51:20.403801848Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "manifest": {
+        "created_at": "2026-10-25T12:51:20.223121+00:00",
+        "seed": 101,
+        "period": 16,
+        "octets": 64,
+        "modes": 256,
+        "grid": 4,
+        "dt": 0.02,
+        "image": "sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587",
+        "elf": "experiments/quantique-build/20261025-q1/monde",
+        "pause_ms_per_128_ticks": 1000,
+        "cpus": 0.15,
+        "commit": "a289f8f44502935714898621c0378205a409036d",
+        "sha256": {
+          "experiments/quantique-build/20261025-q1/monde": "2b215fa5d5c5ad1e0359a7d0db263d4022b3234ea9418feb36a680330b603a93",
+          "experiments/quantique/monde.cpp": "8956923cf0cbe78d442add4b91952ba0440e7b2b55bef78ca50501b6cc617b29",
+          "experiments/quantique/PROTOCOLE.md": "c8f2c4e9d9752837d35a14fa7826cee952b27aade45677fd2f0ce700d9206345"
+        }
+      },
+      "latest": {
+        "t": "3840",
+        "projections": "1530",
+        "liens": "646",
+        "plus_grand": "60",
+        "maximum_assemblage": "64",
+        "maximum_boucle": "16",
+        "erreur_norme": "4.964251232308925e-12",
+        "energie_cinetique": "367.42915225616514"
+      }
+    },
+    {
+      "container": "octet-quantique-p64",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 4149422,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-10-25T12:51:21.086283465Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "manifest": {
+        "created_at": "2026-10-25T12:51:20.882975+00:00",
+        "seed": 101,
+        "period": 64,
+        "octets": 64,
+        "modes": 256,
+        "grid": 4,
+        "dt": 0.02,
+        "image": "sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587",
+        "elf": "experiments/quantique-build/20261025-q1/monde",
+        "pause_ms_per_128_ticks": 1000,
+        "cpus": 0.15,
+        "commit": "a289f8f44502935714898621c0378205a409036d",
+        "sha256": {
+          "experiments/quantique-build/20261025-q1/monde": "2b215fa5d5c5ad1e0359a7d0db263d4022b3234ea9418feb36a680330b603a93",
+          "experiments/quantique/monde.cpp": "8956923cf0cbe78d442add4b91952ba0440e7b2b55bef78ca50501b6cc617b29",
+          "experiments/quantique/PROTOCOLE.md": "c8f2c4e9d9752837d35a14fa7826cee952b27aade45677fd2f0ce700d9206345"
+        }
+      },
+      "latest": {
+        "t": "3712",
+        "projections": "31",
+        "liens": "844",
+        "plus_grand": "63",
+        "maximum_assemblage": "64",
+        "maximum_boucle": "64",
+        "erreur_norme": "1.9612311774608315e-11",
+        "energie_cinetique": "312.91692302489281"
+      }
+    }
+  ],
+  "old_18_pids_unchanged": [
+    2053065,
+    2053067,
+    2053069,
+    2053071,
+    2053074,
+    2053079,
+    2053083,
+    2053085,
+    2053087,
+    2053089,
+    2053091,
+    2053093,
+    2053098,
+    2053101,
+    2526960,
+    2526969,
+    2527013,
+    2527018
+  ],
+  "sanitizers": "ASan + UBSan selftest passed",
+  "old_E1": "extinct episode=278 pop=0; left stopped"
+}
