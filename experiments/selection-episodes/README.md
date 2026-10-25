@@ -71,3 +71,49 @@ Binaire C séparé `experiments/selection_episodes.c`. Construire directement le
 sources C du cœur dans un chemin de build **inédit**, jamais les objets partagés.
 Les commandes exactes, résultats et limites seront ajoutés après le commit de
 ce pré-enregistrement. Les résultats bruts seront du texte, sans JSON ni TSV.
+
+## Résultats après pré-enregistrement `3402120`
+
+Mesure le 25 octobre 2026, ELF neuf
+`/tmp/octet-0996a2cd-build-episodes-a01/selection_episodes`. Selftest vert avant
+le run. Les 96 évolutions ont exécuté les 128 générations, sans arrêt anticipé :
+196 608 enfants au total, puis 1 536 génomes finaux contrôlés. La sélection et
+l'observation réservée ont fait l'objet d'une seconde lecture indépendante.
+
+| bras | graines avec joint | génomes joints | passants m2 / m3 | meilleur min(m2,m3) d'un même génome | max m2 / max m3 |
+|---|---:|---:|---:|---:|---:|
+| L, lexicase | **0/32** | 0/512 | 0 / 0 | 0,307812 | 0,318750 / 0,322656 |
+| M, moyenne | 0/32 | 0/512 | 0 / 0 | 0,500000 | 0,519531 / 0,503906 |
+| N, neutre | 0/32 | 0/512 | 0 / 0 | 0,293750 | 0,299219 / 0,293750 |
+| bruit uniforme, détecteur | 0/32 | 0/32 | — | — | — |
+| cristal, détecteur | 0/32 | 0/32 | — | — | — |
+
+**Verdict : non.** L rate le seuil de huit graines et l'avance de six sur M.
+N et les deux témoins négatifs restent dans leurs seuils. Les deux maxima de
+la dernière colonne peuvent provenir de génomes distincts ; ils ne démontrent
+aucune mémoire jointe. La borne exacte unilatérale à 95 % pour L est
+`1 - 0,05^(1/32) = 0,08937`, sous les 25 % prédits à ce budget.
+
+La lexicase fait ici moins bien que la moyenne, même pour le meilleur minimum.
+Les épisodes ne comptent chacun que 32 réponses notées : conserver des réussites
+sur ces petits échantillons ne garantit pas leur transfert aux tables réservées.
+C'est une explication possible, pas un mécanisme démontré par ces comptes.
+Le protocole ne change pas après cet échec. Il ne compare ni une course illimitée,
+ni un budget de 50 000 mutations, ni un génome joint construit à la main.
+
+### Reproduction sans objets partagés ni remplacement d'ELF
+
+Depuis la racine, avec un identifiant qui n'a jamais existé :
+
+```sh
+make experiments/approches-build/IDENTIFIANT_NEUF/selection-episodes
+experiments/approches-build/IDENTIFIANT_NEUF/selection-episodes selftest
+experiments/approches-build/IDENTIFIANT_NEUF/selection-episodes run > /tmp/episodes-0996a2cd.txt
+cmp experiments/selection-episodes/results.txt /tmp/episodes-0996a2cd.txt
+```
+
+`results.txt` contient les 96 lignes de pools, leurs empreintes et les 64
+contrôles. La compilation mesurée utilise directement les mêmes sources du
+cœur que la règle ci-dessus, `-O2 -std=gnu11 -Wall -Wextra -Werror`, avec
+`-Wno-unused-parameter -Wno-format-truncation -Iinclude -pthread -lm`.
+Aucun objet partagé, binaire existant ou répertoire de monde n'a été utilisé.

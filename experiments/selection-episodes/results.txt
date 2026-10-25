@@ -1,0 +1,166 @@
+selection-episodes prereg=3402120 graines=32 generations=128 population=16 enfants=16 episodes=4
+lexicase graine=0 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=3f343e2561288592
+lexicase graine=1 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=0e8636ef01587124
+lexicase graine=2 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=ed7115c186cc5d6b
+lexicase graine=3 joints=0 m2=0 m3=0 meilleur_min=0.247656 max_m2=0.247656 max_m3=0.273438 hash=3381b12b8e128965
+lexicase graine=4 joints=0 m2=0 m3=0 meilleur_min=0.232813 max_m2=0.232813 max_m3=0.235937 hash=86702fad3936ca8b
+lexicase graine=5 joints=0 m2=0 m3=0 meilleur_min=0.242188 max_m2=0.242188 max_m3=0.248438 hash=88b10df1b119e636
+lexicase graine=6 joints=0 m2=0 m3=0 meilleur_min=0.210938 max_m2=0.210938 max_m3=0.226562 hash=14e437a94604ac21
+lexicase graine=7 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=887dae4a74d20630
+lexicase graine=8 joints=0 m2=0 m3=0 meilleur_min=0.247656 max_m2=0.247656 max_m3=0.252344 hash=baf50b87f3b8a92b
+lexicase graine=9 joints=0 m2=0 m3=0 meilleur_min=0.272656 max_m2=0.318750 max_m3=0.272656 hash=422894d37583e572
+lexicase graine=10 joints=0 m2=0 m3=0 meilleur_min=0.261719 max_m2=0.265625 max_m3=0.265625 hash=f5ff070b7639362d
+lexicase graine=11 joints=0 m2=0 m3=0 meilleur_min=0.265625 max_m2=0.266406 max_m3=0.265625 hash=bb54c181854fe4be
+lexicase graine=12 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=fcc6ef64dc9ae175
+lexicase graine=13 joints=0 m2=0 m3=0 meilleur_min=0.289062 max_m2=0.300000 max_m3=0.289062 hash=15e7171f67cb196f
+lexicase graine=14 joints=0 m2=0 m3=0 meilleur_min=0.259375 max_m2=0.259375 max_m3=0.265625 hash=87b9e174eabc5d5f
+lexicase graine=15 joints=0 m2=0 m3=0 meilleur_min=0.256250 max_m2=0.256250 max_m3=0.305469 hash=1d6a93a0320deac1
+lexicase graine=16 joints=0 m2=0 m3=0 meilleur_min=0.289844 max_m2=0.303906 max_m3=0.289844 hash=26ddc2073cdd0cb3
+lexicase graine=17 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=c26a4b0e70759d56
+lexicase graine=18 joints=0 m2=0 m3=0 meilleur_min=0.260156 max_m2=0.260156 max_m3=0.263281 hash=9d93a4bce6cf2b61
+lexicase graine=19 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=776f84c5c65b2329
+lexicase graine=20 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=7b25970bc9d3d529
+lexicase graine=21 joints=0 m2=0 m3=0 meilleur_min=0.291406 max_m2=0.291406 max_m3=0.293750 hash=34e4b204d191de67
+lexicase graine=22 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=1363d5643e3552eb
+lexicase graine=23 joints=0 m2=0 m3=0 meilleur_min=0.269531 max_m2=0.269531 max_m3=0.284375 hash=809634024e994389
+lexicase graine=24 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.302344 max_m3=0.293750 hash=9bdfb037133b6f6c
+lexicase graine=25 joints=0 m2=0 m3=0 meilleur_min=0.307812 max_m2=0.314063 max_m3=0.307812 hash=5494f71328750395
+lexicase graine=26 joints=0 m2=0 m3=0 meilleur_min=0.278125 max_m2=0.278125 max_m3=0.322656 hash=2c6ad2baf0492e5f
+lexicase graine=27 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=0deefe39475791d8
+lexicase graine=28 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=09b443b33e0c9788
+lexicase graine=29 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=831f8b85493883be
+lexicase graine=30 joints=0 m2=0 m3=0 meilleur_min=0.286719 max_m2=0.297656 max_m3=0.286719 hash=e7e5698cb375deba
+lexicase graine=31 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=7d11129d84f09b3c
+compte lexicase graines_jointes=0/32 genomes_joints=0/512 m2=0 m3=0 meilleur_min=0.307812 max_m2=0.318750 max_m3=0.322656
+moyenne graine=0 joints=0 m2=0 m3=0 meilleur_min=0.492188 max_m2=0.503125 max_m3=0.492188 hash=a577d7f42f2def89
+moyenne graine=1 joints=0 m2=0 m3=0 meilleur_min=0.479687 max_m2=0.519531 max_m3=0.479687 hash=86e6729e7fbe0982
+moyenne graine=2 joints=0 m2=0 m3=0 meilleur_min=0.491406 max_m2=0.491406 max_m3=0.497656 hash=49687e6ce39251af
+moyenne graine=3 joints=0 m2=0 m3=0 meilleur_min=0.441406 max_m2=0.441406 max_m3=0.463281 hash=381a8c84d539ad1c
+moyenne graine=4 joints=0 m2=0 m3=0 meilleur_min=0.460156 max_m2=0.467969 max_m3=0.460156 hash=248c3c9ad41e9ed4
+moyenne graine=5 joints=0 m2=0 m3=0 meilleur_min=0.454688 max_m2=0.468750 max_m3=0.456250 hash=1388c6625406d909
+moyenne graine=6 joints=0 m2=0 m3=0 meilleur_min=0.426563 max_m2=0.426563 max_m3=0.431250 hash=a78f005190e3d368
+moyenne graine=7 joints=0 m2=0 m3=0 meilleur_min=0.393750 max_m2=0.393750 max_m3=0.415625 hash=48f32ac20b5cf3f6
+moyenne graine=8 joints=0 m2=0 m3=0 meilleur_min=0.425000 max_m2=0.425000 max_m3=0.449219 hash=37dfea559ebcfcbf
+moyenne graine=9 joints=0 m2=0 m3=0 meilleur_min=0.457031 max_m2=0.464062 max_m3=0.457031 hash=6f85a41e4516232c
+moyenne graine=10 joints=0 m2=0 m3=0 meilleur_min=0.365625 max_m2=0.365625 max_m3=0.397656 hash=da506310e66cb85d
+moyenne graine=11 joints=0 m2=0 m3=0 meilleur_min=0.481250 max_m2=0.486719 max_m3=0.481250 hash=41aef32f81e2e45c
+moyenne graine=12 joints=0 m2=0 m3=0 meilleur_min=0.450781 max_m2=0.450781 max_m3=0.457813 hash=eacfd5dc44d8d13c
+moyenne graine=13 joints=0 m2=0 m3=0 meilleur_min=0.370312 max_m2=0.375781 max_m3=0.370312 hash=07804c8a7612e796
+moyenne graine=14 joints=0 m2=0 m3=0 meilleur_min=0.475781 max_m2=0.485156 max_m3=0.475781 hash=da6ca81e4b5fe7d3
+moyenne graine=15 joints=0 m2=0 m3=0 meilleur_min=0.488281 max_m2=0.503906 max_m3=0.503906 hash=369ea6c6ff1e1f4f
+moyenne graine=16 joints=0 m2=0 m3=0 meilleur_min=0.470313 max_m2=0.471094 max_m3=0.470313 hash=f6b8bc7ba9adc78f
+moyenne graine=17 joints=0 m2=0 m3=0 meilleur_min=0.464062 max_m2=0.464062 max_m3=0.486719 hash=0c03ac52c69a5ccb
+moyenne graine=18 joints=0 m2=0 m3=0 meilleur_min=0.435156 max_m2=0.435156 max_m3=0.435937 hash=3ecde92fd71ea045
+moyenne graine=19 joints=0 m2=0 m3=0 meilleur_min=0.497656 max_m2=0.503906 max_m3=0.497656 hash=61a275e3265d8ef5
+moyenne graine=20 joints=0 m2=0 m3=0 meilleur_min=0.406250 max_m2=0.406250 max_m3=0.420312 hash=f7393d60bd1ea069
+moyenne graine=21 joints=0 m2=0 m3=0 meilleur_min=0.489063 max_m2=0.500781 max_m3=0.489063 hash=2492533b7fe4381e
+moyenne graine=22 joints=0 m2=0 m3=0 meilleur_min=0.439844 max_m2=0.439844 max_m3=0.470313 hash=d46e625276638b9a
+moyenne graine=23 joints=0 m2=0 m3=0 meilleur_min=0.491406 max_m2=0.503906 max_m3=0.491406 hash=d6b78d57b7f86743
+moyenne graine=24 joints=0 m2=0 m3=0 meilleur_min=0.372656 max_m2=0.372656 max_m3=0.392969 hash=9eccf42f9d97a344
+moyenne graine=25 joints=0 m2=0 m3=0 meilleur_min=0.441406 max_m2=0.441406 max_m3=0.491406 hash=498c26a2efa75729
+moyenne graine=26 joints=0 m2=0 m3=0 meilleur_min=0.448437 max_m2=0.448437 max_m3=0.467187 hash=00d2a43b28bf0d9a
+moyenne graine=27 joints=0 m2=0 m3=0 meilleur_min=0.439844 max_m2=0.439844 max_m3=0.455469 hash=537a783320a586aa
+moyenne graine=28 joints=0 m2=0 m3=0 meilleur_min=0.408594 max_m2=0.408594 max_m3=0.414062 hash=53d3c4464cae27bd
+moyenne graine=29 joints=0 m2=0 m3=0 meilleur_min=0.500000 max_m2=0.500000 max_m3=0.500781 hash=f16284624a304a9d
+moyenne graine=30 joints=0 m2=0 m3=0 meilleur_min=0.380469 max_m2=0.385937 max_m3=0.382812 hash=c060e652387c9f6d
+moyenne graine=31 joints=0 m2=0 m3=0 meilleur_min=0.463281 max_m2=0.467187 max_m3=0.464062 hash=55d207063ea45531
+compte moyenne graines_jointes=0/32 genomes_joints=0/512 m2=0 m3=0 meilleur_min=0.500000 max_m2=0.519531 max_m3=0.503906
+neutre graine=0 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=c30fd54dedbcff52
+neutre graine=1 joints=0 m2=0 m3=0 meilleur_min=0.071875 max_m2=0.102344 max_m3=0.071875 hash=a5914fa6cd777d98
+neutre graine=2 joints=0 m2=0 m3=0 meilleur_min=0.178125 max_m2=0.182812 max_m3=0.178125 hash=f8bc401b7edf348f
+neutre graine=3 joints=0 m2=0 m3=0 meilleur_min=0.289844 max_m2=0.298438 max_m3=0.289844 hash=9b8f647015b6cd65
+neutre graine=4 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=1f6697e4103a6ba3
+neutre graine=5 joints=0 m2=0 m3=0 meilleur_min=0.278125 max_m2=0.278125 max_m3=0.290625 hash=ca7b066913c41290
+neutre graine=6 joints=0 m2=0 m3=0 meilleur_min=0.114062 max_m2=0.117188 max_m3=0.114062 hash=1b947950942bc318
+neutre graine=7 joints=0 m2=0 m3=0 meilleur_min=0.239844 max_m2=0.239844 max_m3=0.246094 hash=43133c21118108a1
+neutre graine=8 joints=0 m2=0 m3=0 meilleur_min=0.237500 max_m2=0.237500 max_m3=0.241406 hash=828294baad97133d
+neutre graine=9 joints=0 m2=0 m3=0 meilleur_min=0.142187 max_m2=0.142187 max_m3=0.146875 hash=ca01176b66598020
+neutre graine=10 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=2ec6c520124415f3
+neutre graine=11 joints=0 m2=0 m3=0 meilleur_min=0.000000 max_m2=0.000000 max_m3=0.000000 hash=f2e66163fc82bff0
+neutre graine=12 joints=0 m2=0 m3=0 meilleur_min=0.283594 max_m2=0.283594 max_m3=0.287500 hash=b7bb0a6a98b6057c
+neutre graine=13 joints=0 m2=0 m3=0 meilleur_min=0.015625 max_m2=0.093750 max_m3=0.015625 hash=c873bca117cf1b81
+neutre graine=14 joints=0 m2=0 m3=0 meilleur_min=0.246875 max_m2=0.260156 max_m3=0.246875 hash=0b56db0830217a2c
+neutre graine=15 joints=0 m2=0 m3=0 meilleur_min=0.000000 max_m2=0.000000 max_m3=0.000000 hash=60d41838dffbb609
+neutre graine=16 joints=0 m2=0 m3=0 meilleur_min=0.277344 max_m2=0.277344 max_m3=0.285156 hash=2abeecc924ee8ae9
+neutre graine=17 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=0c8ae55c75346f96
+neutre graine=18 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=abcca24f265613ac
+neutre graine=19 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=125e964aced358ad
+neutre graine=20 joints=0 m2=0 m3=0 meilleur_min=0.238281 max_m2=0.238281 max_m3=0.240625 hash=88d59b6671945118
+neutre graine=21 joints=0 m2=0 m3=0 meilleur_min=0.121094 max_m2=0.131250 max_m3=0.121094 hash=93101adf43493544
+neutre graine=22 joints=0 m2=0 m3=0 meilleur_min=0.000781 max_m2=0.000781 max_m3=0.000781 hash=083b47688c8bd537
+neutre graine=23 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=9a270a0b3fb93936
+neutre graine=24 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=d796f49c5e7a27c1
+neutre graine=25 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=f6364181b061720b
+neutre graine=26 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=a0bc0d344b547be8
+neutre graine=27 joints=0 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750 hash=de8883e66fd9e568
+neutre graine=28 joints=0 m2=0 m3=0 meilleur_min=0.212500 max_m2=0.221875 max_m3=0.212500 hash=29d1fefe92bcc961
+neutre graine=29 joints=0 m2=0 m3=0 meilleur_min=0.000000 max_m2=0.000000 max_m3=0.000000 hash=9a48146034fdebfe
+neutre graine=30 joints=0 m2=0 m3=0 meilleur_min=0.054688 max_m2=0.054688 max_m3=0.060937 hash=bbe35cd2aca65b10
+neutre graine=31 joints=0 m2=0 m3=0 meilleur_min=0.145313 max_m2=0.145313 max_m3=0.148438 hash=94da340bbf8b1409
+compte neutre graines_jointes=0/32 genomes_joints=0/512 m2=0 m3=0 meilleur_min=0.293750 max_m2=0.299219 max_m3=0.293750
+controle bruit graine=0 joint=0 min=0.000000
+controle bruit graine=1 joint=0 min=0.000000
+controle bruit graine=2 joint=0 min=0.000000
+controle bruit graine=3 joint=0 min=0.256250
+controle bruit graine=4 joint=0 min=0.000000
+controle bruit graine=5 joint=0 min=0.000000
+controle bruit graine=6 joint=0 min=0.000000
+controle bruit graine=7 joint=0 min=0.000000
+controle bruit graine=8 joint=0 min=0.000000
+controle bruit graine=9 joint=0 min=0.000000
+controle bruit graine=10 joint=0 min=0.251563
+controle bruit graine=11 joint=0 min=0.000000
+controle bruit graine=12 joint=0 min=0.000000
+controle bruit graine=13 joint=0 min=0.000000
+controle bruit graine=14 joint=0 min=0.000000
+controle bruit graine=15 joint=0 min=0.000000
+controle bruit graine=16 joint=0 min=0.000000
+controle bruit graine=17 joint=0 min=0.000000
+controle bruit graine=18 joint=0 min=0.000000
+controle bruit graine=19 joint=0 min=0.000000
+controle bruit graine=20 joint=0 min=0.293750
+controle bruit graine=21 joint=0 min=0.000000
+controle bruit graine=22 joint=0 min=0.232031
+controle bruit graine=23 joint=0 min=0.237500
+controle bruit graine=24 joint=0 min=0.000000
+controle bruit graine=25 joint=0 min=0.145313
+controle bruit graine=26 joint=0 min=0.232813
+controle bruit graine=27 joint=0 min=0.000000
+controle bruit graine=28 joint=0 min=0.293750
+controle bruit graine=29 joint=0 min=0.000000
+controle bruit graine=30 joint=0 min=0.000000
+controle bruit graine=31 joint=0 min=0.000000
+controle cristal graine=0 joint=0 min=0.000000
+controle cristal graine=1 joint=0 min=0.000000
+controle cristal graine=2 joint=0 min=0.000000
+controle cristal graine=3 joint=0 min=0.000000
+controle cristal graine=4 joint=0 min=0.000000
+controle cristal graine=5 joint=0 min=0.000000
+controle cristal graine=6 joint=0 min=0.000000
+controle cristal graine=7 joint=0 min=0.000000
+controle cristal graine=8 joint=0 min=0.000000
+controle cristal graine=9 joint=0 min=0.000000
+controle cristal graine=10 joint=0 min=0.000000
+controle cristal graine=11 joint=0 min=0.000000
+controle cristal graine=12 joint=0 min=0.000000
+controle cristal graine=13 joint=0 min=0.000000
+controle cristal graine=14 joint=0 min=0.000000
+controle cristal graine=15 joint=0 min=0.000000
+controle cristal graine=16 joint=0 min=0.000000
+controle cristal graine=17 joint=0 min=0.000000
+controle cristal graine=18 joint=0 min=0.000000
+controle cristal graine=19 joint=0 min=0.000000
+controle cristal graine=20 joint=0 min=0.293750
+controle cristal graine=21 joint=0 min=0.000000
+controle cristal graine=22 joint=0 min=0.000000
+controle cristal graine=23 joint=0 min=0.000000
+controle cristal graine=24 joint=0 min=0.000000
+controle cristal graine=25 joint=0 min=0.000000
+controle cristal graine=26 joint=0 min=0.000000
+controle cristal graine=27 joint=0 min=0.000000
+controle cristal graine=28 joint=0 min=0.000000
+controle cristal graine=29 joint=0 min=0.000000
+controle cristal graine=30 joint=0 min=0.000000
+controle cristal graine=31 joint=0 min=0.000000
+temoins bruit=0/32 cristal=0/32 dispositif=valide
+verdict=NON L=0/32 M=0/32 N=0/32 seuils=L>=8,L-M>=6,N<=1
