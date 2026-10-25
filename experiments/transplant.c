@@ -141,7 +141,9 @@ static int cmd_jardin(const char *host, const char *A, const char *B, const char
     P.founders = F_RANDOM;   /* fondateurs écrasés juste après : pas de fichier soupe à relire */
     P.K = 1; P.migrate = 0; P.expand_every = 0; P.seed = seed; P.pop0 = pop0 > 0 ? pop0 : (P.pop0 > 0 ? P.pop0 : 64);
     if (P.pop0 > P.max_pop) P.pop0 = P.max_pop;
-    P.ck_every = P.ck_every > 0 ? P.ck_every : 2000; if (P.ck_every % P.sample) P.ck_every = P.sample * 10;
+    P.ck_every = P.ck_every > 0 ? P.ck_every : 2000;
+    { const char *ck = getenv("TP_CK"); if (ck && atoi(ck) > 0) P.ck_every = atoi(ck); }   /* jardin vivant : checkpoints plus espacés */
+    if (P.ck_every % P.sample) P.ck_every = P.sample * 10;
     if (mkdir(dir, 0775)) { perror(dir); return 2; }
     static Terra T; terra_new(&T, &P); snprintf(T.dir, sizeof T.dir, "%s", dir);
     Island *I = &T.I[0]; World *w = I->w; Rng pick; rng_seed(&pick, seed ^ 0x7A4D5EEDULL);
