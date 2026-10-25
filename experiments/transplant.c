@@ -10,14 +10,20 @@
 #include <stdint.h>
 static void tp_before(void *I);
 static void tp_sample(void *T);
+#include <stdio.h>
+static int tp_save(FILE *f, void *T);
+static int tp_load(FILE *f, void *T);
 #define TERRA_BEFORE_WORLD(I) tp_before(I)
 #define TERRA_AFTER_SAMPLE(T) tp_sample(T)
+#define TERRA_SAVE_EXTRA(f, T) tp_save(f, T)
+#define TERRA_LOAD_EXTRA(f, T) tp_load(f, T)
 #define main terrarium_original_main
 #include "terrarium.c"
 #undef main
 
 static uint8_t *orig[KMAX]; static long norig[KMAX];
 static FILE *orig_out;
+static int own_trailer;   /* 1 : on relit un de nos propres jardins (table des origines dans le checkpoint) */
 static uint8_t *orig_slot(int k, long id) {
     if (id < 0) return NULL;
     if (id >= norig[k]) {
@@ -52,6 +58,29 @@ static void tp_sample(void *ptr) {
     long g = 0; for (int k = 0; k < T->P.K; k++) g += T->I[k].w->ncs;
     fprintf(orig_out, "%ld\t%ld\t%ld\t%ld\t%ld\n", T->t, n[1], n[2], n[3], g);
     fflush(orig_out);
+}
+
+/* Table des origines dans le checkpoint de NOS expériences, pour qu'un jardin vivant reprenne sans la perdre.
+ * Un monde étranger est lu sans toucher à sa queue de fichier (own_trailer = 0). */
+static int tp_save(FILE *f, void *ptr) {
+    Terra *T = ptr; int K = T->P.K;
+    if (fwrite("OADNTRP1", 1, 8, f) != 8 || fwrite(&K, sizeof K, 1, f) != 1) return 0;
+    for (int k = 0; k < K; k++) {
+        if (fwrite(&norig[k], sizeof norig[k], 1, f) != 1) return 0;
+        if (norig[k] && fwrite(orig[k], 1, (size_t)norig[k], f) != (size_t)norig[k]) return 0;
+    }
+    return 1;
+}
+static int tp_load(FILE *f, void *ptr) {
+    (void)ptr; if (!own_trailer) return 1;
+    char m[8]; int K;
+    if (fread(m, 1, 8, f) != 8 || memcmp(m, "OADNTRP1", 8) || fread(&K, sizeof K, 1, f) != 1 || K < 1 || K > KMAX) return 0;
+    for (int k = 0; k < K; k++) {
+        long n; if (fread(&n, sizeof n, 1, f) != 1 || n < 0) return 0;
+        free(orig[k]); orig[k] = NULL; norig[k] = 0;
+        if (n) { orig[k] = malloc((size_t)n); if (!orig[k] || fread(orig[k], 1, (size_t)n, f) != (size_t)n) return 0; norig[k] = n; }
+    }
+    return 1;
 }
 
 /* ---------- lecture seule d'un monde ---------- */
@@ -178,7 +207,25 @@ static int cmd_teleport(const char *src, const char *from, const char *dir, cons
     return rc;
 }
 
+/* Monde vivant : reprend un de NOS jardins (ou fourches) depuis son checkpoint, origine comprise, sans fin.
+ * Ne lit que DIR, n'écrit que dans DIR. SIGTERM : sauvegarde propre puis sortie. */
+static int cmd_vivre(const char *dir, long ticks) {
+    own_trailer = 1;
+    static Terra T; char ck[700]; snprintf(ck, sizeof ck, "%s/state.ck", dir);
+    if (!load(&T, ck)) { fprintf(stderr, "%s illisible (jardin sans table d'origine ?)\n", ck); return 2; }
+    snprintf(T.dir, sizeof T.dir, "%s", dir);
+    char p[700]; snprintf(p, sizeof p, "%s/origine.tsv", dir); truncate_tsv(p, T.t);
+    orig_out = fopen(p, "a"); if (!orig_out) { perror(p); return 2; }
+    if (!open_outputs(&T, 1)) return 2;
+    signal(SIGINT, on_sig); signal(SIGTERM, on_sig);
+    int rc = terra_run(&T, ticks > 0 ? T.t + ticks : 0, 1);
+    if (!save(&T)) rc = 1;
+    fclose(orig_out); orig_out = NULL; terra_free(&T);
+    return rc;
+}
+
 int main(int argc, char **argv) {
+    if ((argc == 3 || argc == 4) && !strcmp(argv[1], "vivre")) return cmd_vivre(argv[2], argc == 4 ? atol(argv[3]) : 0);
     if (argc >= 3 && !strcmp(argv[1], "info")) return cmd_info(argc, argv);
     if (argc == 9 && !strcmp(argv[1], "jardin")) return cmd_jardin(argv[2], argv[3], argv[4], argv[5], atol(argv[6]), strtoull(argv[7], NULL, 10), atoi(argv[8]));
     if (argc == 9 && !strcmp(argv[1], "teleport"))
@@ -186,6 +233,7 @@ int main(int argc, char **argv) {
     fprintf(stderr, "usage : transplant info MONDE...\n"
                     "        transplant jardin HOTE A B DIR_NEUF TICKS GRAINE POP0(0=hôte)\n"
                     "        transplant teleport SOURCE DEPUIS|- DIR_NEUF retrait|arrivee|temoin FRACTION TICKS GRAINE\n"
+                    "        transplant vivre DIR   (reprend un jardin ou une fourche, sans fin ; TICKS=0 à la création = sans fin)\n"
                     "Les mondes sont lus en lecture seule ; rien n'est écrit hors de DIR_NEUF.\n");
     return 2;
 }
