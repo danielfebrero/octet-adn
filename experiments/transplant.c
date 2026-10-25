@@ -141,8 +141,9 @@ static int cmd_jardin(const char *host, const char *A, const char *B, const char
 
 /* ---------- téléportation : fourche d'un monde (copie mémoire), retrait ou arrivée, ou témoin ---------- */
 static int cmd_teleport(const char *src, const char *from, const char *dir, const char *mode, double frac, long ticks, uint64_t seed) {
-    Terra *S = read_world(src); if (!S) return 2;
-    static Terra T; T = *S; free(S);               /* fourche : la mémoire chargée devient le monde de l'expérience */
+    /* fourche : on charge directement dans la structure de l'expérience (les îles pointent vers T.P) */
+    static Terra T; char ck[700]; snprintf(ck, sizeof ck, "%s/state.ck", src);
+    if (!load(&T, ck)) { fprintf(stderr, "%s illisible pour ce moteur\n", ck); return 2; }
     snprintf(T.dir, sizeof T.dir, "%s", dir);
     if (mkdir(dir, 0775)) { perror(dir); return 2; }
     for (int k = 0; k < T.P.K; k++) { World *w = T.I[k].w; for (int i = 0; i < w->ncs; i++) *orig_slot(k, w->cs[i]->id) = 1; }
