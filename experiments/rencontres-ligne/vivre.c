@@ -34,6 +34,17 @@ static int tail_byte(const Creature *c, int k) {
     return c->len >= k && c->len <= MAX_LEN ? c->dna[c->len - k] : 0;
 }
 
+const int VIVRE_NEUTRES[VIVRE_NNEUTRES] = { 1, 4, 6, 10 };
+
+int vivre_tail(const Creature *c, int k) { return tail_byte(c, k); }
+
+int vivre_max_age(const VivreConfig *C, const Creature *c) {
+    int b = tail_byte(c, 2);
+    if (C->senescence == VIVRE_SEN_DECOUPLE) b = VIVRE_LIFE_FIXED;
+    else if (C->senescence == VIVRE_SEN_INVERSE) b = 255 - b;
+    return C->life_base + C->life_step * b;
+}
+
 static int shared_len(const Creature *a, const Creature *b) {
     int n = a->len;
     if (b->len < n) n = b->len;
@@ -75,8 +86,7 @@ int vivre_step(World *w, const VivreConfig *C, VivreState *S) {
         for (int i = 0; i < w->ncs; i++) {
             Creature *c = w->cs[i];
             if (c->e <= 0) continue;
-            int max_age = C->life_base + C->life_step * tail_byte(c, 2);
-            if (c->age >= max_age) { c->e = 0; S->old_deaths++; }
+            if (c->age >= vivre_max_age(C, c)) { c->e = 0; S->old_deaths++; }
         }
     }
     int period = C->period > 0 ? C->period : 16;
@@ -139,19 +149,42 @@ int vivre_step(World *w, const VivreConfig *C, VivreState *S) {
     return changed;
 }
 
-void vivre_sample(const World *w, VivreSample *o) {
+void vivre_sample_cfg(const World *w, const VivreConfig *C, VivreSample *o) {
     memset(o, 0, sizeof *o);
-    double g = 0, l = 0, z = 0, at = 0, xo = 0;
+    int young_age = C && C->life_base > 0 ? C->life_base : 100;
+    double g = 0, l = 0, z = 0, at = 0, xo = 0, yl = 0, ylow = 0, nz[VIVRE_NNEUTRES] = { 0 }, ynz[VIVRE_NNEUTRES] = { 0 };
     for (int i = 0; i < w->ncs; i++) {
         const Creature *c = w->cs[i];
         if (c->e <= 0) continue;
         o->n++;
         g += tail_byte(c, 1); l += tail_byte(c, 2); z += tail_byte(c, 3);
         at += has_op(c, OP_ATTACK); xo += has_op(c, OP_XOR);
+        for (int j = 0; j < VIVRE_NNEUTRES; j++) nz[j] += tail_byte(c, VIVRE_NEUTRES[j]);
+        if (c->age < young_age) {
+            o->young++; yl += tail_byte(c, 2); ylow += tail_byte(c, 2) < OP_COUNT;
+            for (int j = 0; j < VIVRE_NNEUTRES; j++) ynz[j] += tail_byte(c, VIVRE_NEUTRES[j]);
+        }
     }
     if (o->n) {
         o->give_byte = g / o->n; o->life_byte = l / o->n; o->neutral_byte = z / o->n;
         o->frac_attack = at / o->n; o->frac_xor = xo / o->n;
+        for (int j = 0; j < VIVRE_NNEUTRES; j++) o->neutral[j] = nz[j] / o->n;
+    }
+    if (o->young) {
+        o->young_life = yl / o->young; o->young_low = ylow / o->young;
+        for (int j = 0; j < VIVRE_NNEUTRES; j++) o->young_neutral[j] = ynz[j] / o->young;
+    }
+}
+
+void vivre_sample(const World *w, VivreSample *o) { vivre_sample_cfg(w, NULL, o); }
+
+void vivre_births(const World *w, VivreBirths *b) {
+    for (int i = 0; i < w->ncs; i++) {
+        const Creature *c = w->cs[i];
+        if (c->e <= 0 || c->age != 0 || c->parent < 0) continue;   /* fondateurs exclus */
+        int x = tail_byte(c, 2);
+        b->n++; b->life += x; b->low += x < OP_COUNT;
+        for (int j = 0; j < VIVRE_NNEUTRES; j++) b->nz[j] += tail_byte(c, VIVRE_NEUTRES[j]);
     }
 }
 
@@ -226,6 +259,20 @@ int vivre_selftest(void) {
     VCHECK("mort à l'âge hérité, pas un tick avant", w->cs[0]->e == 100 && w->cs[1]->e == 0 && S.old_deaths == 1);
     world_free(w);
 
+    /* Bras : découplé (octet fixé à 128 → 1 124 ticks), inversé (octet 255 → 100 ticks, 0 → 2 140). */
+    VivreConfig dec = base; dec.senescence = VIVRE_SEN_DECOUPLE;
+    w = pair(0x00, 0xFF, 100, 100); vivre_init(&S, 5);
+    w->cs[0]->age = 1123; w->cs[1]->age = 1124;
+    vivre_step(w, &dec, &S);
+    VCHECK("découplé : même âge max quel que soit l'octet", w->cs[0]->e == 100 && w->cs[1]->e == 0 && S.old_deaths == 1);
+    world_free(w);
+    VivreConfig inv = base; inv.senescence = VIVRE_SEN_INVERSE;
+    w = pair(0x00, 0xFF, 100, 100); vivre_init(&S, 5);
+    w->cs[0]->age = 2139; w->cs[1]->age = 100;
+    vivre_step(w, &inv, &S);
+    VCHECK("inversé : octet haut = vie courte", w->cs[0]->e == 100 && w->cs[1]->e == 0 && S.old_deaths == 1);
+    world_free(w);
+
     /* Déterminisme : deux mêmes fixtures, même graine, mêmes états. */
     VivreConfig all = base; all.capture = all.parente = all.senescence = 1;
     World *u = pair(OP_ATTACK, 0xFF, 100, 30), *v = pair(OP_ATTACK, 0xFF, 100, 30);
@@ -237,6 +284,16 @@ int vivre_selftest(void) {
 
     VivreSample s; w = pair(OP_ATTACK, OP_EAT, 100, 100); vivre_sample(w, &s);
     VCHECK("relevé : octets et fraction ATTACK", s.n == 2 && s.frac_attack == 0.5 && s.give_byte == (OP_ATTACK + OP_EAT) / 2.0);
+    world_free(w);
+    VivreBirths nb = { 0 };
+    w = pair(0x10, 0xC0, 100, 100); w->cs[0]->age = 0; w->cs[0]->parent = 3; w->cs[1]->age = 0;
+    vivre_births(w, &nb);
+    VCHECK("naissances : âge 0 et parent connu, fondateurs exclus", nb.n == 1 && nb.life == 0x10 && nb.low == 1 && nb.nz[2] == 0x10);
+    world_free(w);
+    w = pair(0x10, 0xC0, 100, 100); w->cs[0]->age = 99; w->cs[1]->age = 100;
+    vivre_sample_cfg(w, &sen, &s);
+    VCHECK("relevé des nouveau-nés : âge < life_base seulement", s.young == 1 && s.young_life == 0x10 && s.young_low == 1.0
+           && s.young_neutral[3] == 0x10 && s.neutral[0] == (0x10 + 0xC0) / 2.0);
     world_free(w);
     return fails;
 }

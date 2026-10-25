@@ -31,8 +31,9 @@ static int extra_load(FILE *, void *);
 
 /* capture, parente et senescence (2026-10-25) viennent après all : les numéros des cinq
  * premiers profils, écrits dans les checkpoints existants, ne bougent pas. */
-enum { CONTROL, EXCHANGE, NURSERY, MEETING, ALL, CAPTURE, PARENTE, SENESCENCE, NPROFILE };
-static const char *profiles[] = { "control", "exchange", "nursery", "meeting", "all", "capture", "parente", "senescence" };
+/* senescence-decouple et senescence-inverse (bras du débat 4881cc62) viennent ensuite, même règle. */
+enum { CONTROL, EXCHANGE, NURSERY, MEETING, ALL, CAPTURE, PARENTE, SENESCENCE, SEN_DECOUPLE, SEN_INVERSE, NPROFILE };
+static const char *profiles[] = { "control", "exchange", "nursery", "meeting", "all", "capture", "parente", "senescence", "senescence-decouple", "senescence-inverse" };
 typedef struct {
     int profile, reserve;
     EchangeConfig exchange;
@@ -51,6 +52,7 @@ typedef struct {
 } ExtraIsland;
 static Config config;
 static ExtraIsland ext[KMAX];
+static VivreBirths births[KMAX];   /* remis à zéro à chaque relevé ; le checkpoint suit le relevé, donc vide */
 static FILE *metrics, *vivre_out;
 static unsigned announced;
 static int profile_explicit, loading, extension_error, bypass;
@@ -75,7 +77,8 @@ static Config configuration(int profile) {
     c.meeting = (RendezvousConfig){ .enabled = (profile == MEETING || profile == ALL) ? 2 : 0,
         .period = 4, .cost = 1 };
     c.vivre = (VivreConfig){ .capture = profile == CAPTURE, .parente = profile == PARENTE,
-        .senescence = profile == SENESCENCE, .period = 16,
+        .senescence = profile == SENESCENCE ? VIVRE_SEN_ACTUEL : profile == SEN_DECOUPLE ? VIVRE_SEN_DECOUPLE
+            : profile == SEN_INVERSE ? VIVRE_SEN_INVERSE : 0, .period = 16,
         .capture_cost = 2, .capture_take = 4, .capture_gain = 2,
         .give = 10, .give_rich = 60, .give_poor = 40, .life_base = 100, .life_step = 8 };
     return c;
@@ -122,6 +125,7 @@ static void extra_before(void *ptr) {
         if (w->ncs >= I->P->max_pop) e->exchange_at_cap += e->exchange.changes - before;
         for (int i = 0; i < w->ncs; i++) genotype(w->cs[i]);
     }
+    if (config.vivre.senescence) vivre_births(w, &births[e - ext]);
     if (vivre_step(w, &config.vivre, &e->vivre)) for (int i = 0; i < w->ncs; i++) genotype(w->cs[i]);
     e->before_dead = w->st.dead; e->before_hatched = e->birth.hatched;
     if (config.birth.enabled) {
@@ -153,8 +157,9 @@ static void extra_after(void *ptr) {
  * impossible de distinguer "peu d'echanges parce que peu de contacts" de "peu d'echanges
  * parce que le repos bloque" : question posee par le choix primaire cooldown=64. */
 static const char *METRICS = "tick\tcontacts\tintra_contacts\tinter_contacts\texchanges\texchange_at_cap\tbytes_changed\teggs\thatched\tcrossed_children\tbirth_no_death\tcap_refused\tplace_refused\tenergy_refused\tseason_refused\treads\tmoves\tmove_energy\tpending\texchange_cooldown_refused\tpartner_refused\tnaissance_cooldown_refused\tfood_refused\tqueue_refused\n";
-/* Octets hérités lus en fin de génome : don (len-1), âge max (len-2), témoin neutre (len-3). */
-static const char *VIVRE_METRICS = "tick\tpop\tcaptures\tcapture_bytes\tcapture_refused\tcapture_dist_mean\tdonations\tdonated\tdonation_refused\told_deaths\tgive_byte\tlife_byte\tneutral_byte\tfrac_attack\tfrac_xor\n";
+/* Octets hérités lus en fin de génome : don (len-1), âge max (len-2), témoin neutre (len-3).
+ * Nouveau-nés = âge < life_base (aucune mort d'âge avant) ; témoins len-1, len-4, len-6, len-10. */
+static const char *VIVRE_METRICS = "tick\tpop\tcaptures\tcapture_bytes\tcapture_refused\tcapture_dist_mean\tdonations\tdonated\tdonation_refused\told_deaths\tgive_byte\tlife_byte\tneutral_byte\tfrac_attack\tfrac_xor\tyoung\tyoung_life\tyoung_low\tn1\tn4\tn6\tn10\tyoung_n1\tyoung_n4\tyoung_n6\tyoung_n10\tbirths\tbirth_life\tbirth_low\tbirth_n1\tbirth_n4\tbirth_n6\tbirth_n10\n";
 static void extra_sample(void *ptr) {
     Terra *T = ptr;
     long ct = 0, in = 0, out = 0, xc = 0, full = 0, bytes = 0, eggs = 0, born = 0, cross = 0, nd = 0;
@@ -204,14 +209,29 @@ static void extra_sample(void *ptr) {
             VivreState *v = &extra_island(&T->I[k])->vivre;
             cap_n += v->captures; cap_b += v->capture_bytes; cap_r += v->capture_refused; cap_d += v->capture_dist_sum;
             don += v->donations; given += v->donated; don_r += v->donation_refused; old += v->old_deaths;
-            vivre_sample(T->I[k].w, &vs);
+            vivre_sample_cfg(T->I[k].w, vc, &vs);
             sum.n += vs.n; sum.give_byte += vs.give_byte * vs.n; sum.life_byte += vs.life_byte * vs.n;
             sum.neutral_byte += vs.neutral_byte * vs.n; sum.frac_attack += vs.frac_attack * vs.n; sum.frac_xor += vs.frac_xor * vs.n;
+            sum.young += vs.young; sum.young_life += vs.young_life * vs.young; sum.young_low += vs.young_low * vs.young;
+            for (int j = 0; j < VIVRE_NNEUTRES; j++) {
+                sum.neutral[j] += vs.neutral[j] * vs.n; sum.young_neutral[j] += vs.young_neutral[j] * vs.young;
+            }
         }
+        VivreBirths bs = { 0 };
+        for (int k = 0; k < T->P.K; k++) {
+            bs.n += births[k].n; bs.life += births[k].life; bs.low += births[k].low;
+            for (int j = 0; j < VIVRE_NNEUTRES; j++) bs.nz[j] += births[k].nz[j];
+        }
+        memset(births, 0, sizeof births);
+        double bb = bs.n ? bs.n : 1;
+        double yy = sum.young ? sum.young : 1;
         double nn = sum.n ? sum.n : 1;
-        fprintf(vivre_out, "%ld\t%d\t%ld\t%ld\t%ld\t%.3f\t%ld\t%ld\t%ld\t%ld\t%.3f\t%.3f\t%.3f\t%.4f\t%.4f\n",
+        fprintf(vivre_out, "%ld\t%d\t%ld\t%ld\t%ld\t%.3f\t%ld\t%ld\t%ld\t%ld\t%.3f\t%.3f\t%.3f\t%.4f\t%.4f\t%d\t%.3f\t%.4f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%ld\t%.3f\t%.4f\t%.3f\t%.3f\t%.3f\t%.3f\n",
             T->t, sum.n, cap_n, cap_b, cap_r, cap_n ? (double)cap_d / cap_n : 0.0, don, given, don_r, old,
-            sum.give_byte / nn, sum.life_byte / nn, sum.neutral_byte / nn, sum.frac_attack / nn, sum.frac_xor / nn);
+            sum.give_byte / nn, sum.life_byte / nn, sum.neutral_byte / nn, sum.frac_attack / nn, sum.frac_xor / nn,
+            sum.young, sum.young_life / yy, sum.young_low / yy, sum.neutral[0] / nn, sum.neutral[1] / nn, sum.neutral[2] / nn,
+            sum.neutral[3] / nn, sum.young_neutral[0] / yy, sum.young_neutral[1] / yy, sum.young_neutral[2] / yy, sum.young_neutral[3] / yy,
+            bs.n, bs.life / bb, bs.low / bb, bs.nz[0] / bb, bs.nz[1] / bb, bs.nz[2] / bb, bs.nz[3] / bb);
         if (fflush(vivre_out)) { extension_error = 1; stop_flag = 1; }
     }
     if (xc && !(announced & 1)) { event(T, "croisement_rencontre", "couples_modifies=%ld au_plafond=%ld", xc, full); announced |= 1; }
@@ -255,7 +275,7 @@ static int extra_load(FILE *f, void *ptr) {
 static void reset_extra(int profile) {
     if (metrics) fclose(metrics);
     if (vivre_out) fclose(vivre_out);
-    metrics = NULL; vivre_out = NULL; memset(ext, 0, sizeof ext); config = configuration(profile);
+    metrics = NULL; vivre_out = NULL; memset(ext, 0, sizeof ext); memset(births, 0, sizeof births); config = configuration(profile);
     announced = 0; loading = 0; extension_error = 0;
 }
 
@@ -325,16 +345,17 @@ static int rencontres_selftest(void) {
     int same = ah == terra_hash(&b) && !memcmp(&ar, &b.I[0].wr, sizeof ar);
     printf("rencontres désactivées : égalité avec hooks contournés hash+RNG %s ; Params=%zu\n", same ? "OK" : "ECHEC", sizeof(Params));
     rc |= !same; terra_free(&a); terra_free(&b);
-    return rc | resume_selftest(ALL) | resume_selftest(CAPTURE) | resume_selftest(PARENTE) | resume_selftest(SENESCENCE);
+    return rc | resume_selftest(ALL) | resume_selftest(CAPTURE) | resume_selftest(PARENTE) | resume_selftest(SENESCENCE)
+        | resume_selftest(SEN_DECOUPLE) | resume_selftest(SEN_INVERSE);
 }
 
 static int help(void) {
-    fprintf(stderr, "rencontres run --dir CHEMIN_NEUF --profile control|exchange|nursery|meeting|all|capture|parente|senescence [options terrarium]\n"
+    fprintf(stderr, "rencontres run --dir CHEMIN_NEUF --profile control|exchange|nursery|meeting|all|capture|parente|senescence|senescence-decouple|senescence-inverse [options terrarium]\n"
         "    [--exchange-period N] [--exchange-cost N] [--exchange-cooldown N]\n"
         "    [--nursery-period N] [--nursery-cost N] [--nursery-food N] [--nursery-delay N]\n"
         "    [--nursery-season-period N] [--nursery-season-open N] [--nursery-mutation F]\n"
         "    [--meeting-period N] [--meeting-cost N] [--meeting-behavioral 0|1]\n"
-        "rencontres selftest | report DIR... | dump DIR\n"
+        "rencontres selftest | report DIR... | dump DIR | cohortes DIR (lecture seule de state.ck)\n"
         "Pas d'import state.ck ancien ; pas de copie réelle, migration ou expansion dans cette expérience.\n"
         "Les overrides ci-dessus ne s'appliquent qu'à un --dir neuf : une reprise relit la\n"
         "configuration du checkpoint (même règle que --profile sur une reprise).\n");
@@ -380,10 +401,60 @@ static int protected_world(const char *dir) {
     return 0;
 }
 
+/* Lecture seule d'un state.ck (copie conseillée) : trait par cohorte d'âge et enfants vivants
+ * par parent vivant. Ne lance rien, n'écrit rien dans DIR. Débat 4881cc62, mesure (a). */
+static int cmd_cohortes(int argc, char **argv) {
+    if (argc < 3) return help();
+    static Terra T; memset(&T, 0, sizeof T);
+    char ck[600]; snprintf(ck, sizeof ck, "%s/state.ck", argv[2]);
+    if (!load(&T, ck)) { fprintf(stderr, "%s illisible\n", ck); return 1; }
+    const VivreConfig *vc = &config.vivre;
+    static const int edges[] = { 0, 100, 500, 1000, 1500, 1 << 30 };
+    enum { NB = 5 };
+    double n[NB] = { 0 }, life[NB] = { 0 }, low[NB] = { 0 }, nz[NB][VIVRE_NNEUTRES] = { { 0 } };
+    /* enfants vivants par parent vivant, selon l'octet de vie du parent */
+    static const int ledges[] = { 0, 32, 128, 240, 256 };
+    enum { NL = 4 };
+    double pn[NL] = { 0 }, kids[NL] = { 0 }, ages[NL] = { 0 };
+    printf("t=%ld profil=%s senescence=%d life_base=%d life_step=%d\n", T.t, profiles[config.profile],
+           vc->senescence, vc->life_base, vc->life_step);
+    for (int k = 0; k < T.P.K; k++) {
+        World *w = T.I[k].w;
+        for (int i = 0; i < w->ncs; i++) {
+            const Creature *c = w->cs[i];
+            if (c->e <= 0) continue;
+            int b = vivre_tail(c, 2), a = c->age, bin = 0;
+            while (bin < NB - 1 && a >= edges[bin + 1]) bin++;
+            n[bin]++; life[bin] += b; low[bin] += b < OP_COUNT;
+            for (int j = 0; j < VIVRE_NNEUTRES; j++) nz[bin][j] += vivre_tail(c, VIVRE_NEUTRES[j]);
+            int ch = 0;
+            for (int m = 0; m < w->ncs; m++) ch += w->cs[m]->e > 0 && w->cs[m]->parent == c->id;
+            int lb = 0; while (lb < NL - 1 && b >= ledges[lb + 1]) lb++;
+            pn[lb]++; kids[lb] += ch; ages[lb] += a;
+        }
+    }
+    printf("age_min\tage_max\tn\tlife_byte\tfrac_opcode\tn1\tn4\tn6\tn10\n");
+    for (int b = 0; b < NB; b++) {
+        double d = n[b] ? n[b] : 1;
+        printf("%d\t%d\t%.0f\t%.3f\t%.4f", edges[b], edges[b + 1] == 1 << 30 ? -1 : edges[b + 1], n[b], life[b] / d, low[b] / d);
+        for (int j = 0; j < VIVRE_NNEUTRES; j++) printf("\t%.3f", nz[b][j] / d);
+        printf("\n");
+    }
+    printf("parent_life_min\tparent_life_max\tparents\tenfants_vivants_moy\tage_moy\tenfants_par_1000_ticks\n");
+    for (int b = 0; b < NL; b++) {
+        double d = pn[b] ? pn[b] : 1;
+        printf("%d\t%d\t%.0f\t%.4f\t%.1f\t%.4f\n", ledges[b], ledges[b + 1] - 1, pn[b], kids[b] / d, ages[b] / d,
+               ages[b] ? 1000.0 * kids[b] / ages[b] : 0.0);
+    }
+    terra_free(&T);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "selftest")) return rencontres_selftest();
     if (argc >= 2 && !strcmp(argv[1], "report")) return cmd_report(argc, argv);
     if (argc >= 2 && !strcmp(argv[1], "dump")) return cmd_dump(argc, argv);
+    if (argc >= 2 && !strcmp(argv[1], "cohortes")) return cmd_cohortes(argc, argv);
     if (argc < 2 || strcmp(argv[1], "run")) return help();
     int profile = ALL; const char *dir = NULL;
     char **args = calloc((size_t)argc + 5, sizeof *args); if (!args) return 1;

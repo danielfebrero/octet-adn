@@ -46,3 +46,8 @@ Une seule graine courte : rien n'est conclu. Deux faits de dispositif : `frac_at
 0,99 à 1,00 dès le départ (`ATTACK` est un octet commun des génomes fondateurs, comme l'était
 la porte statique des rendez-vous) ; la capture teste donc la circulation de l'ADN, pas la
 diffusion d'un trait chasseur.
+
+## Suite : bras sénescence
+
+Le débat 4881cc62 a gardé le signal et ouvert son attribution. Protocole et mesure à la naissance :
+`SENESCENCE-BRAS.md` (profils `senescence-decouple`, `senescence-inverse`, colonnes `births*`).
