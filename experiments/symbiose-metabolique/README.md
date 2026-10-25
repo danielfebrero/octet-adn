@@ -107,4 +107,101 @@ positif, absence de gain du cristal et de l'EMIT neutralisé, indépendance des
 copies causales et disparition du survivant privé de partenaire. Les 10 labos
 historiques restent indépendants de ce binaire.
 
-Compilation et résultats seront ajoutés après le commit de ce document.
+## Résultats
+
+Mesures effectuées **après le commit du pré-enregistrement `f7efd67`**.
+112 runs aux horizons prévus, aucun paramètre ni seuil modifié. Deux passages
+complets donnent le même [`results.txt`](results.txt), hash et nombres inclus.
+
+| bras | graines | coexistence finale | candidats complets | communautés causales | seuil | tenu ? |
+|---|---:|---:|---:|---:|---|---|
+| R, bruit + recyclage réel | 32 | 28 | 10 | **10** | ≥ 8/32 | oui |
+| P, bruit + produit perdu | 32 | 0 | 0 | **0** | 0/32 | oui |
+| S, bruit + EMIT neutralisé | 32 | 0 | 0 | **0** | 0/32, zéro réaction | oui |
+| cristal | 8 | 0 | 0 | **0** | 0/8, zéro réaction | oui |
+| programme positif prédéfini | 8 | 8 | 8 | **8** | ≥ 6/8 | oui |
+
+Coexistence finale signifie seulement un vivant de chaque enzyme à t=2048 :
+elle est moins exigeante que le critère pré-enregistré. Les 18 coexistences
+qui ne deviennent pas candidates ne comptent pas comme communautés validées.
+
+| bras | naissances enzyme 0 / 1 | réactions 0 / 1 | énergie extérieure fournie 0 / 1 |
+|---|---:|---:|---:|
+| R | 1689 / 994 | 455230 / 454853 | 1820920 / 1819412 |
+| P | 13 / 6 | 992 / 930 | 3968 / 3720 |
+| S | 0 / 0 | 0 / 0 | 0 / 0 |
+| cristal | 0 / 0 | 0 / 0 | 0 / 0 |
+| positif | 134 / 128 | 523216 / 523257 | 2092864 / 2093028 |
+
+Le bras P peut utiliser ses stocks initiaux et faire quelques enfants. Il
+n'arrive pas à renouveler la ressource ; à l'horizon, il ne conserve aucune
+classe vivante. Le puits conserve la matière, sans la rendre aux organismes.
+L'énergie fournie est 4 × réactions ; le plafonnement individuel peut en
+dissiper une partie. Ce tableau ne prétend pas que la matière engendre seule
+cette énergie.
+
+Les dix graines qui passent :
+
+| graine | vivants 0 / 1 à t=2048 | enfants 0 / 1 | réactions 0 / 1 | biomasse intacte 0 / 1 | biomasse sans partenaire 0 / 1 |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 33 / 31 | 76 / 32 | 57921 / 57889 | 6930,875 / 6828,996 | 0 / 0 |
+| 1 | 35 / 29 | 592 / 26 | 10634 / 10602 | 6180,973 / 6348,566 | 0 / 0 |
+| 7 | 20 / 18 | 207 / 17 | 2399 / 2367 | 7008,000 / 7007,000 | 0 / 0 |
+| 8 | 33 / 31 | 110 / 27 | 59253 / 59221 | 6818,953 / 6785,023 | 0 / 0 |
+| 14 | 33 / 31 | 110 / 31 | 9502 / 9530 | 7209,805 / 6775,000 | 0 / 0 |
+| 15 | 32 / 32 | 30 / 36 | 63656 / 63626 | 7008,000 / 7008,000 | 0 / 0 |
+| 18 | 33 / 31 | 38 / 74 | 48072 / 48040 | 6819,238 / 6788,000 | 0 / 0 |
+| 21 | 33 / 31 | 184 / 30 | 17952 / 17920 | 6824,492 / 6789,000 | 0 / 0 |
+| 23 | 32 / 32 | 31 / 37 | 62163 / 62134 | 6987,500 / 7007,500 | 0 / 0 |
+| 25 | 32 / 32 | 44 / 32 | 62521 / 62493 | 7008,000 / 6995,691 | 0 / 0 |
+
+Les biomasses sont les moyennes des 256 derniers ticks des copies causales,
+pas celles du moment où le partenaire est retiré. Dans les vingt suppressions
+qui correspondent aux dix candidats, la biomasse du survivant devient nulle
+dans cette fenêtre : la chute dépasse le seuil de 50 %.
+
+**Verdict : oui, dans cette écologie offerte.** Les 10/32 communautés
+reproductrices dépassent les 8/32 annoncées et les quatre contrôles passent.
+Ce résultat établit le maintien et la transmission de programmes qui
+utilisent une dépendance métabolique imposée. Il n'établit pas l'invention de
+la complémentarité ni l'évolution nouvelle d'une coopération. Les génomes
+sont initialement du bruit ; des mutants sont produits par les divisions
+natives, mais les traces ne séparent pas le recrutement d'un programme déjà
+viable au départ d'une capacité nouvelle acquise par mutation. Les deux
+classes enzymatiques sont initialement présentes. Aucun second mécanisme
+n'a été ajouté après les chiffres.
+
+## Reproduire et validation
+
+Depuis la racine du dépôt, avec un identifiant de build jamais utilisé :
+
+```sh
+ulimit -c 0
+mkdir /tmp/octet-symbiose-MON_IDENTIFIANT_NEUF
+cc -O2 -std=gnu11 -Wall -Wextra -Wno-unused-parameter -Wno-format-truncation \
+  -Iinclude -o /tmp/octet-symbiose-MON_IDENTIFIANT_NEUF/symbiose \
+  experiments/symbiose_metabolique.c src/rng.c src/isa.c src/vm.c \
+  src/mutate.c src/labs.c src/store.c src/runner.c src/seeds.S \
+  src/labs_h.c src/novelty.c src/soup.c -lm
+/tmp/octet-symbiose-MON_IDENTIFIANT_NEUF/symbiose selftest
+/tmp/octet-symbiose-MON_IDENTIFIANT_NEUF/symbiose run > /tmp/symbiose-results.txt
+cmp experiments/symbiose-metabolique/results.txt /tmp/symbiose-results.txt
+```
+
+`world.c` est inclus une seule fois par le binaire sous deux noms d'action
+renommés ; il ne doit pas être lié une seconde fois. `vm.c` reste la VM native.
+Les wrappers de l'éprouvette font la chimie d'EMIT et retirent la ressource
+d'EAT, sans modifier les fichiers du cœur.
+
+Selftests **tous verts** : réaction unitaire et apport énergétique, EAT
+neutralisé, puits et extinction, reproducteur positif et dépendance
+réciproque, copie sans effet sur le parent, déterminisme, cristal et EMIT
+neutralisé. Une seconde compilation dans un autre chemin neuf avec
+`-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer` passe selftest
+et les 112 runs avec détection de fuites activée, sans rapport de sanitizer.
+Sa sortie est identique à celle de la compilation optimisée. L'empreinte
+inclut les registres, l'état de naissance et de réécriture, l'occupation du
+monde, l'historique, le RNG, la chimie et tous ses compteurs.
+
+Les ELF, objets et répertoires de mesure restent dans des chemins neufs de
+`/tmp`. Aucun monde de l'hôte lancé, arrêté, modifié ou relinké.
