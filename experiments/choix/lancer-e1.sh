@@ -3,14 +3,15 @@
 set -eu
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 host_repo=/data/eternalgrok-grok-workspace/produits/octet-adn
-world=experiments/vie-choix-e1-20261025
+world=experiments/vie-choix-e1b-20261025
 elf=experiments/choix-build/20261025-e2/choix
-image=sha256:2cfcd3ab219f91d00877f41e8f46ff7068f35498f457b4b5d68a06e67bd4d179
+image=sha256:17251f7d83fadf835831bce14b8358a52643428ba7c976fbcc9a877caa06e66d
 if docker container inspect octet-choix-e1 >/dev/null 2>&1; then
     echo 'octet-choix-e1 existe : examiner son état, aucun remplacement automatique' >&2
     exit 1
 fi
 test -x "$repo/$elf"
+docker image inspect "$image" >/dev/null
 python3 - "$repo" <<'PY'
 import json, sys
 from pathlib import Path

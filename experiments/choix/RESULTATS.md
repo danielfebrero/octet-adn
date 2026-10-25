@@ -54,6 +54,15 @@ reproduction, au lieu d'attendre qu'un fondateur non entraîné soit adapté.
 64 fondateurs issus de quatre seeds existantes, aucun contrôle positif injecté.
 La recette de lancement est [lancer-e1.sh](lancer-e1.sh).
 
+E1 lancé le 25 octobre à **11:03:03 UTC**, conteneur `octet-choix-e1`, données
+`experiments/vie-choix-e1b-20261025`. ELF immuable `choix-build/20261025-e2/choix`.
+Le premier essai n'a lancé aucun processus : l'image des anciens mondes avait
+été retirée du cache Docker. Leur conteneur est resté intact ; E1 utilise une
+image disponible, épinglée par digest, et un nouveau répertoire de données.
+Au neuvième épisode : 109 individus, 43 génotypes germinaux, 71 naissances et
+26 morts depuis les 64 fondateurs. Ce relevé décrit la démographie, pas une
+capacité cognitive. Les 18 PID des mondes antérieurs sont inchangés.
+
 Les tests écologiques passent en natif et sous ASan/UBSan : 40 cycles continus
 produisent exactement les mêmes checkpoints et journaux que 20 cycles, reprise,
 puis 20 cycles. Les écritures non validées après checkpoint sont retirées lors

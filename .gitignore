@@ -84,3 +84,4 @@ TASK.md
 # Banc de choix : ELF et journaux volumineux ; résultats résumés sous choix/.
 /experiments/choix-build/
 /experiments/choix-runs/
+/experiments/vie-choix-*/
