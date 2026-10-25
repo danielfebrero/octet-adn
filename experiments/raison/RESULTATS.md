@@ -58,3 +58,21 @@ Les mécanismes trouvés sont courts (quelques instructions). Ce n'est pas un ra
 de l'usage d'information sélectionné, avec généralisation à l'inédit pour trois milieux. Les trois échecs
 indiquent ce que cette écologie n'atteint pas encore : l'adaptation pendant la vie, la décision de s'informer,
 la communication à deux rôles.
+
+## Mondes vivants (graine 101, conteneur `octet-raison`) — observations, hors préenregistrement
+
+Relevé du 25 octobre vers 16:25 UTC, 98 304 à 131 072 cycles. Évaluation figée sur une **copie** du checkpoint ;
+« canal coupé » = la même population évaluée avec l'information remplacée par du bruit (bras témoin).
+
+| milieu | réussite | canal coupé | remarque |
+|---|---:|---:|---|
+| **signal** | **0,913** | **0,499** | plat à 0,50 jusqu'à 65 536 cycles, puis 0,84 dès 73 728 : la communication a émergé d'un coup |
+| transfert (valeurs jamais vues) | 0,944 | 0,500 | règle |
+| autrui | 0,728 | 0,504 | |
+| relation (valeurs jamais vues) | 0,705 | — | |
+| chainage | déverrouille 0,94, juste 0,80 | — | mesure principale ≈ 0,29 (max 0,5) |
+| memoire, composition, inversion, observation, patience | ≈ 0,5 | — | pas (encore) émergé |
+
+**Le signal, qui n'a émergé dans aucune des 10 graines de la série, a émergé dans le monde vivant.** Couper le
+canal ramène les récepteurs au hasard : ils utilisent réellement ce que les émetteurs envoient. C'est une
+observation sur un seul monde, pas un résultat statistique ; elle confirme la contingence vue dans la série.
