@@ -46,3 +46,44 @@ CHEMIN_NEUF/perception_sequence run > /tmp/perception-sequence-0996a2cd.txt
 ```
 
 Les comptes, les récoltes et le verdict seront ajoutés après le commit de ce pré-enregistrement. Les sorties texte brutes sont lisibles sans JSON ; aucun ELF ou run n'entre dans Git.
+
+## Résultats, après pré-enregistrement `769ac52`
+
+Mesure le 25 octobre 2026 avec l'ELF neuf
+`/tmp/octet-0996a2cd-build-A-ps02/perception_sequence`. Selftest vert avant le compte.
+Les 96 sources et 480 relectures ont parcouru les 512 ticks ; les morts restent
+comptées, leur monde continue sans organisme. Les 96 relectures exactes sont
+identiques à la source à chaque tick selon le contrat physique ci-dessus.
+Les quatre rotations conservent exactement le nombre d'événements prescrits
+pour chaque trace. Source et témoins ne se partagent aucune nourriture.
+
+| bras | graines | source et quatre décalés vivants | passent le gain de 10 % et la survie | seuil | relecture exacte |
+|---|---:|---:|---:|---|---:|
+| forager | 32 | 32 | **4** | ≥ 24 | 32 / 32 |
+| bruit | 32 | 0 | 0 | ≤ 1 | 32 / 32 |
+| cristal | 32 | 0 | 0 | ≤ 1 | 32 / 32 |
+
+| bras | énergie récoltée, somme sources | somme des quatre témoins | moyenne par source | moyenne par témoin |
+|---|---:|---:|---:|---:|
+| forager | 64 160 | 256 870 | 2 005,000 | 2 006,797 |
+| bruit | 420 | 1 270 | 13,125 | 9,922 |
+| cristal | 0 | 0 | 0 | 0 |
+
+**Verdict : non.** Le seuil pré-enregistré est raté : **4 / 32**, au lieu de
+24 / 32. Les quatre graines passantes sont 6, 18, 21 et 30. Le forager récolte
+en moyenne 0,090 % de moins que le témoin qui conserve sa séquence complète.
+Dans ce dispositif, sa bonne survie n'établit donc pas un gain causé par
+l'alignement temporel entre ses actes et le milieu.
+
+Les 32 comparaisons forager ont leurs cinq acteurs vivants : l'échec ne vient
+pas d'un témoin mort. Bruit et cristal échouent, mais leur mort ne constitue
+pas une preuve indépendante de spécificité du détecteur. La rotation conserve
+l'ordre cyclique et les pauses ; elle ne conserve pas le préfixe ni la position
+initiale sur le cycle. Cette intervention peut aussi modifier une phase utile
+sans relation aux capteurs. Un succès aurait donc indiqué un alignement causal
+de trajectoire, et non isolé toute perception. Aucun réglage après les comptes.
+
+Sortie complète : [`results.txt`](results.txt), une ligne par graine, avec
+récoltes de chaque témoin et hash physique de la source. Le selftest inclut
+également une trace prescrite `EAT` à tous les ticks : toutes ses rotations
+ont exactement le même résultat, y compris en cas de mort.
