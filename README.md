@@ -1,5 +1,7 @@
 # 🧬 Octet-ADN — de la vie artificielle écrite en octets
 
+[**Les 34 mondes vivants : index et fiches individuelles**](ops/mondes/MONDES.md).
+
 Expériences isolées de l'ordre 0996a2cd (aucun changement d'ISA) :
 [pari phénotypique](experiments/pari-phenotypique/README.md),
 [symbiose par paquets](experiments/symbiose-paquets/README.md),

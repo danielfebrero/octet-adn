@@ -1,5 +1,9 @@
 # Reprise des mondes sans interruption globale
 
+L’[index des mondes vivants](MONDES.md) relie les 34 fiches individuelles :
+18 terrariums de cet inventaire, 4 quantiques, 10 milieux du raisonnement et 2 jardins.
+Les trois autres familles ont leurs conteneurs propres, hors de `mondes.tsv`.
+
 Le superviseur déployé est `/workspace/ops/octet-mondes/reprise.sh` (chemin hôte :
 `/data/eternalgrok-grok-workspace/ops/octet-mondes/reprise.sh`). Son inventaire
 `mondes.tsv`, à côté du script, est relu à chaque passage. Il contient 18 mondes.
