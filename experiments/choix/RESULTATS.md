@@ -70,3 +70,21 @@ de la reprise. L'export des génomes est en lecture seule sur le checkpoint.
 
 Les journaux de campagne complets compressés restent dans les répertoires des
 runs, exclus de git. Les anciens mondes et leurs binaires n'ont pas été modifiés.
+
+## Extinction et export, 25 octobre 13:09 UTC
+
+E1 s'est éteint de lui-même. Dernière ligne de `experiments/vie-choix-e1b-20261025/series.tsv` :
+t=2780, épisode 278, population 0, génotypes 0, naissances 101, morts 165,
+décisions correctes 0, consultations 1, omissions 1, énergie moyenne 0.
+Le conteneur `octet-choix-e1` est sorti avec le code 0. C'est une extinction.
+Les fondateurs ne sont pas recréés. L'écologie n'est pas relancée.
+
+Export en lecture seule avec l'ELF `experiments/choix-build/20261025-e2/choix`,
+commande `export`, source `experiments/vie-choix-e1b-20261025`,
+sortie `experiments/choix/export-e1b-20261025`. Le checkpoint (542 824 octets,
+horodaté 11:07:43 UTC) n'a pas été réécrit. `genomes.tsv` ne contient que
+l'en-tête `episode id parent energy genome`. Aucun fichier `.adn`.
+
+Aucun germen vivant n'est exportable. L'évaluation M1 sur 32 graines neuves
+est impossible : elle exigerait d'inventer un génome, ou de reconstruire des
+séquences que le journal ne garde pas. Cette impossibilité est le résultat.
