@@ -42,3 +42,29 @@ ce n'est pas un compromis d'histoire de vie. Le bras coût d'entretien est une q
 
 Lancer : `sh experiments/rencontres-ligne/senescence-bras.sh ELF RACINE` ; analyser :
 `sh experiments/rencontres-ligne/senescence-bras-analyse.sh RACINE`.
+
+## Résultat (2026-10-25, ELF `claude-d5a2462`, 60 mondes, aucun éteint)
+
+Mesure (a), lecture seule d'une copie du checkpoint de l'archive (t = 4 858 000) : 12 vivants d'âge < 100,
+octet de vie moyen 234,4 ; 51 vivants d'âge ≥ 1 500, 254,8. Pas de journal de naissance dans ce
+binaire : l'archive ne dit rien de plus. Parenté et capture : aucun vivant de moins de 1 500 ticks.
+
+Série préenregistrée, fenêtre 80 000–100 000 ticks, octet à la naissance M :
+
+| bras | M (moyenne des 20 graines) | part < 32 (opcode) |
+|---|---|---|
+| actuel | ≈ 233 (195 à 238) | ≈ 0,08 |
+| découplé | ≈ 45 (27 à 66) | ≈ 0,77 |
+| inversé | ≈ 6 (4,7 à 9,1) | ≈ 0,97 |
+
+- D1 actuel − découplé : +188,6, IC 97,5 % [179,3 ; 197,9] → **prédit > 0, tenu** (20/20 graines).
+- D2 inversé − découplé : −38,9, IC 97,5 % [−45,5 ; −32,3] → **prédit < 0, tenu** (20/20 graines).
+- Verdict préenregistré : la valeur de l'octet à la naissance suit le levier âge max, dans les deux sens.
+- Diagnostics : les 8 contrastes sur les témoins len-1, len-4, len-6, len-10 ont tous un IC qui contient 0.
+- Hors préenregistrement (dit comme tel) : moyenne des vivants − moyenne des naissances sur la même
+  fenêtre = +17,8 (actuel, 20/20 > 0), −0,4 (découplé), −3,3 (inversé). La survie différentielle existe
+  et gonfle la moyenne des vivants d'environ 18 points ; l'essentiel de l'écart est déjà à la naissance.
+- Sans levier, l'octet len-2 ne reste pas à 128 : il descend vers ~45 et devient un opcode exécutable
+  chez ~77 % des nouveau-nés. La base de comparaison est le bras découplé, pas la valeur de départ.
+- Limite : l'inversé bute sur le plancher 0 ; son contraste est borné. L'optimum du bras actuel est celui
+  que la règle inscrit (vie gratuite). Le coût d'entretien reste une question séparée.
