@@ -10,6 +10,7 @@
 #include "rencontres-ligne/echange.h"
 #include "rencontres-ligne/naissance.h"
 #include "rencontres-ligne/rendezvous.h"
+#include "rencontres-ligne/mondes.h"
 
 static void extra_before(void *);
 static void extra_after(void *);
@@ -66,7 +67,7 @@ static Config configuration(int profile) {
     c.birth = (NaissanceConfig){ .enabled = profile == NURSERY || profile == ALL,
         .period = 16, .cost = 24, .food_cost = 2, .delay = 24,
         .season_period = 400, .season_open = 160, .mutation = 0.005 };
-    c.meeting = (RendezvousConfig){ .enabled = profile == MEETING || profile == ALL,
+    c.meeting = (RendezvousConfig){ .enabled = (profile == MEETING || profile == ALL) ? 2 : 0,
         .period = 4, .cost = 1 };
     return c;
 }
@@ -290,7 +291,7 @@ static int help(void) {
         "    [--exchange-period N] [--exchange-cost N] [--exchange-cooldown N]\n"
         "    [--nursery-period N] [--nursery-cost N] [--nursery-food N] [--nursery-delay N]\n"
         "    [--nursery-season-period N] [--nursery-season-open N] [--nursery-mutation F]\n"
-        "    [--meeting-period N] [--meeting-cost N]\n"
+        "    [--meeting-period N] [--meeting-cost N] [--meeting-behavioral 0|1]\n"
         "rencontres selftest | report DIR... | dump DIR\n"
         "Pas d'import state.ck ancien ; pas de copie réelle, migration ou expansion dans cette expérience.\n"
         "Les overrides ci-dessus ne s'appliquent qu'à un --dir neuf : une reprise relit la\n"
@@ -306,7 +307,7 @@ typedef struct {
     int has_xp, xp, has_xc, xc, has_xk, xk;
     int has_bp, bp, has_bc, bc, has_bf, bf, has_bd, bd, has_bsp, bsp, has_bso, bso;
     int has_bm; double bm;
-    int has_mp, mp, has_mc, mc;
+    int has_mp, mp, has_mc, mc, has_mg, mg;
 } Overrides;
 
 static void apply_overrides(const Overrides *o) {
@@ -322,20 +323,18 @@ static void apply_overrides(const Overrides *o) {
     if (o->has_bm) config.birth.mutation = o->bm;
     if (o->has_mp) config.meeting.period = o->mp;
     if (o->has_mc) config.meeting.cost = o->mc;
+    if (o->has_mg && config.meeting.enabled) config.meeting.enabled = o->mg ? 2 : 1;
 }
 
 static int protected_world(const char *dir) {
-    const char *names[] = { "vie-monde", "vie-forces", "vie-causes", "vie-forces-briques",
-        "vie-forces-societes", "vie-attention", "vie-traits", "vie-depense", "vie-causales",
-        "vie-saison", "vie-tronc", "vie-lecture" };
     char resolved[4096];
     if (realpath(dir, resolved)) dir = resolved;
     size_t len = strlen(dir);
     while (len && dir[len - 1] == '/') len--;
     size_t start = len;
     while (start && dir[start - 1] != '/') start--;
-    for (int i = 0; i < 12; i++)
-        if (strlen(names[i]) == len - start && !memcmp(dir + start, names[i], len - start)) return 1;
+    for (int i = 0; i < OCTET_NMONDES; i++)
+        if (strlen(octet_mondes[i]) == len - start && !memcmp(dir + start, octet_mondes[i], len - start)) return 1;
     return 0;
 }
 
@@ -367,6 +366,10 @@ int main(int argc, char **argv) {
         else if (!strcmp(a, "--nursery-mutation")) { ov.has_bm = 1; ov.bm = atof(v); }
         else if (!strcmp(a, "--meeting-period")) { ov.has_mp = 1; ov.mp = atoi(v); }
         else if (!strcmp(a, "--meeting-cost")) { ov.has_mc = 1; ov.mc = atoi(v); }
+        else if (!strcmp(a, "--meeting-behavioral")) {
+            if (strcmp(v, "0") && strcmp(v, "1")) { free(args); return help(); }
+            ov.has_mg = 1; ov.mg = atoi(v);
+        }
         else {
             if (!strcmp(a, "--dir")) dir = v;
             if ((!strcmp(a, "--migrate") || !strcmp(a, "--expand-every")) && strcmp(v, "0")) { free(args); return help(); }
@@ -376,7 +379,7 @@ int main(int argc, char **argv) {
         }
     }
     if (!dir || strlen(dir) > 480) { free(args); return help(); }
-    if (protected_world(dir)) { fprintf(stderr, "répertoire d'un des douze anciens mondes refusé : %s\n", dir); free(args); return 1; }
+    if (protected_world(dir)) { fprintf(stderr, "répertoire d'un monde protégé refusé : %s\n", dir); free(args); return 1; }
     /* Les identités changent à migration et expansion ; cette première physique
      * garde les îles fixes pour préserver cooldowns et parentés sans ambiguïté. */
     args[n++] = "--migrate"; args[n++] = "0"; args[n] = NULL;

@@ -8,6 +8,12 @@ static const int DX[4] = { 0, 1, 0, -1 }, DY[4] = { -1, 0, 1, 0 };
 static __thread double split_mut_scale;
 static __thread double tls_birth_mut_sum;
 static __thread long tls_birth_mut_n;
+WorldThreadState world_thread_state(void) {
+    return (WorldThreadState){ split_mut_scale, tls_birth_mut_sum, tls_birth_mut_n };
+}
+void world_thread_restore(WorldThreadState s) {
+    split_mut_scale = s.scale; tls_birth_mut_sum = s.sum; tls_birth_mut_n = s.n;
+}
 void world_set_mut_scale(double s) { split_mut_scale = s; }
 void world_take_birth_mut(double *sum, long *n) {
     *sum += tls_birth_mut_sum; *n += tls_birth_mut_n;

@@ -14,6 +14,7 @@ static inline int imin(int a, int b) { return a < b ? a : b; }
 
 static __thread void (*vm_watch)(Creature *c, uint8_t op);
 void vm_set_watch(void (*fn)(Creature *c, uint8_t op)) { vm_watch = fn; }
+VmWatch vm_get_watch(void) { return vm_watch; }
 
 /* Un neurone : 4 entrées capteurs (0..15) × 4 poids int8 + biais → A (0..255). */
 static int neural(const Creature *c, const World *w, int addr) {

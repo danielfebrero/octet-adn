@@ -136,6 +136,11 @@ void     world_free(World *w);
 void     world_step(World *w);
 void     world_set_mut_scale(double s); /* 0 = mut_rate du monde ; >0 = mut_rate × s (aucun tirage de plus) */
 void     world_take_birth_mut(double *sum, long *n); /* naissances SPLIT depuis le dernier appel, puis remise à zéro */
+/* Sauvegarde des seuls compteurs TLS pour un tick témoin isolé. Aucune action
+ * normale ne passe par ces accesseurs ; ni RNG ni configuration ne changent. */
+typedef struct { double scale, sum; long n; } WorldThreadState;
+WorldThreadState world_thread_state(void);
+void world_thread_restore(WorldThreadState state);
 uint64_t world_hash(const World *w);
 Creature *creature_new(int x, int y, const uint8_t *dna, int len, int e, int id, int species, int parent);
 int      food_ahead(const World *w, const Creature *c);
@@ -147,6 +152,8 @@ void     world_spawn(World *w, Creature *c);   /* ajoute une créature (rejoint 
 int vm_run(Creature *c, World *w);
 /* NULL = aucun appel. Posé par un monde qui veut voir les opcodes, sans changer l'état ni l'aléa. */
 void vm_set_watch(void (*fn)(Creature *c, uint8_t op));
+typedef void (*VmWatch)(Creature *c, uint8_t op);
+VmWatch vm_get_watch(void);
 
 /* mutations */
 int mutate(const uint8_t *in, int n, Rng *r, double rate, double dup_rate, uint8_t *out);

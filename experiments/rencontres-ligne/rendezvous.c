@@ -14,7 +14,7 @@ void rendezvous_init(RendezvousState *s, uint64_t seed) {
     s->last_fields_tick = -1;
 }
 
-static int capable(const World *w, const Creature *c) {
+static int static_capable(const World *w, const Creature *c) {
     int sensor = 0, step = 0;
     if (c->len <= 0 || c->len > MAX_LEN) return 0;
     for (int i = 0; i < c->len;) {
@@ -27,6 +27,52 @@ static int capable(const World *w, const Creature *c) {
             (op == OPX_RPUSH || op == OPX_RPEEK))) i++;
     }
     return sensor && step;
+}
+
+static __thread int witness_sensor, witness_step;
+static void witness_watch(Creature *c, uint8_t op) {
+    (void)c;
+    if (op == OP_SENSE || op == OP_LOAD || op == OP_SENSE_NB ||
+        op == OP_SENSE_EN || op == OP_SENSE_STIM || op == OP_SENSE_HIST)
+        witness_sensor = 1;
+    if (op == OP_STEP) witness_step = 1;
+}
+
+int rendezvous_capable(const World *w, const Creature *c, int behavioral) {
+    if (!behavioral) return static_capable(w, c);
+    if (c->len <= 0 || c->len > MAX_LEN || c->e <= 0 ||
+        w->ncs < 0 || w->ncs > CMAX || w->nnb < 0 || w->nnb > CMAX) return 0;
+    /* Pas de préfiltre statique : STORE peut créer l'opcode exécuté ensuite.
+     * Tous les pointeurs accessibles par ATTACK/crossover sont privés. */
+    World *p = xmalloc(sizeof *p); *p = *w;
+    int n = w->ncs + w->nnb;
+    Creature *copies = xmalloc((size_t)(n + 1) * sizeof *copies), *subject = NULL;
+    for (int i = 0; i < w->ncs; i++) {
+        copies[i] = *w->cs[i]; p->cs[i] = &copies[i];
+        if (w->cs[i] == c) subject = p->cs[i];
+    }
+    for (int i = 0; i < w->nnb; i++) {
+        copies[w->ncs + i] = *w->nb[i]; p->nb[i] = &copies[w->ncs + i];
+        if (w->nb[i] == c) subject = p->nb[i];
+    }
+    if (!subject) { copies[n] = *c; subject = &copies[n]; }
+    Rng r = w->rng ? *w->rng : (Rng){{1,2,3,4}};
+    p->rng = &r; p->lab = NULL; p->before_vm = NULL;
+    /* Les anciennes émissions ne sont jamais lues par vm_run ; aucune adresse
+     * du monde n'est laissée dans cette file privée. */
+    memset(p->em, 0, sizeof p->em); p->nem = 0;
+    WorldThreadState thread = world_thread_state();
+    VmWatch watch = vm_get_watch();
+    witness_sensor = witness_step = 0;
+    vm_set_watch(witness_watch);
+    vm_run(subject, p);
+    int result = witness_sensor && witness_step;
+    vm_set_watch(watch);
+    world_thread_restore(thread);
+    /* SPLIT a pu allouer de vrais enfants dans la copie. */
+    for (int i = w->nnb; i < p->nnb; i++) free(p->nb[i]);
+    free(copies); free(p);
+    return result;
 }
 
 static unsigned mark_at(const RendezvousState *s,
@@ -48,7 +94,7 @@ void rendezvous_before(World *w, Creature *c, const RendezvousConfig *cfg,
     if (W <= 0 || H <= 0 || W > GRID_W || H > GRID_H) return;
     int period = cfg->period > 0 ? cfg->period : 8;
     uint64_t phase = (uint64_t)w->t + (uint64_t)(unsigned)c->id + s->seed;
-    if (phase % (unsigned)period || !capable(w, c)) return;
+    if (phase % (unsigned)period) return;
 
     unsigned value = mark_at(s, marks, c->x, c->y);
     int tx = 0, ty = 0, distance = RENDEZVOUS_RADIUS + 1;
@@ -75,6 +121,7 @@ void rendezvous_before(World *w, Creature *c, const RendezvousConfig *cfg,
         }
     }
     if (distance > RENDEZVOUS_RADIUS) return;
+    if (!rendezvous_capable(w, c, cfg->enabled == 2)) return;
 
     s->reads++;
     c->a = (uint8_t)((c->a & 15u) | (value << 4));
@@ -194,6 +241,42 @@ int rendezvous_selftest(void) {
     rendezvous_fields(w, &cfg, &s, NULL);
     CHECK(!s.marks[c.y][c.x] && !s.ttl[c.y][c.x] && s.expired == 1);
     CHECK(!memcmp(&rng, &rng_before, sizeof rng));
+    /* Présence inatteignable, puis opcode créé par STORE : le tick prime sur
+     * la simple grammaire. L'ip courant et YIELD sont effectivement respectés. */
+    memset(c.dna, 0xff, sizeof c.dna); c.len = 8; c.ip = 0; c.e = 200;
+    c.dna[0] = OP_YIELD; c.dna[1] = OP_SENSE; c.dna[2] = OP_STEP;
+    CHECK(rendezvous_capable(w, &c, 0) && !rendezvous_capable(w, &c, 1));
+    uint8_t created[] = { OP_LOADI, OP_STEP, OP_STORE, 6, OP_SENSE, OP_NOP, OP_NOP, OP_YIELD };
+    memcpy(c.dna, created, sizeof created);
+    CHECK(!rendezvous_capable(w, &c, 0) && rendezvous_capable(w, &c, 1));
+
+    /* ATTACK, EAT, STORE, EMIT et SPLIT frappent seulement les copies ; même
+     * le cumul TLS de mutation et l'observateur déjà installé sont restaurés. */
+    w->cfg = cfg_default(); w->cfg.w = GRID_W; w->cfg.h = GRID_H;
+    c.x = 3; c.y = 3; c.d = 1; c.len = 16; c.ip = 0; c.e = 200; c.species = 0;
+    uint8_t hostile[] = { OP_SENSE, OP_STEP, OP_EAT, OP_LOADI, 49, OP_STORE, 14,
+                          OP_ATTACK, OP_SPLIT, OP_EMIT, OP_YIELD };
+    memset(c.dna, 0xff, sizeof c.dna); memcpy(c.dna, hostile, sizeof hostile);
+    Creature victim = c; victim.id = 1; victim.species = 1; victim.x = 5;
+    Creature pending = victim; pending.id = 2;
+    w->cs[0] = &c; w->cs[1] = &victim; w->ncs = 2;
+    w->nb[0] = &pending; w->nnb = 1; w->rng = &rng;
+    memset(w->occ, 0, sizeof w->occ); w->occ[3][3] = 1; w->occ[3][5] = 2;
+    memset(w->food, 14, sizeof w->food);
+    *before = *w; original = c;
+    Creature vcopy = victim, pcopy = pending; rng_before = rng;
+    WorldThreadState old_thread = world_thread_state();
+    WorldThreadState requested = { 1.75, 123.5, 9 };
+    world_thread_restore(requested);
+    VmWatch old_watch = vm_get_watch(); vm_set_watch(witness_watch);
+    CHECK(rendezvous_capable(w, &c, 1));
+    WorldThreadState after_thread = world_thread_state();
+    CHECK(after_thread.scale == requested.scale && after_thread.sum == requested.sum && after_thread.n == requested.n);
+    CHECK(vm_get_watch() == witness_watch);
+    CHECK(!memcmp(before, w, sizeof *w) && !memcmp(&c, &original, sizeof c));
+    CHECK(!memcmp(&victim, &vcopy, sizeof victim) && !memcmp(&pending, &pcopy, sizeof pending));
+    CHECK(!memcmp(&rng, &rng_before, sizeof rng));
+    vm_set_watch(old_watch); world_thread_restore(old_thread);
     free(before); free(w);
 #undef CHECK
     return failures;

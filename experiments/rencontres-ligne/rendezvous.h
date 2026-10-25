@@ -5,6 +5,7 @@
 #include "octet.h"
 
 typedef struct {
+    /* enabled : 0 éteint, 1 ancienne porte statique, 2 tick témoin (nouveau défaut). */
     int enabled, period, cost;
 } RendezvousConfig;
 
@@ -17,9 +18,15 @@ typedef struct {
 } RendezvousState;
 
 void rendezvous_init(RendezvousState *state, uint64_t seed);
+/* API de diagnostic : 0 présence statique, 1 exécution réelle d'un tick privé.
+ * Ne change aucun octet du monde, de ses créatures, RNG ou observateurs. */
+int rendezvous_capable(const World *w, const Creature *c, int behavioral);
 
-/* Avant la VM : un génome muni d'un capteur (famille SENSE ou LOAD) et STEP
- * peut lire une marque à distance Manhattan <= 4, s'orienter et payer un pas.
+/* Avant la VM : enabled=2 exige l'exécution d'un capteur (famille SENSE ou LOAD)
+ * et de STEP dans un tick témoin depuis l'état courant, enabled=1 leur présence
+ * statique (compatibilité des anciens checkpoints). Cela ne prouve pas une
+ * dépendance causale du pas au capteur. Une marque à Manhattan <= 4 peut ensuite
+ * être lue et guider un pas payé.
  * Les immédiats ne sont pas des opcodes. Aucune marque => aucun changement.
  * Une marque sous la créature supprime ce pas guidé ; la VM peut ensuite
  * repartir. Les marques

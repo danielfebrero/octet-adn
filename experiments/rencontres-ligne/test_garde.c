@@ -12,12 +12,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "mondes.h"
 
-static const char *names[] = {
-    "vie-monde", "vie-forces", "vie-causes", "vie-forces-briques",
-    "vie-forces-societes", "vie-attention", "vie-traits", "vie-depense",
-    "vie-causales", "vie-saison", "vie-tronc", "vie-lecture"
-};
+#define names octet_mondes
 static const char *guard;
 static char base[128], procroot[160];
 static int failures, cases;
@@ -117,9 +114,14 @@ int main(int argc, char **argv) {
     strcpy(base, dir);
     snprintf(procroot, sizeof procroot, "%s/proc", base);
     if (mkdir(procroot, 0700)) die(procroot);
+    /* Les douze seuls ne suffisent plus. Aucun vrai /proc n'est consulté. */
     for (int i = 0; i < 12; i++) makeproc(101 + i, names[i], (101 + i) * 100, 'S', 1);
     char proof[256], proof2[256], refused[256], path[256], empty[160];
     snprintf(proof, sizeof proof, "%s/snapshot.txt", base);
+    run("douze seuls refusés", procroot, "snapshot", proof, 1, 1);
+    makeproc(113, names[12], 11300, 'S', 1);
+    run("treize seuls refusés", procroot, "snapshot", proof, 1, 1);
+    makeproc(114, names[13], 11400, 'S', 1);
     run("snapshot complet", procroot, "snapshot", proof, 0, 0);
     run("check identique", procroot, "check", proof, 0, 0);
     run("preuve existante refusée", procroot, "snapshot", proof, 1, 0);
