@@ -87,3 +87,18 @@ Sortie complète : [`results.txt`](results.txt), une ligne par graine, avec
 récoltes de chaque témoin et hash physique de la source. Le selftest inclut
 également une trace prescrite `EAT` à tous les ticks : toutes ses rotations
 ont exactement le même résultat, y compris en cas de mort.
+
+La cible de build isolé ajoutée à l'intégration est :
+
+```sh
+make experiments/approches-build/IDENTIFIANT_NEUF/perception-sequence
+experiments/approches-build/IDENTIFIANT_NEUF/perception-sequence selftest
+experiments/approches-build/IDENTIFIANT_NEUF/perception-sequence run > /tmp/perception-sequence-0996a2cd.txt
+cmp experiments/perception-sequence/results.txt /tmp/perception-sequence-0996a2cd.txt
+```
+
+La revue de l'intégration a aussi retiré une comparaison de structures entières
+du selftest : le padding de `Outcome` n'est pas une donnée portable. L'égalité
+compare désormais chaque champ. Le selftest et les 96 comptes du nouveau build
+restent identiques, octet pour octet dans `results.txt` ; aucune règle, séquence
+ou décision du détecteur n'a changé.

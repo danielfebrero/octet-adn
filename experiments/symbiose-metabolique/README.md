@@ -205,3 +205,11 @@ monde, l'historique, le RNG, la chimie et tous ses compteurs.
 
 Les ELF, objets et répertoires de mesure restent dans des chemins neufs de
 `/tmp`. Aucun monde de l'hôte lancé, arrêté, modifié ou relinké.
+
+La cible équivalente de build isolé, sans objets partagés, est :
+
+```sh
+make experiments/approches-build/IDENTIFIANT_NEUF/symbiose-metabolique
+experiments/approches-build/IDENTIFIANT_NEUF/symbiose-metabolique selftest
+experiments/approches-build/IDENTIFIANT_NEUF/symbiose-metabolique run > /tmp/symbiose-results.txt
+```

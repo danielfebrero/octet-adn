@@ -1,0 +1,35 @@
+garde: monde absent: vie-rencontres-b129054c
+garde: monde absent: vie-rencontres-sonnet-41ab85e
+isolation monde+creatures+RNG+watcher 16/16 OK
+protection noms=14 chemins_exacts_et_suffixes=28/28 OK
+garde faux proc 14/14 lus, preuve 14/14 relue, deux mondes rencontres absents chacun refusés OK
+nurserie CMAX=4096 graines=32 refus_plafond=32 refus_place=32 eclosions=32 energie_payee=640
+seed forager statique=1 comportement=1
+seed neural statique=1 comportement=1
+seed echo statique=1 comportement=1
+seed dialog statique=1 comportement=1
+seed stock statique=1 comportement=1
+seed social statique=1 comportement=1
+seed predator statique=1 comportement=1
+seed walk statique=1 comportement=1
+seed fold statique=1 comportement=1
+seed antibiotic statique=1 comportement=1
+seed commons statique=1 comportement=1
+seed pandemic statique=1 comportement=1
+seed repair statique=0 comportement=0
+seed selfevo statique=1 comportement=1
+seed diagnose statique=1 comportement=1
+seed general statique=0 comportement=0
+seeds total statique=14/16 comportement=14/16
+derive generation=0 statique=14/16 comportement=14/16
+derive generation=10 statique=14/16 comportement=10/16
+derive generation=20 statique=14/16 comportement=9/16
+derive generation=30 statique=14/16 comportement=8/16
+derive generation=40 statique=14/16 comportement=7/16
+derive generation=50 statique=14/16 comportement=5/16
+derive generation=60 statique=14/16 comportement=5/16
+derive total=853/976 comportement=497/976 plages=13..14/4..14
+cout population=1 sondes=4096 acceptees=4096 secondes=0.010076 us_par_sonde=2.460
+cout population=128 sondes=4096 acceptees=3328 secondes=0.032776 us_par_sonde=8.002
+cout population=4096 sondes=4096 acceptees=3328 secondes=0.850709 us_par_sonde=207.693
+corrections selftest OK

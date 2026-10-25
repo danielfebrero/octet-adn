@@ -97,7 +97,11 @@ static World *arena(const PoolEntry *g, Rng *r, uint64_t seed, int replay) {
 }
 static Outcome finish(const World *w) {
     Physical p = snapshot(w);
-    Outcome o = { w->st.energy_eaten, w->ncs, fnv1a(&p, sizeof p, FNV_INIT) };
+    Outcome o;
+    memset(&o, 0, sizeof o);
+    o.ate = w->st.energy_eaten;
+    o.alive = w->ncs;
+    o.hash = fnv1a(&p, sizeof p, FNV_INIT);
     return o;
 }
 static Outcome collect(const PoolEntry *g, uint64_t seed, Trace *tr) {
@@ -176,8 +180,19 @@ static Result measure(const PoolEntry *g, uint64_t seed) {
     free(tr);
     return v;
 }
+static int same_outcome(const Outcome *a, const Outcome *b) {
+    return a->ate == b->ate && a->alive == b->alive && a->hash == b->hash;
+}
 static int same_result(const Result *a, const Result *b) {
-    return !memcmp(a, b, sizeof *a);
+    /* Ne pas comparer le padding des structures, indéterminé selon le compilateur. */
+    if (!same_outcome(&a->source, &b->source) ||
+        !same_outcome(&a->exact, &b->exact) || a->events != b->events ||
+        a->exact_ok != b->exact_ok || a->passed != b->passed ||
+        a->alive_all != b->alive_all) return 0;
+    for (int i = 0; i < N_SHIFT; i++)
+        if (!same_outcome(&a->shifted[i], &b->shifted[i]) ||
+            a->prescribed[i] != b->prescribed[i]) return 0;
+    return 1;
 }
 static int selftest(void) {
     PoolEntry g = genome(0, 0);

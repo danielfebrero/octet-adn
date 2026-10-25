@@ -174,7 +174,11 @@ rendezvous=0 échecs ; profil désactivé identique hash+RNG aux hooks contourn�
 n'appelle que `test_core_state_hash_matches_main()` : **10/10 hashes historiques
 inchangés** (un cycle de 50 ticks par labo), sans lancer la suite globale.
 
-Les ELF de mesure a01..a05 et les comptes bruts restent hors dépôt. Une erreur
+Les ELF de mesure a01..a05 restent hors dépôt. Les sorties brutes de la mesure
+a04 sont archivées dans [results.txt](results.txt), celles de la sonde existante
+dans [sonde-controles.txt](sonde-controles.txt) et [sonde-barre.txt](sonde-barre.txt).
+Les selftests et l'historique ci-dessus sont une transcription des sorties
+outils, sans fichier journal brut conservé. Une erreur
 de construction initiale a01 (stockage de copie trop volumineux en TLS)
 débordait la pile d'un thread au selftest de reprise ; le stockage de copie
 est passé sur le tas avant les mesures a04. Le selftest complet de reprise
