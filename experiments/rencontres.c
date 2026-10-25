@@ -11,6 +11,7 @@
 #include "rencontres-ligne/naissance.h"
 #include "rencontres-ligne/rendezvous.h"
 #include "rencontres-ligne/mondes.h"
+#include "rencontres-ligne/vivre.h"
 
 static void extra_before(void *);
 static void extra_after(void *);
@@ -28,25 +29,29 @@ static int extra_load(FILE *, void *);
 #include "terrarium.c"
 #undef main
 
-enum { CONTROL, EXCHANGE, NURSERY, MEETING, ALL, NPROFILE };
-static const char *profiles[] = { "control", "exchange", "nursery", "meeting", "all" };
+/* capture, parente et senescence (2026-10-25) viennent après all : les numéros des cinq
+ * premiers profils, écrits dans les checkpoints existants, ne bougent pas. */
+enum { CONTROL, EXCHANGE, NURSERY, MEETING, ALL, CAPTURE, PARENTE, SENESCENCE, NPROFILE };
+static const char *profiles[] = { "control", "exchange", "nursery", "meeting", "all", "capture", "parente", "senescence" };
 typedef struct {
     int profile, reserve;
     EchangeConfig exchange;
     NaissanceConfig birth;
     RendezvousConfig meeting;
+    VivreConfig vivre;
 } Config;
 typedef struct {
     int ready;
     EchangeState exchange;
     NaissanceState birth;
     RendezvousState meeting;
+    VivreState vivre;
     long contacts, intra, inter, exchange_at_cap, birth_no_death;
     long before_dead, before_hatched;
 } ExtraIsland;
 static Config config;
 static ExtraIsland ext[KMAX];
-static FILE *metrics;
+static FILE *metrics, *vivre_out;
 static unsigned announced;
 static int profile_explicit, loading, extension_error, bypass;
 
@@ -69,6 +74,10 @@ static Config configuration(int profile) {
         .season_period = 400, .season_open = 160, .mutation = 0.005 };
     c.meeting = (RendezvousConfig){ .enabled = (profile == MEETING || profile == ALL) ? 2 : 0,
         .period = 4, .cost = 1 };
+    c.vivre = (VivreConfig){ .capture = profile == CAPTURE, .parente = profile == PARENTE,
+        .senescence = profile == SENESCENCE, .period = 16,
+        .capture_cost = 2, .capture_take = 4, .capture_gain = 2,
+        .give = 10, .give_rich = 60, .give_poor = 40, .life_base = 100, .life_step = 8 };
     return c;
 }
 
@@ -79,6 +88,7 @@ static ExtraIsland *extra_island(Island *I) {
         echange_init(&e->exchange, seed ^ 0xECA6E);
         naissance_init(&e->birth, seed ^ 0x0E0F);
         rendezvous_init(&e->meeting, seed ^ 0xAEDE);
+        vivre_init(&e->vivre, seed ^ 0x51BE);
         e->ready = 1;
     }
     return e;
@@ -112,6 +122,7 @@ static void extra_before(void *ptr) {
         if (w->ncs >= I->P->max_pop) e->exchange_at_cap += e->exchange.changes - before;
         for (int i = 0; i < w->ncs; i++) genotype(w->cs[i]);
     }
+    if (vivre_step(w, &config.vivre, &e->vivre)) for (int i = 0; i < w->ncs; i++) genotype(w->cs[i]);
     e->before_dead = w->st.dead; e->before_hatched = e->birth.hatched;
     if (config.birth.enabled) {
         int reserve = I->P->max_pop / config.reserve;
@@ -142,6 +153,8 @@ static void extra_after(void *ptr) {
  * impossible de distinguer "peu d'echanges parce que peu de contacts" de "peu d'echanges
  * parce que le repos bloque" : question posee par le choix primaire cooldown=64. */
 static const char *METRICS = "tick\tcontacts\tintra_contacts\tinter_contacts\texchanges\texchange_at_cap\tbytes_changed\teggs\thatched\tcrossed_children\tbirth_no_death\tcap_refused\tplace_refused\tenergy_refused\tseason_refused\treads\tmoves\tmove_energy\tpending\texchange_cooldown_refused\tpartner_refused\tnaissance_cooldown_refused\tfood_refused\tqueue_refused\n";
+/* Octets hérités lus en fin de génome : don (len-1), âge max (len-2), témoin neutre (len-3). */
+static const char *VIVRE_METRICS = "tick\tpop\tcaptures\tcapture_bytes\tcapture_refused\tcapture_dist_mean\tdonations\tdonated\tdonation_refused\told_deaths\tgive_byte\tlife_byte\tneutral_byte\tfrac_attack\tfrac_xor\n";
 static void extra_sample(void *ptr) {
     Terra *T = ptr;
     long ct = 0, in = 0, out = 0, xc = 0, full = 0, bytes = 0, eggs = 0, born = 0, cross = 0, nd = 0;
@@ -175,6 +188,32 @@ static void extra_sample(void *ptr) {
             xcool, partner, bcool, food, queue);
         if (fflush(metrics)) { extension_error = 1; stop_flag = 1; }
     }
+    const VivreConfig *vc = &config.vivre;
+    if ((vc->capture || vc->parente || vc->senescence) && !vivre_out && !extension_error) {
+        char path[600]; snprintf(path, sizeof path, "%s/vivre.tsv", T->dir);
+        int fresh = access(path, F_OK) != 0;
+        if (loading) truncate_tsv(path, T->t - T->P.sample);
+        vivre_out = fopen(path, loading ? "a" : "w");
+        if (!vivre_out) { extension_error = 1; stop_flag = 1; return; }
+        if (!loading || fresh) fputs(VIVRE_METRICS, vivre_out);
+    }
+    if (vivre_out) {
+        long cap_n = 0, cap_b = 0, cap_r = 0, cap_d = 0, don = 0, given = 0, don_r = 0, old = 0;
+        VivreSample vs, sum = { 0 };
+        for (int k = 0; k < T->P.K; k++) {
+            VivreState *v = &extra_island(&T->I[k])->vivre;
+            cap_n += v->captures; cap_b += v->capture_bytes; cap_r += v->capture_refused; cap_d += v->capture_dist_sum;
+            don += v->donations; given += v->donated; don_r += v->donation_refused; old += v->old_deaths;
+            vivre_sample(T->I[k].w, &vs);
+            sum.n += vs.n; sum.give_byte += vs.give_byte * vs.n; sum.life_byte += vs.life_byte * vs.n;
+            sum.neutral_byte += vs.neutral_byte * vs.n; sum.frac_attack += vs.frac_attack * vs.n; sum.frac_xor += vs.frac_xor * vs.n;
+        }
+        double nn = sum.n ? sum.n : 1;
+        fprintf(vivre_out, "%ld\t%d\t%ld\t%ld\t%ld\t%.3f\t%ld\t%ld\t%ld\t%ld\t%.3f\t%.3f\t%.3f\t%.4f\t%.4f\n",
+            T->t, sum.n, cap_n, cap_b, cap_r, cap_n ? (double)cap_d / cap_n : 0.0, don, given, don_r, old,
+            sum.give_byte / nn, sum.life_byte / nn, sum.neutral_byte / nn, sum.frac_attack / nn, sum.frac_xor / nn);
+        if (fflush(vivre_out)) { extension_error = 1; stop_flag = 1; }
+    }
     if (xc && !(announced & 1)) { event(T, "croisement_rencontre", "couples_modifies=%ld au_plafond=%ld", xc, full); announced |= 1; }
     if (born && !(announced & 2)) { event(T, "eclosion", "enfants=%ld croises=%ld sans_mort_ce_tick=%ld", born, cross, nd); announced |= 2; }
     if (moves && !(announced & 4)) { event(T, "rendezvous", "pas_coutes=%ld lectures=%ld", moves, reads); announced |= 4; }
@@ -183,7 +222,7 @@ static void extra_sample(void *ptr) {
 /* Version et tailles explicites : pas de changement de Params ou de LoiMonde.
  * Une seule publication atomique contient monde, œufs, cooldowns, marques et RNG. */
 static int extra_save(FILE *f, void *ptr) {
-    Terra *T = ptr; uint32_t version = 1, size = sizeof(ExtraIsland), cs = sizeof(Config);
+    Terra *T = ptr; uint32_t version = 2, size = sizeof(ExtraIsland), cs = sizeof(Config);
     for (int k = 0; k < T->P.K; k++) extra_island(&T->I[k]);
     int ok = wr(f, "OADNREN1", 8) && wr(f, &version, sizeof version) && wr(f, &size, sizeof size) &&
         wr(f, &cs, sizeof cs) && wr(f, &config, sizeof config) && wr(f, &announced, sizeof announced) &&
@@ -194,7 +233,7 @@ static int extra_save(FILE *f, void *ptr) {
 
 static int extra_load(FILE *f, void *ptr) {
     Terra *T = ptr; char magic[8]; uint32_t v, size, cs; Config saved;
-    if (!rd(f, magic, 8) || memcmp(magic, "OADNREN1", 8) || !rd(f, &v, sizeof v) || v != 1 ||
+    if (!rd(f, magic, 8) || memcmp(magic, "OADNREN1", 8) || !rd(f, &v, sizeof v) || v != 2 ||
         !rd(f, &size, sizeof size) || size != sizeof(ExtraIsland) || !rd(f, &cs, sizeof cs) || cs != sizeof(Config) ||
         !rd(f, &saved, sizeof saved) || saved.profile < 0 || saved.profile >= NPROFILE ||
         (profile_explicit && saved.profile != config.profile)) {
@@ -215,12 +254,14 @@ static int extra_load(FILE *f, void *ptr) {
 
 static void reset_extra(int profile) {
     if (metrics) fclose(metrics);
-    metrics = NULL; memset(ext, 0, sizeof ext); config = configuration(profile);
+    if (vivre_out) fclose(vivre_out);
+    metrics = NULL; vivre_out = NULL; memset(ext, 0, sizeof ext); config = configuration(profile);
     announced = 0; loading = 0; extension_error = 0;
 }
 
 static void close_outputs(Terra *T) {
     if (metrics) { fclose(metrics); metrics = NULL; }
+    if (vivre_out) { fclose(vivre_out); vivre_out = NULL; }
     if (T->series) fclose(T->series);
     if (T->events) fclose(T->events);
     if (T->forces_out) fclose(T->forces_out);
@@ -230,7 +271,7 @@ static void close_outputs(Terra *T) {
     if (T->lois_out) fclose(T->lois_out);
 }
 
-static int resume_selftest(void) {
+static int resume_selftest(int profile) {
     char root[] = "/tmp/octet-rencontres-resume-XXXXXX", full[600], split[600], ck[700];
     if (!mkdtemp(root)) return 1;
     snprintf(full, sizeof full, "%s/full", root); snprintf(split, sizeof split, "%s/split", root);
@@ -238,36 +279,37 @@ static int resume_selftest(void) {
     Params p = defaults(); p.K = 1; p.w = 16; p.h = 8; p.pop0 = 24; p.max_pop = 80;
     p.sample = 100; p.ck_every = 200; p.migrate = 0; p.stress = 1;
     static Terra a, b;
-    reset_extra(ALL); terra_new(&a, &p); snprintf(a.dir, sizeof a.dir, "%s", full);
+    reset_extra(profile); terra_new(&a, &p); snprintf(a.dir, sizeof a.dir, "%s", full);
     if (!open_outputs(&a, 0) || terra_run(&a, 400, 1)) return 1;
     uint64_t hash = terra_hash(&a); Rng rng = a.I[0].wr;
     ExtraIsland *expected = malloc(sizeof *expected); if (!expected) return 1;
     *expected = ext[0]; close_outputs(&a); terra_free(&a);
-    reset_extra(ALL); terra_new(&b, &p); snprintf(b.dir, sizeof b.dir, "%s", split);
+    reset_extra(profile); terra_new(&b, &p); snprintf(b.dir, sizeof b.dir, "%s", split);
     if (!open_outputs(&b, 0) || terra_run(&b, 200, 1)) return 1;
     close_outputs(&b); terra_free(&b); memset(&b, 0, sizeof b);
-    reset_extra(ALL); snprintf(ck, sizeof ck, "%s/state.ck", split);
+    reset_extra(profile); snprintf(ck, sizeof ck, "%s/state.ck", split);
     if (!load(&b, ck)) return 1;
     snprintf(b.dir, sizeof b.dir, "%s", split);
     if (!open_outputs(&b, 1) || terra_run(&b, 400, 1)) return 1;
     int same = hash == terra_hash(&b) && !memcmp(&rng, &b.I[0].wr, sizeof rng) && !memcmp(expected, &ext[0], sizeof *expected);
     close_outputs(&b); terra_free(&b); free(expected);
-    const char *names[] = { "series.tsv", "societies.tsv", "events.tsv", "rencontres.tsv" };
-    for (int i = 0; i < 4; i++) {
+    const char *names[] = { "series.tsv", "societies.tsv", "events.tsv", "rencontres.tsv", "vivre.tsv" };
+    int nnames = profile >= CAPTURE ? 5 : 4;
+    for (int i = 0; i < nnames; i++) {
         char pa[700], pb[700]; snprintf(pa, sizeof pa, "%s/%s", full, names[i]); snprintf(pb, sizeof pb, "%s/%s", split, names[i]);
         char *sa = slurp(pa), *sb = slurp(pb); int eq = sa && sb && !strcmp(sa, sb);
-        printf("rencontres reprise : %s %s\n", names[i], eq ? "identique" : "ECHEC");
+        printf("rencontres reprise [%s] : %s %s\n", profiles[profile], names[i], eq ? "identique" : "ECHEC");
         same &= eq; free(sa); free(sb);
     }
-    printf("rencontres reprise : monde, RNG, œufs, cooldowns, marques %s\n", same ? "OK" : "ECHEC");
+    printf("rencontres reprise [%s] : monde, RNG, œufs, cooldowns, marques %s\n", profiles[profile], same ? "OK" : "ECHEC");
     reset_extra(CONTROL);
     return !same;
 }
 
 static int rencontres_selftest(void) {
-    int xc = echange_selftest(), nc = naissance_selftest(), rv = rendezvous_selftest();
-    int rc = xc | nc | rv;
-    printf("rencontres modules : échange=%d naissance=%d rendezvous=%d échecs\n", xc, nc, rv);
+    int xc = echange_selftest(), nc = naissance_selftest(), rv = rendezvous_selftest(), vv = vivre_selftest();
+    int rc = xc | nc | rv | vv;
+    printf("rencontres modules : échange=%d naissance=%d rendezvous=%d vivre=%d échecs\n", xc, nc, rv, vv);
     /* Neutralité physique : aucun RNG du monde touché lorsque tout est éteint. */
     Params p = defaults(); p.K = 1; p.w = 16; p.h = 8; p.pop0 = 12; p.max_pop = 40;
     p.sample = 100; p.ck_every = 200; p.migrate = 0;
@@ -283,11 +325,11 @@ static int rencontres_selftest(void) {
     int same = ah == terra_hash(&b) && !memcmp(&ar, &b.I[0].wr, sizeof ar);
     printf("rencontres désactivées : égalité avec hooks contournés hash+RNG %s ; Params=%zu\n", same ? "OK" : "ECHEC", sizeof(Params));
     rc |= !same; terra_free(&a); terra_free(&b);
-    return rc | resume_selftest();
+    return rc | resume_selftest(ALL) | resume_selftest(CAPTURE) | resume_selftest(PARENTE) | resume_selftest(SENESCENCE);
 }
 
 static int help(void) {
-    fprintf(stderr, "rencontres run --dir CHEMIN_NEUF --profile control|exchange|nursery|meeting|all [options terrarium]\n"
+    fprintf(stderr, "rencontres run --dir CHEMIN_NEUF --profile control|exchange|nursery|meeting|all|capture|parente|senescence [options terrarium]\n"
         "    [--exchange-period N] [--exchange-cost N] [--exchange-cooldown N]\n"
         "    [--nursery-period N] [--nursery-cost N] [--nursery-food N] [--nursery-delay N]\n"
         "    [--nursery-season-period N] [--nursery-season-open N] [--nursery-mutation F]\n"

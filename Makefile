@@ -12,7 +12,7 @@ RENCONTRES_CORE := src/rng.c src/isa.c src/vm.c src/mutate.c src/world.c src/lab
 experiments/rencontres-build/%/terrarium: $(RENCONTRES_SRC) $(RENCONTRES_CORE) include/octet.h
 	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
 	@mkdir -p "$(dir $@)"
-	$(CC) $(CFLAGS) -pthread -o $@ experiments/rencontres.c experiments/rencontres-ligne/echange.c experiments/rencontres-ligne/naissance.c experiments/rencontres-ligne/rendezvous.c $(RENCONTRES_CORE) $(LDLIBS) -ldl
+	$(CC) $(CFLAGS) -pthread -o $@ experiments/rencontres.c experiments/rencontres-ligne/echange.c experiments/rencontres-ligne/naissance.c experiments/rencontres-ligne/rendezvous.c experiments/rencontres-ligne/vivre.c $(RENCONTRES_CORE) $(LDLIBS) -ldl
 
 experiments/rencontres-build/%/garde: experiments/rencontres-ligne/garde.c experiments/rencontres-ligne/mondes.h
 	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
