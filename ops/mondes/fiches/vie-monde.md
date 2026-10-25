@@ -62,6 +62,18 @@ Dernière ligne complète de [experiments/vie-monde/series.tsv](../../../experim
 | `scomp_new` | 2 |
 | `scomp_alive` | 164 |
 
+## Faits remarquables
+
+### Renouvellement et diversité dans le monde de référence
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** La population compte 3 833 individus et 480 génotypes (H=6,8913). La fenêtre rapporte 5 958 naissances et 5 917 morts : une population présente peut donc cacher un renouvellement important. Les 26 niches occupées ne donnent que trois niches stables.
+
+**Portée et limites.** Ces compteurs de fenêtre ne sont pas les totaux depuis la fondation. Ils décrivent un état démographique, sans établir une amélioration ni une société.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/terrarium/README.md](../../../experiments/terrarium/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-monde).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

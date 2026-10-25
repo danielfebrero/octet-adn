@@ -2,6 +2,8 @@
 
 Inventaire vérifié le **2026-10-25T17:04:16+00:00** : **34 processus vivants**, chacun avec sa fiche Markdown versionnée. Les mesures sont des instantanés datés ; les journaux locaux restent la source pour les regards suivants. Documentation seule : aucun processus, ELF ou checkpoint modifié.
 
+[**Faits remarquables : index transversal et récits par monde**](FAITS-REMARQUABLES.md).
+
 ## Terrariums historiques (18)
 
 | Monde | Fiche | Conteneur |
@@ -58,8 +60,10 @@ Inventaire vérifié le **2026-10-25T17:04:16+00:00** : **34 processus vivants**
 
 ## E1 — éteint
 
-E1 (`octet-choix-e1`) est sorti avec le code 0, épisode 278, population 0, 101 naissances et 165 morts. Il ne fait pas partie des 34 vivants. Aucun fondateur à recréer, aucune écologie à relancer. Export en lecture seule : `experiments/choix/export-e1b-20261025` (zéro génome exportable). Voir [Écologie E1](../../experiments/choix/ECOLOGIE.md).
+E1 (`octet-choix-e1`) est sorti avec le code 0, épisode 278, population 0, 101 naissances et 165 morts. Il ne fait pas partie des 34 vivants. Aucun fondateur à recréer, aucune écologie à relancer. Export en lecture seule : `experiments/choix/export-e1b-20261025` (zéro génome exportable). Voir la [fiche historique et les faits d’E1](fiches/choix-e1.md), ainsi que [Écologie E1](../../experiments/choix/ECOLOGIE.md).
 
 ## Maintenir les fiches
 
 Chaque nouveau monde continu reçoit sa fiche ici, liée dans cet index. Conserver le moteur, les paramètres de fondation, les données, les preuves du processus et un regard daté. Remplacer un relevé nécessite de conserver sa date ; ne pas confondre un essai borné ou un ancien checkpoint avec un monde actuellement vivant. Les essais contrôlés et leurs verdicts restent dans les protocoles liés.
+
+À chaque regard, détailler aussi les faits remarquables dans la fiche (date, repère simulé, mesures, preuves, limites), conserver l’historique, puis maintenir [leur index](FAITS-REMARQUABLES.md). Les résultats nuls et les extinctions restent documentés.

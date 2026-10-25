@@ -90,6 +90,18 @@ Dernière ligne complète de [experiments/vie-jardin-senescence-parente-20261025
 | `inconnue` | 0 |
 | `pop` | 160 |
 
+## Faits remarquables
+
+### Les deux origines sont encore présentes
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** À t=549 400, origine.tsv donne A=107 (sénescence), B=53 (parenté), inconnue=0, pour 160 vivants. Cela représente 66,875 % et 33,125 % ; 160 génotypes et dix niches stables sont mesurés.
+
+**Portée et limites.** Cette coexistence est un instantané, pas une stabilité démontrée. L’étiquette d’origine suit une filiation ; elle ne prouve ni fusion génétique ni coopération entre les deux lignées.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/transplant/PROTOCOLE.md](../../../experiments/transplant/PROTOCOLE.md) ; [experiments/transplant/RESULTATS.md](../../../experiments/transplant/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-jardin-senescence-parente-20261025).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -77,6 +77,18 @@ Dernière ligne complète de [experiments/vie-depense/lois.tsv](../../../experim
 | `pompe_milli` | 1000 |
 | `lois` | 0 |
 
+## Faits remarquables
+
+### La règle de dépense existe, son compteur est nul au relevé
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Le monde compte 32 000 individus, 10 535 génotypes et huit niches stables. lois.tsv donne spend=0, partage=0 et marques=0, tandis que series.tsv rapporte 9 566 émissions.
+
+**Portée et limites.** Ne pas transformer la description de la règle en événement observé : aucune dépense n’est attestée par ce compteur à cet instant. Il faudrait plusieurs relevés pour décrire sa fréquence.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/depense-ligne/README.md](../../../experiments/depense-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-depense).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

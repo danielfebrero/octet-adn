@@ -88,6 +88,18 @@ Dernière ligne complète de [experiments/vie-causales/lois.tsv](../../../experi
 | `pompe_milli` | 1000 |
 | `lois` | 0 |
 
+## Faits remarquables
+
+### Partage mesuré, aucune marque au relevé
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Le compteur partage vaut 25 958 alors que marques=0. Huit traits sont tenus, dont entre_siens=0,162 ; 244 niches sont occupées et sept stables, avec 32 000 vivants.
+
+**Portée et limites.** Le moteur rend possibles des effets distincts entre siens et étrangers. Le relevé constate le partage, sans établir un usage des marques ni une communication adaptée.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/causales-ligne/README.md](../../../experiments/causales-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-causales).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -64,6 +64,18 @@ L’en-tête ayant déjà disparu du journal, schéma commun du terrarium repris
 | `scomp_new` | 0 |
 | `scomp_alive` | 55 |
 
+## Faits remarquables
+
+### Diversité de comportements malgré une fenêtre sans renouvellement
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** La population de 32 000 individus comprend 12 244 génotypes, 41 niches occupées et 11 niches stables. La fenêtre contient 12 142 émissions mais zéro naissance et zéro mort.
+
+**Portée et limites.** L’activité continue alors que la démographie est stationnaire sur cette fenêtre. Les chiffres seuls ne montrent pas que la chaleur a causé les comportements observés ; cela demanderait une comparaison dédiée.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/attention-ligne/README.md](../../../experiments/attention-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-attention).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

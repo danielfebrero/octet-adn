@@ -61,6 +61,18 @@ Dernière ligne complète de [experiments/vie-quantique-p64-20261025/mesures.tsv
 | `erreur_norme` | 4.1493009028670258e-09 |
 | `energie_cinetique` | 475.25735597245574 |
 
+## Faits remarquables
+
+### Fixations à seuil 64 ticks et réseau étendu
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** À t=816000, le compteur atteint 87 projections. Le graphe possède 1024 liens, sa plus grande composante actuelle contient 61 octets sur 64, et son maximum historique est 64. L’erreur de norme vaut 4.1493009028670258e-09.
+
+**Portée et limites.** Cette erreur dépasse le maximum de 2,5×10⁻¹¹ rapporté dans les essais courts : c’est un point de surveillance numérique, sans cause diagnostiquée ici. Une grande composante n’est pas un organisme autonome. Les projections sont des fixations du modèle, sans preuve de vie, de conscience ni d’interdépendance fonctionnelle. Les compteurs bruts ne constituent pas une comparaison contrôlée des périodes.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/quantique/PROTOCOLE.md](../../../experiments/quantique/PROTOCOLE.md) ; [experiments/quantique/RESULTATS.md](../../../experiments/quantique/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-quantique-p64-20261025).
+
 ## Lecture et continuité
 
 Suivre t, projections, liens, tailles des assemblages et erreur_norme. Une dérive de norme fragilise l’interprétation du long terme, même si le processus continue ; ne pas la corriger en remplaçant son ELF. Le mot quantique désigne ce modèle hybride, pas une physique quantique complète.

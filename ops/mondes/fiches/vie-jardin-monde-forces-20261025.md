@@ -90,6 +90,18 @@ Dernière ligne complète de [experiments/vie-jardin-monde-forces-20261025/origi
 | `inconnue` | 0 |
 | `pop` | 200 |
 
+## Faits remarquables
+
+### L’origine forces occupe tout le jardin observé
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** À t=1 234 600, origine.tsv donne A=0 (monde), B=200 (forces), inconnue=0 et population=200. Les deux origines ne coexistent donc plus au relevé. Le jardin présente 67 génotypes et trois niches stables.
+
+**Portée et limites.** C’est la fixation d’une origine dans ce jardin. Ce constat ne démontre pas une supériorité universelle de forces ; les essais séparés distinguent compétition générale et adaptation locale.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/transplant/PROTOCOLE.md](../../../experiments/transplant/PROTOCOLE.md) ; [experiments/transplant/RESULTATS.md](../../../experiments/transplant/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-jardin-monde-forces-20261025).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

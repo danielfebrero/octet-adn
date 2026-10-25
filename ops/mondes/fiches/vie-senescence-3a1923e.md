@@ -115,6 +115,18 @@ Dernière ligne complète de [experiments/vie-senescence-3a1923e/rencontres.tsv]
 | `food_refused` | 0 |
 | `queue_refused` | 0 |
 
+## Faits remarquables
+
+### Longévité codée près du maximum et morts d’âge nombreuses
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** vivre.tsv compte 2 222 283 morts d’âge. life_byte=254,431, près du maximum 255, contre neutral_byte=34,469. La longueur moyenne atteint 994,12 octets et le maximum 1 024. La fenêtre rapporte 17 naissances et 17 morts pour 160 vivants.
+
+**Portée et limites.** Le contraste avec l’octet neutre est descriptif sur cette instance ; il ne remplace pas les bras contrôlés. Le dernier excès social vaut −0,01169 sur 8 984 paires : il ne résume pas les événements sociaux antérieurs.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/rencontres-ligne/VIVRE.md](../../../experiments/rencontres-ligne/VIVRE.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-senescence-3a1923e).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

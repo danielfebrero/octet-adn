@@ -72,6 +72,18 @@ Dernière ligne complète de [experiments/vie-raison-patience-20261025/eval.tsv]
 | `m3` | -1.000000 |
 | `episodes` | 8192 |
 
+## Faits remarquables
+
+### Attendre souvent ne suffit pas à démontrer une patience conditionnelle
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** m0=0,508179 ; attente si court m1=0,905274 et si long m2=0,870914. La différence m1−m2 vaut 0,034360. Évaluation de clones au cycle 262 144, 8 192 épisodes consignés ; population de 256 individus.
+
+**Portée et limites.** Le monde attend dans les deux situations. L’écart positif reste descriptif sur ce relevé sans témoin apparié ; la série à dix graines ne tient pas le critère préenregistré.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/raison/PROTOCOLE.md](../../../experiments/raison/PROTOCOLE.md) ; [experiments/raison/RESULTATS.md](../../../experiments/raison/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-raison-patience-20261025).
+
 ## Lecture et continuité
 
 `series.tsv` décrit la population en évolution ; `eval.tsv` mesure des clones. Le sens de m0…m3 dépend du milieu et des ablations : voir le protocole et `experiments/raison.c`. Une valeur −1 indique une mesure non applicable. Seul autrui passe le critère préenregistré de la série à dix graines ; les apparitions dans les autres milieux restent des résultats exploratoires.

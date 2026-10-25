@@ -62,6 +62,18 @@ Dernière ligne complète de [experiments/vie-forces-briques/series.tsv](../../.
 | `scomp_new` | 0 |
 | `scomp_alive` | 52 |
 
+## Faits remarquables
+
+### Émissions abondantes et quatre niches stables
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Le relevé associe 32 000 individus, 4 524 génotypes et 71 129 émissions dans la fenêtre. Sur 50 niches occupées, quatre sont stables ; la diversité génétique H vaut 8,3479.
+
+**Portée et limites.** Une émission permet de déposer des briques dans ce moteur ; son compteur ne donne pas le nombre de constructions encore présentes ni de carrés mixtes fonctionnels.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/briques-ligne/README.md](../../../experiments/briques-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-forces-briques).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -67,6 +67,18 @@ Dernière ligne complète de [experiments/vie-quantique2-e-20261025/mesures.tsv]
 
 Lecture cumulative de `naissances.tsv` au relevé : 100425 naissances de type 2 avec distances valides ; somme d_parent = 867700.706938, somme d_hasard = 1181497.267159. H_e = 1 − somme(d_parent)/somme(d_hasard) = **0.265592**. Le journal évolue pendant la lecture ; ce constat d’une instance ne remplace pas les contrastes de la série contrôlée.
 
+## Faits remarquables
+
+### Héritage par empreinte dans des ensembles de petite taille
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** À t=422 528, 17 ensembles sont présents, le plus grand contient cinq octets et 44 octets sont liés. Les naissances cumulées comprennent 100 425 empreintes et 22 042 fissions. H_e=0,265592 sur les naissances de type 2 aux distances valides ; l’ordre de phase vaut 0,975219705.
+
+**Portée et limites.** H_e compare la distance au parent à la distance au hasard ; sa valeur positive indique une ressemblance héritée sur cette instance. La génération maximale 447 ne mesure pas la fidélité de transmission. La série contrôlée établit un contraste d’hérédité, sans sélection adaptative démontrée.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/quantique2/PROTOCOLE.md](../../../experiments/quantique2/PROTOCOLE.md) ; [experiments/quantique2/RESULTATS.md](../../../experiments/quantique2/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-quantique2-e-20261025).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -90,6 +90,18 @@ Dernière ligne complète de [experiments/vie-lecture/lois.tsv](../../../experim
 
 Plugins présents au relevé (la présence du fichier ne prouve pas à elle seule son activation) : `competition.so`, `heritage.so`, `lecture.so`, `memoire.so`, `osmo.so`, `renaissance.so`, `trace.so`.
 
+## Faits remarquables
+
+### Sept lois comptées, sans marque dans le relevé
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** lois.tsv donne lois=7, partage=26 029 et marques=0. Le monde compte 32 000 individus, 10 230 génotypes et cinq niches stables sur 191 occupées. L’excès social est de 0,05243 sur 349 paires.
+
+**Portée et limites.** La possibilité de lire ou marquer les briques ne démontre pas un usage évolué de cette lecture. L’excès social et la présence des fichiers lecture.so/trace.so ne suffisent pas à cette attribution.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/tronc-ligne/README.md](../../../experiments/tronc-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-lecture).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

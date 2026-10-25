@@ -62,6 +62,18 @@ Dernière ligne complète de [experiments/vie-forces/series.tsv](../../../experi
 | `scomp_new` | 19 |
 | `scomp_alive` | 119 |
 
+## Faits remarquables
+
+### Renouvellement intense sous les règles de prédation
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** À 2 207 vivants pour 477 génotypes, la fenêtre rapporte 6 262 naissances et 6 383 morts. H=7,6666 et trois niches stables sont encore mesurées. L’excès social de 0,16667 repose sur seulement six paires.
+
+**Portée et limites.** Un excès élevé sur six paires ne suffit pas à conclure à une société. pred_hits=0 dans cette fenêtre ne signifie pas que la prédation n’a jamais eu lieu.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/forces-ligne/README.md](../../../experiments/forces-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-forces).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

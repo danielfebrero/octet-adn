@@ -75,6 +75,18 @@ Dernière ligne complète de [experiments/vie-saison/lois.tsv](../../../experime
 | `pompe_milli` | 892 |
 | `lois` | 0 |
 
+## Faits remarquables
+
+### La pompe saisonnière est sous son maximum
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Le facteur pompe_milli=892 correspond à 89,2 % du niveau nominal au relevé. Le mécanisme module les apports des fermes et de la technologie, et pas uniquement la repousse de base.
+
+**Portée et limites.** Une phase de saison ne montre pas à elle seule une adaptation saisonnière. Comparer plusieurs phases et un témoin serait nécessaire pour attribuer un effet à ce mécanisme.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/saison-ligne/README.md](../../../experiments/saison-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-saison).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

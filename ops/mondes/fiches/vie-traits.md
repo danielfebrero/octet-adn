@@ -75,6 +75,18 @@ Dernière ligne complète de [experiments/vie-traits/traits.tsv](../../../experi
 | `tenues` | STORE=0.793,SENSE=0.867,TURN=0.819,STEP=0.387,EAT=0.796,MOV_BA=0.600,LOOP=0.891,entre_siens=0.158 |
 | `essayees` | STORE=0.793,SENSE=0.867,TURN=0.819,STEP=0.387,EAT=0.796,MOV_BA=0.600,LOOP=0.891,entre_siens=0.158 |
 
+## Faits remarquables
+
+### Huit traits découverts structurent 242 niches occupées
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Les huit traits tenus sont STORE, SENSE, TURN, STEP, EAT, MOV_BA, LOOP et entre_siens. Leurs valeurs sont conservées dans traits.tsv ci-dessous ; entre_siens=0,158 et LOOP=0,891. Sept niches sont stables sur 242 occupées, pour 32 000 individus.
+
+**Portée et limites.** Les niches correspondent ici à des masques de traits découverts, pas à 242 espèces. La présence du trait entre_siens ne démontre pas une dépendance sociale.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/traits-ligne/README.md](../../../experiments/traits-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-traits).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

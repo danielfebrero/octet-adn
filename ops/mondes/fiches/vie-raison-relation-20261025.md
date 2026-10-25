@@ -72,6 +72,18 @@ Dernière ligne complète de [experiments/vie-raison-relation-20261025/eval.tsv]
 | `m3` | -1.000000 |
 | `episodes` | 8192 |
 
+## Faits remarquables
+
+### Comparer des valeurs inédites
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** m0=0,713135 sur des valeurs jamais vues pendant l’évolution, contre une référence de hasard de 0,50. Évaluation de clones au cycle 262 144, 8 192 épisodes consignés ; population de 256 individus.
+
+**Portée et limites.** C’est une généralisation observée sur cette population. Six graines sur dix réussissent dans la lecture exploratoire de la série, mais l’intervalle du contraste global recouvre zéro : son critère préenregistré n’est pas tenu.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/raison/PROTOCOLE.md](../../../experiments/raison/PROTOCOLE.md) ; [experiments/raison/RESULTATS.md](../../../experiments/raison/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-raison-relation-20261025).
+
 ## Lecture et continuité
 
 `series.tsv` décrit la population en évolution ; `eval.tsv` mesure des clones. Le sens de m0…m3 dépend du milieu et des ablations : voir le protocole et `experiments/raison.c`. Une valeur −1 indique une mesure non applicable. Seul autrui passe le critère préenregistré de la série à dix graines ; les apparitions dans les autres milieux restent des résultats exploratoires.

@@ -62,6 +62,18 @@ Dernière ligne complète de [experiments/vie-causes/series.tsv](../../../experi
 | `scomp_new` | 0 |
 | `scomp_alive` | 131 |
 
+## Faits remarquables
+
+### Beaucoup de vivants, très peu de diversité génétique
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Les 4 000 individus se répartissent en seulement quatre génotypes ; H=0,0924 indique une répartition très déséquilibrée. La fenêtre ne rapporte ni naissance ni mort, mais 2 359 émissions.
+
+**Portée et limites.** Cette faible diversité n’est pas une extinction ni une absence d’activité. Un seul relevé ne prouve pas que cette situation est irréversible.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/causes-ligne/README.md](../../../experiments/causes-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-causes).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

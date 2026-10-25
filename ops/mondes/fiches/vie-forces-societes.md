@@ -62,6 +62,18 @@ Dernière ligne complète de [experiments/vie-forces-societes/series.tsv](../../
 | `scomp_new` | 0 |
 | `scomp_alive` | 55 |
 
+## Faits remarquables
+
+### Le détecteur social ne donne pas un résultat positif dans cette fenêtre
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Les 32 000 vivants conservent 11 491 génotypes et quatre niches stables. La mesure sociale utilise 12 paires : MI=0,13718, témoin=0,15269, excès=−0,01550. Quatre naissances et quatre morts sont rapportées.
+
+**Portée et limites.** La corrélation brute est inférieure au témoin. Ce relevé ne prouve pas une société ; il ne permet pas non plus de déclarer qu’aucun événement societe_intra/inter n’a existé dans l’historique.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/briques-ligne/README.md](../../../experiments/briques-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-forces-societes).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

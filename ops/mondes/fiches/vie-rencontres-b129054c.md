@@ -88,6 +88,18 @@ Dernière ligne complète de [experiments/vie-rencontres-b129054c/rencontres.tsv
 | `move_energy` | 476810653 |
 | `pending` | 32 |
 
+## Faits remarquables
+
+### Échanges au plafond et enfants croisés attestés
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** rencontres.tsv compte 45009191 échanges, dont 44784772 au plafond, et 696641240 octets changés. Sur 1913 éclosions, 1904 enfants différaient des deux ADN parentaux avant mutation ; 1020 éclosions ont eu lieu sans mort sur la même île au même tick. La population au relevé est 160, avec 4 niches occupées et 2 stables.
+
+**Portée et limites.** Les contacts sont des observations répétées de paires physiques, pas des partenaires distincts ni des sociétés. Les compteurs sont cumulatifs ; les durées et moteurs diffèrent entre ces trois mondes, ce qui interdit de classer leur efficacité par les totaux bruts.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/rencontres-ligne/README.md](../../../experiments/rencontres-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-rencontres-b129054c).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -115,6 +115,18 @@ Dernière ligne complète de [experiments/vie-capture-3a1923e/rencontres.tsv](..
 | `food_refused` | 0 |
 | `queue_refused` | 0 |
 
+## Faits remarquables
+
+### Circulation massive d’octets par capture
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** vivre.tsv conserve 11 646 660 captures et 47 114 360 octets capturés, avec 14 715 refus. La distance ADN moyenne mesurée vaut 289,792 ; les 160 individus ont chacun un génotype distinct. Le génome moyen mesure 409,40 octets.
+
+**Portée et limites.** Ces captures sont cumulatives : frac_attack=0 au relevé n’annule pas leur historique. Capturer de l’ADN ne prouve ni son utilité ni une adaptation par transfert horizontal.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/rencontres-ligne/VIVRE.md](../../../experiments/rencontres-ligne/VIVRE.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-capture-3a1923e).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

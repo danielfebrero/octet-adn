@@ -115,6 +115,18 @@ Dernière ligne complète de [experiments/vie-parente-3a1923e/rencontres.tsv](..
 | `food_refused` | 0 |
 | `queue_refused` | 0 |
 
+## Faits remarquables
+
+### Dons d’énergie attestés entre voisins
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** Le journal compte 89 932 dons pour 899 320 unités transférées, avec 53 848 refus. give_byte=155,469, life_byte=199,312 et neutral_byte=170,806. Les 160 individus portent 160 génotypes.
+
+**Portée et limites.** Les dons prouvent l’exécution du mécanisme. Sans comparaison contrôlée, ces seules moyennes ne prouvent pas une sélection de la générosité ni un bénéfice collectif.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/rencontres-ligne/VIVRE.md](../../../experiments/rencontres-ligne/VIVRE.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-parente-3a1923e).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

@@ -90,6 +90,18 @@ Dernière ligne complète de [experiments/vie-tronc/lois.tsv](../../../experimen
 
 Plugins présents au relevé (la présence du fichier ne prouve pas à elle seule son activation) : `competition.so`, `heritage.so`, `memoire.so`, `osmo.so`, `renaissance.so`.
 
+## Faits remarquables
+
+### Cinq lois comptées et partage actif
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** lois.tsv compte cinq lois, partage=20 341, marques=0 et pompe_milli=859. Les huit traits comprennent LOAD et ATTACK ; 193 niches sont occupées, dont cinq stables, pour 32 000 individus.
+
+**Portée et limites.** Le nombre de lois et la présence des plugins ne démontrent pas que chaque plugin produit un avantage. Les effets doivent être reliés à leurs propres traces ou à une ablation.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/tronc-ligne/README.md](../../../experiments/tronc-ligne/README.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-tronc).
+
 ## Lecture et continuité
 
 Observer les journaux en lecture seule. Ne jamais tuer, relinker, reconstruire par-dessus le moteur, ni réinitialiser un vivant. Les fichiers d’état ne sont pas modifiés par cette documentation.

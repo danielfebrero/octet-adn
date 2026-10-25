@@ -72,6 +72,18 @@ Dernière ligne complète de [experiments/vie-raison-autrui-20261025/eval.tsv](.
 | `m3` | -1.000000 |
 | `episodes` | 8192 |
 
+## Faits remarquables
+
+### Usage de l’action d’un autre comme information
+
+**Observation datée — 25 octobre 2026, 17:04:16 UTC.** m0=0,726074 pour l’observateur ; m1=0,737061 pour l’acteur qui dispose de l’indice. Évaluation de clones au cycle 262 144, 8 192 épisodes consignés ; population de 256 individus.
+
+**Portée et limites.** C’est aussi le seul milieu qui tient le critère préenregistré : 0,702 contre 0,502, Δ=0,201, IC 99,5 % [0,179 ; 0,222], avec effet dans les dix graines. Ce résultat porte sur un usage d’information sociale, pas sur une théorie de l’esprit humaine.
+
+**Preuves.** Les tableaux du [dernier état observé](#dernier-état-observé) conservent les valeurs et les chemins des journaux de cette instance. Le contexte, les définitions et les essais séparés sont dans [experiments/raison/PROTOCOLE.md](../../../experiments/raison/PROTOCOLE.md) ; [experiments/raison/RESULTATS.md](../../../experiments/raison/RESULTATS.md).
+
+[Retrouver ce monde dans l’index des faits](../FAITS-REMARQUABLES.md#vie-raison-autrui-20261025).
+
 ## Lecture et continuité
 
 `series.tsv` décrit la population en évolution ; `eval.tsv` mesure des clones. Le sens de m0…m3 dépend du milieu et des ablations : voir le protocole et `experiments/raison.c`. Une valeur −1 indique une mesure non applicable. Seul autrui passe le critère préenregistré de la série à dix graines ; les apparitions dans les autres milieux restent des résultats exploratoires.
