@@ -259,6 +259,41 @@ int naissance_selftest(void) {
     NCHECK(w->ncs == 3 && s->hatched == 1 && w->st.dead == 0 && s->energy_paid == 20);
     world_free(w);
 
+    /* Le vrai plafond CMAX, pas seulement un cap de fixture à deux individus.
+     * Une place libre loin du nid ne suffit pas ; une place locale débloque
+     * l'œuf payé, sans nouveau débit et sans changer le vrai plafond. */
+    w = fixture(&r, 32, 32, 1, 1, 2, 1); naissance_init(s, 4301);
+    w->cfg.max_pop = CMAX;
+    while (w->ncs < CMAX) {
+        int x = w->ncs % 32, y = (w->ncs / 32) % 32;
+        Creature *c = creature_new(x, y, w->cs[0]->dna, MIN_LEN, 100,
+                                   w->nid++, 0, -1);
+        w->cs[w->ncs++] = c; w->occ[y][x]++; w->st.born++;
+    }
+    cfg.period = 1; cfg.delay = 1; cfg.cap = CMAX;
+    naissance_step(w, &cfg, s);
+    NCHECK(w->ncs == CMAX && s->eggs == 1 && s->npending == 1);
+    /* Quel que soit le nid tiré, son voisinage est entièrement occupé. */
+    cfg.period = 100000; w->t = 1; naissance_step(w, &cfg, s);
+    NCHECK(s->refused_cap == 1 && s->hatched == 0);
+    Creature *removed = w->cs[--w->ncs];
+    w->occ[removed->y][removed->x]--; free(removed);
+    /* CMAX=4096 sur 1024 cases : retirer un seul occupant ne vide aucune
+     * case. Le refus local reste donc observable à CMAX-1. */
+    int ex = s->pending[0].x, ey = s->pending[0].y;
+    int fx = (ex + 16) % 32, fy = (ey + 16) % 32;
+    w->t = 2; naissance_step(w, &cfg, s);
+    NCHECK(w->ncs == CMAX - 1 && s->refused_place == 1 && s->hatched == 0);
+    int nx = (ex + 1) % 32, ny = ey;
+    for (int i = 0; i < w->ncs; i++) if (w->cs[i]->x == nx && w->cs[i]->y == ny) {
+        w->occ[ny][nx]--; w->occ[fy][fx]++;
+        w->cs[i]->x = fx; w->cs[i]->y = fy;
+    }
+    w->t = 3; naissance_step(w, &cfg, s);
+    NCHECK(w->ncs == CMAX && s->hatched == 1 && s->npending == 0);
+    NCHECK(s->energy_paid == 20 && s->food_paid == 3 && s->refused_cap == 1);
+    world_free(w);
+
     /* Both axes wrap: (0,0) and (4,4) are neighbors on a 5x5 torus. */
     w = fixture(&r, 5, 5, 0, 0, 4, 4); naissance_init(s, 44); cfg.period = 1;
     world_step(w); naissance_step(w, &cfg, s);

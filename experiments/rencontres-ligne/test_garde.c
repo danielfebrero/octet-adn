@@ -12,12 +12,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "mondes_proteges.h"
 
-static const char *names[] = {
-    "vie-monde", "vie-forces", "vie-causes", "vie-forces-briques",
-    "vie-forces-societes", "vie-attention", "vie-traits", "vie-depense",
-    "vie-causales", "vie-saison", "vie-tronc", "vie-lecture"
-};
+#define names octet_mondes_proteges
 static const char *guard;
 static char base[128], procroot[160];
 static int failures, cases;
@@ -117,7 +114,7 @@ int main(int argc, char **argv) {
     strcpy(base, dir);
     snprintf(procroot, sizeof procroot, "%s/proc", base);
     if (mkdir(procroot, 0700)) die(procroot);
-    for (int i = 0; i < 12; i++) makeproc(101 + i, names[i], (101 + i) * 100, 'S', 1);
+    for (int i = 0; i < OCTET_MONDES_PROTEGES; i++) makeproc(101 + i, names[i], (101 + i) * 100, 'S', 1);
     char proof[256], proof2[256], refused[256], path[256], empty[160];
     snprintf(proof, sizeof proof, "%s/snapshot.txt", base);
     run("snapshot complet", procroot, "snapshot", proof, 0, 0);

@@ -3,8 +3,8 @@
  * garde [--proc DIR] snapshot FILE | check FILE
  * --proc sert aux fixtures ; seule la racine /proc décrit le namespace courant.
  * Une absence dans ce namespace n'est pas une vérification de l'hôte distant.
- * Snapshot exclusif (FILE doit être absent), seulement après 12 mondes valides.
- * Format : OCTET_GARDE_V1 12, puis 12 lignes séparées par tabulations :
+ * Snapshot exclusif (FILE doit être absent), seulement après 14 mondes valides.
+ * Format : OCTET_GARDE_V1 14, puis 14 lignes séparées par tabulations :
  * nom pid starttime ppid dev inode taille mtime_sec mtime_nsec ctime_sec
  * ctime_nsec dir_hex. check exige aussi l'absence de doublons et PPID=1. */
 #define _POSIX_C_SOURCE 200809L
@@ -18,13 +18,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "mondes_proteges.h"
 
-enum { NW = 12, PATH_CAP = 4096, CMD_CAP = 65536 };
-static const char *names[NW] = {
-    "vie-monde", "vie-forces", "vie-causes", "vie-forces-briques",
-    "vie-forces-societes", "vie-attention", "vie-traits", "vie-depense",
-    "vie-causales", "vie-saison", "vie-tronc", "vie-lecture"
-};
+enum { NW = OCTET_MONDES_PROTEGES, PATH_CAP = 4096, CMD_CAP = 65536 };
+#define names octet_mondes_proteges
 typedef struct {
     long pid, ppid;
     uint64_t start;
@@ -44,13 +41,7 @@ static int numeric(const char *s) {
     return 1;
 }
 static int world_index(const char *path) {
-    size_t n = strlen(path);
-    while (n && path[n - 1] == '/') n--;
-    size_t start = n;
-    while (start && path[start - 1] != '/') start--;
-    for (int i = 0; i < NW; i++)
-        if (strlen(names[i]) == n - start && !memcmp(names[i], path + start, n - start)) return i;
-    return -1;
+    return octet_monde_protege(path);
 }
 static int read_at(int fd, const char *name, char *buf, size_t cap) {
     int f = openat(fd, name, O_RDONLY | O_CLOEXEC);
@@ -161,7 +152,7 @@ static void print_record(FILE *f, int i, const Record *r) {
 static int save_file(const char *file, Record rows[NW]) {
     FILE *f = fopen(file, "wx");
     if (!f) return error("snapshot non créé (existe déjà ou écriture refusée)", file);
-    fputs("OCTET_GARDE_V1\t12\n", f);
+    fprintf(f, "OCTET_GARDE_V1\t%d\n", NW);
     for (int i = 0; i < NW; i++) print_record(f, i, &rows[i]);
     int bad = ferror(f);
     if (fclose(f)) bad = 1;
@@ -185,7 +176,8 @@ static int load_file(const char *file, Record rows[NW]) {
     if (!f) return error("snapshot illisible", file);
     char line[PATH_CAP * 2 + 1024], name[64], hex[PATH_CAP * 2], extra;
     int seen[NW] = {0}, bad = 0;
-    if (!fgets(line, sizeof line, f) || strcmp(line, "OCTET_GARDE_V1\t12\n")) bad = 1;
+    char header[64]; snprintf(header, sizeof header, "OCTET_GARDE_V1\t%d\n", NW);
+    if (!fgets(line, sizeof line, f) || strcmp(line, header)) bad = 1;
     for (int k = 0; !bad && k < NW; k++) {
         Record r = {0};
         if (!fgets(line, sizeof line, f) || sscanf(line, "%63s %ld %" SCNu64
@@ -216,7 +208,7 @@ int main(int argc, char **argv) {
     else for (int i = 0; i < NW; i++) if (!same(&old[i], &current[i])) {
         error("PID/starttime/exe/dir modifié depuis snapshot", names[i]); return 1;
     }
-    printf("garde %s OK : 12 processus vivants, PPID 1 ; proc=%s\n", argv[1], root);
+    printf("garde %s OK : %d processus vivants, PPID 1 ; proc=%s\n", argv[1], NW, root);
     for (int i = 0; i < NW; i++)
         printf("%s pid=%ld start=%" PRIu64 " exe=%" PRIuMAX ":%" PRIuMAX
                " size=%" PRIdMAX " state=%c dir=%s\n", names[i], current[i].pid,

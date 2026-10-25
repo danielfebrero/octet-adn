@@ -73,12 +73,19 @@ au plus par île. Aucun adulte n'est supprimé pour faire place. Les éclosions
 sans décès dans l'île ce tick et les enfants différents des **deux parents avant
 mutation** ont leurs propres compteurs. Au vrai plafond, les œufs attendent
 encore : ce levier ne promet pas des naissances illimitées dans une place finie.
+Le banc 0996a2cd exerce maintenant les deux refus au vrai `CMAX=4096` : sur
+32 graines, 32 œufs attendent au plafond, puis 32 attendent à 4095 sans case
+locale vide, puis 32 éclosent après libération d'une case voisine, sans
+second paiement. Aucun paramètre de nurserie n'est changé.
 
 Les rendez-vous lisent une marque dans un rayon Manhattan de quatre cases,
 puis orientent et paient un pas tous les quatre ticks selon une phase propre à
-l'identité. Ils demandent la présence d'un capteur SENSE/LOAD et de STEP comme
-opcodes, en sautant les immédiats. C'est une loi de reconnaissance du génome,
-pas une preuve que ces instructions ont été exécutées ce tick. La VM reprend
+l'identité. Ils demandent maintenant un tick témoin : dans une copie profonde
+du monde, de ses créatures et de son RNG, le génome doit exécuter un capteur
+SENSE/LOAD/NEURAL puis STEP, depuis son ip et ses registres courants. STORE,
+SPLIT, ATTACK et EMIT restent dans la copie ; le watcher et les compteurs de
+mutation du vrai tick ne sont pas touchés. Cela constate une séquence, sans
+prouver que le déplacement dépend causalement du capteur. La VM reprend
 ensuite son tour normal. Les traces propres viennent des EMIT non nuls et
 expirent au bout de 24 ticks. Les marques des lois, si présentes dans **ce
 nouvel hôte**, sont prioritaires. Aucune loi n'est déposée dans vie-tronc ou
@@ -87,7 +94,7 @@ vie-lecture ; `trace.so` n'est ni compilée ni copiée.
 L'ABI existante ne donne accès ni aux créatures ni aux partenaires : une simple
 loi `.so` ne pouvait pas ouvrir ces chemins de reproduction et de recombinaison.
 
-**Porte « capable » réexaminée, non changée.** Hypothèse testée : la présence
+**Premier réexamen historique, avant l'ordre 0996a2cd.** Hypothèse testée : la présence
 statique (n'importe où dans le génome) est un portail presque toujours ouvert,
 qui ne distingue rien. Mesuré : 14/16 seeds du dépôt la passent dès l'origine
 (`LOAD`, qui appartient à la famille SENSE, et `STEP` sont deux des opcodes
@@ -102,7 +109,15 @@ génome qui bouge.** Durcir le test de présence ne règle pas ce que le README
 signalait déjà (« pas une preuve que ces instructions ont été exécutées ce
 tick ») ; le rendre réellement comportemental demanderait un tick témoin
 isolé (bac à sable, comme `gn_life` du labo `general`), hors budget de cette
-mission. Aucun code changé ici : échec honnête.
+mission. Aucun code changé dans ce premier réexamen : échec honnête.
+
+**Correction 0996a2cd.** Le tick témoin est désormais implémenté. Les seeds
+restent à 14/16 ; sur 61 générations d'une dérive de 16 lignées, la porte statique
+accepte 853/976 états, la porte exécutée 497/976 (génération 60 : 14/16 contre
+5/16). Les queues mortes, sauts et ip sont testés. La copie coûte 8,00 µs par
+sonde à 128 créatures, 207,69 µs à 4096 dans le banc de cette machine : elle
+ne passe qu'à la période prévue et après découverte d'une marque à portée.
+[Protocole, comptes et limites](../corrections-0996a2cd/README.md).
 
 ## Construire sans relinker un vivant
 
@@ -114,7 +129,7 @@ make experiments/rencontres-build/IDENTIFIANT_NEUF/test-garde
 experiments/rencontres-build/IDENTIFIANT_NEUF/test-garde experiments/rencontres-build/IDENTIFIANT_NEUF/garde
 ```
 
-Sur l'hôte où vivent les douze mondes, découvrir leurs PID par `--dir` et
+Sur l'hôte où vivent les quatorze mondes, découvrir leurs PID par `--dir` et
 enregistrer leurs exécutables **avant** de compiler la nouvelle physique :
 
 ```console
@@ -127,8 +142,15 @@ experiments/rencontres-build/IDENTIFIANT_NEUF/garde check /tmp/octet-avant-IDENT
 `garde` refuse une liste incomplète, un doublon, un zombie ou un PPID autre que
 1. Le contrôle compare PID, début du processus, inode/dev/taille/mtime/ctime
 de `/proc/PID/exe` et le `--dir`. Le snapshot doit être neuf ; aucun fichier de
-preuve n'est créé si les douze processus ne sont pas visibles. `--proc` sert
+preuve n'est créé si les quatorze processus ne sont pas visibles. Les deux noms
+`vie-rencontres-b129054c` et `vie-rencontres-sonnet-41ab85e` sont inclus dans
+la liste commune à la garde et au pilote. Une ancienne preuve de douze mondes
+est refusée par cette garde à quatorze. `--proc` sert
 uniquement aux fixtures : leur succès ne vérifie pas les mondes de l'hôte.
+La mission 0996a2cd ne lance pas cette procédure d'hôte, ni `garde snapshot`
+ni `test-garde` : son nouveau banc C appelle seulement les fonctions de lecture
+sur un faux `/proc` privé, puis relit une preuve de fixture écrite directement.
+Aucun état d'hôte n'a été vérifié dans ce conteneur.
 
 Les règles de build refusent d'écraser un ELF existant, même avec `make -B`.
 Elles compilent directement les sources vers le chemin neuf, sans toucher aux
@@ -145,7 +167,7 @@ experiments/rencontres-build/IDENTIFIANT_NEUF/garde check /tmp/octet-avant-IDENT
 ```
 
 Le pilote part de fondateurs et d'un sol vierge, sans `state.ck` importé. Il
-refuse les noms des douze anciens répertoires, y compris via un lien symbolique.
+refuse les noms des quatorze répertoires protégés, y compris via un lien symbolique.
 Un verrou exclusif prévient deux pilotes dans le même répertoire. Il refuse les
 imports de checkpoints historiques. Ne copier aucun répertoire vivant pour
 préparer cet essai. Les premiers essais utilisent les seeds du dépôt ; une

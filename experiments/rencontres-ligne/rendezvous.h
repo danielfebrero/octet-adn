@@ -18,8 +18,15 @@ typedef struct {
 
 void rendezvous_init(RendezvousState *state, uint64_t seed);
 
-/* Avant la VM : un génome muni d'un capteur (famille SENSE ou LOAD) et STEP
- * peut lire une marque à distance Manhattan <= 4, s'orienter et payer un pas.
+/* Un tick VM sur copie profonde du monde, des créatures et du RNG : exige un
+ * capteur réellement exécuté (SENSE/LOAD/NEURAL), puis STEP dans ce même tick.
+ * Aucun effet sur le monde original ni sur le watcher de son vrai tick.
+ * Ce test constate une séquence exécutée, pas une dépendance causale de STEP
+ * au capteur. Il repart de l'ip et des registres courants, pas de l'octet zéro. */
+int rendezvous_capable(const World *w, const Creature *c);
+
+/* Avant la VM : un génome qui passe le tick témoin ci-dessus peut lire une
+ * marque à distance Manhattan <= 4, s'orienter et payer un pas.
  * Les immédiats ne sont pas des opcodes. Aucune marque => aucun changement.
  * Une marque sous la créature supprime ce pas guidé ; la VM peut ensuite
  * repartir. Les marques

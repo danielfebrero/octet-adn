@@ -10,6 +10,7 @@
 #include "rencontres-ligne/echange.h"
 #include "rencontres-ligne/naissance.h"
 #include "rencontres-ligne/rendezvous.h"
+#include "rencontres-ligne/mondes_proteges.h"
 
 static void extra_before(void *);
 static void extra_after(void *);
@@ -26,6 +27,7 @@ static int extra_load(FILE *, void *);
 #define main terrarium_original_main
 #include "terrarium.c"
 #undef main
+_Static_assert(sizeof(Params) == 416, "Params doit rester compatible avec les mondes vivants");
 
 enum { CONTROL, EXCHANGE, NURSERY, MEETING, ALL, NPROFILE };
 static const char *profiles[] = { "control", "exchange", "nursery", "meeting", "all" };
@@ -325,18 +327,9 @@ static void apply_overrides(const Overrides *o) {
 }
 
 static int protected_world(const char *dir) {
-    const char *names[] = { "vie-monde", "vie-forces", "vie-causes", "vie-forces-briques",
-        "vie-forces-societes", "vie-attention", "vie-traits", "vie-depense", "vie-causales",
-        "vie-saison", "vie-tronc", "vie-lecture" };
     char resolved[4096];
     if (realpath(dir, resolved)) dir = resolved;
-    size_t len = strlen(dir);
-    while (len && dir[len - 1] == '/') len--;
-    size_t start = len;
-    while (start && dir[start - 1] != '/') start--;
-    for (int i = 0; i < 12; i++)
-        if (strlen(names[i]) == len - start && !memcmp(dir + start, names[i], len - start)) return 1;
-    return 0;
+    return octet_monde_protege(dir) >= 0;
 }
 
 int main(int argc, char **argv) {
@@ -376,7 +369,7 @@ int main(int argc, char **argv) {
         }
     }
     if (!dir || strlen(dir) > 480) { free(args); return help(); }
-    if (protected_world(dir)) { fprintf(stderr, "répertoire d'un des douze anciens mondes refusé : %s\n", dir); free(args); return 1; }
+    if (protected_world(dir)) { fprintf(stderr, "répertoire d'un monde protégé refusé : %s\n", dir); free(args); return 1; }
     /* Les identités changent à migration et expansion ; cette première physique
      * garde les îles fixes pour préserver cooldowns et parentés sans ambiguïté. */
     args[n++] = "--migrate"; args[n++] = "0"; args[n] = NULL;
