@@ -30,7 +30,8 @@ pas une simulation de physique quantique complète.
   comme lien. Les composantes connexes de ces liens sont les assemblages.
   Ce graphe mesure les liens ; il n'ajoute aucune force ni contrainte.
 * Attention : au moins deux membres du même assemblage influencent un
-  point ; ce point change son moment de phase, ce qui modifie effectivement
+  point ; ce point change son moment de phase par rapport à son évolution
+  libre sans le potentiel présent des octets, ce qui modifie effectivement
   la force rendue aux membres. La même identité d'assemblage doit boucler
   P ticks consécutifs. Toute interruption remet le compteur à zéro.
 * Seul événement discret : à P, projection du point sur une phase tirée

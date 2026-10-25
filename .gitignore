@@ -85,3 +85,6 @@ TASK.md
 /experiments/choix-build/
 /experiments/choix-runs/
 /experiments/vie-choix-*/
+/experiments/quantique-build/
+/experiments/quantique-runs/
+/experiments/vie-quantique-*/
