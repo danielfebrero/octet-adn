@@ -76,9 +76,9 @@ encore : ce levier ne promet pas des naissances illimitées dans une place finie
 
 Les rendez-vous lisent une marque dans un rayon Manhattan de quatre cases,
 puis orientent et paient un pas tous les quatre ticks selon une phase propre à
-l'identité. Ils demandent la présence d'un capteur SENSE/LOAD et de STEP comme
-opcodes, en sautant les immédiats. C'est une loi de reconnaissance du génome,
-pas une preuve que ces instructions ont été exécutées ce tick. La VM reprend
+l'identité. Le nouveau défaut exige un capteur SENSE/LOAD et STEP exécutés
+dans un tick témoin isolé ; l'ancienne porte statique reste disponible pour
+comparaison et reprise des checkpoints. La VM reprend
 ensuite son tour normal. Les traces propres viennent des EMIT non nuls et
 expirent au bout de 24 ticks. Les marques des lois, si présentes dans **ce
 nouvel hôte**, sont prioritaires. Aucune loi n'est déposée dans vie-tronc ou
@@ -87,7 +87,7 @@ vie-lecture ; `trace.so` n'est ni compilée ni copiée.
 L'ABI existante ne donne accès ni aux créatures ni aux partenaires : une simple
 loi `.so` ne pouvait pas ouvrir ces chemins de reproduction et de recombinaison.
 
-**Porte « capable » réexaminée, non changée.** Hypothèse testée : la présence
+**Porte « capable » réexaminée, non changée lors de l'ordre 70000966.** Hypothèse testée : la présence
 statique (n'importe où dans le génome) est un portail presque toujours ouvert,
 qui ne distingue rien. Mesuré : 14/16 seeds du dépôt la passent dès l'origine
 (`LOAD`, qui appartient à la famille SENSE, et `STEP` sont deux des opcodes
@@ -104,6 +104,22 @@ tick ») ; le rendre réellement comportemental demanderait un tick témoin
 isolé (bac à sable, comme `gn_life` du labo `general`), hors budget de cette
 mission. Aucun code changé ici : échec honnête.
 
+**Suite 0996a2cd : tick témoin réalisé.** Les nouveaux mondes de cet ELF
+utilisent maintenant un tick VM isolé depuis l'état courant. Le capteur (SENSE
+ou LOAD) et STEP doivent être réellement exécutés dans ce tick ; un STORE peut
+les créer. Tout le monde accessible, ses créatures et son RNG sont copiés ;
+les enfants temporaires sont libérés, les compteurs TLS et l'observateur sont
+restaurés. Aucun effet du témoin ne rejoint le monde. Ce test ne prouve pas
+que le mouvement dépend du capteur ni qu'il améliore l'écologie. Le drapeau
+`--meeting-behavioral 0` conserve l'ancienne porte ; `1` est le nouveau défaut
+des profils meeting/all. Les checkpoints anciens conservent leur porte
+statique sauvegardée (formats et tailles inchangés). Voir les comptes et les
+limites dans [la validation 0996a2cd](../validation-0996a2cd/README.md).
+
+La même validation teste la nurserie à 4095 et 4096 adultes, sur 32 graines
+par condition. Le plafond et le manque de place locale provoquent chacun
+32 refus sur 32, indépendamment. Aucune physique supplémentaire n'est ajoutée.
+
 ## Construire sans relinker un vivant
 
 Utiliser un identifiant de build qui n'a **jamais existé** :
@@ -114,7 +130,7 @@ make experiments/rencontres-build/IDENTIFIANT_NEUF/test-garde
 experiments/rencontres-build/IDENTIFIANT_NEUF/test-garde experiments/rencontres-build/IDENTIFIANT_NEUF/garde
 ```
 
-Sur l'hôte où vivent les douze mondes, découvrir leurs PID par `--dir` et
+Sur l'hôte où vivent les quatorze mondes, découvrir leurs PID par `--dir` et
 enregistrer leurs exécutables **avant** de compiler la nouvelle physique :
 
 ```console
@@ -124,10 +140,11 @@ experiments/rencontres-build/IDENTIFIANT_NEUF/terrarium selftest
 experiments/rencontres-build/IDENTIFIANT_NEUF/garde check /tmp/octet-avant-IDENTIFIANT_NEUF
 ```
 
-`garde` refuse une liste incomplète, un doublon, un zombie ou un PPID autre que
+`garde` exige maintenant les quatorze noms de `mondes.h`, dont les deux mondes
+rencontres. Elle refuse une liste incomplète, un doublon, un zombie ou un PPID autre que
 1. Le contrôle compare PID, début du processus, inode/dev/taille/mtime/ctime
 de `/proc/PID/exe` et le `--dir`. Le snapshot doit être neuf ; aucun fichier de
-preuve n'est créé si les douze processus ne sont pas visibles. `--proc` sert
+preuve n'est créé si les quatorze processus ne sont pas visibles. `--proc` sert
 uniquement aux fixtures : leur succès ne vérifie pas les mondes de l'hôte.
 
 Les règles de build refusent d'écraser un ELF existant, même avec `make -B`.
@@ -145,7 +162,7 @@ experiments/rencontres-build/IDENTIFIANT_NEUF/garde check /tmp/octet-avant-IDENT
 ```
 
 Le pilote part de fondateurs et d'un sol vierge, sans `state.ck` importé. Il
-refuse les noms des douze anciens répertoires, y compris via un lien symbolique.
+refuse les noms des quatorze répertoires protégés, y compris via un lien symbolique.
 Un verrou exclusif prévient deux pilotes dans le même répertoire. Il refuse les
 imports de checkpoints historiques. Ne copier aucun répertoire vivant pour
 préparer cet essai. Les premiers essais utilisent les seeds du dépôt ; une
@@ -183,6 +200,6 @@ interactions : leur écart ne doit pas servir de preuve de nouveauté sélection
 
 Les selftests vérifient le plafond sans décès, les bords du tore, les coûts et
 refus, les opcodes/immediats, les flags éteints et la reprise continue contre
-checkpoint (monde, RNG, état des trois mécanismes et TSV identiques). Les onze
+checkpoint (monde, RNG, état des trois mécanismes et TSV identiques). Les treize
 fixtures de garde vérifient aussi les refus sans création d'une fausse preuve.
 Voir [RESULTATS.md](RESULTATS.md) pour les mesures et leurs limites.

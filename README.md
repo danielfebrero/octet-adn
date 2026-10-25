@@ -1,5 +1,14 @@
 # 🧬 Octet-ADN — de la vie artificielle écrite en octets
 
+Expériences isolées de l'ordre 0996a2cd (aucun changement d'ISA) :
+[pari phénotypique](experiments/pari-phenotypique/README.md),
+[symbiose par paquets](experiments/symbiose-paquets/README.md),
+[héritage du milieu](experiments/heritage-milieu/README.md).
+Les pré-enregistrements précèdent les comptes ; chaque dossier contient son
+C, son script de build neuf et son verdict. [Corrections et validation](experiments/validation-0996a2cd/README.md)
+documente le tick témoin des rendez-vous, les quatorze noms protégés, la
+nurserie au plafond réel et le rejeu de la sonde déjà corrigée.
+
 **Octet only.** Un génome est un fichier `.adn` d'octets bruts. Un seul binaire ELF
 natif Linux x86_64, `octet-adn` (~60 Ko), les lit octet par octet, les fait vivre,
 muter, se réécrire, et fait tourner les 10 éprouvettes. **Pas de Python, pas de JS,
