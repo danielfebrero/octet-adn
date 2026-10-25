@@ -1,0 +1,473 @@
+{
+  "device_checks": {
+    "oracle_accuracy": true,
+    "oracle_net": true,
+    "blind_controls": true,
+    "scramble_compatible_half": true,
+    "scramble_ci_width": true,
+    "controls_live_and_decide": true,
+    "low_consultation": true,
+    "high_informed_cost": true,
+    "rational_high_no_consultation": true
+  },
+  "device_valid": true,
+  "candidate_checks": {
+    "accuracy_ge_65": false,
+    "gain_ci_low_positive": false,
+    "scramble_drop_ge_10": false,
+    "ablation_drop_ge_10": true,
+    "scramble_compatible_half": false
+  },
+  "candidate_pass": false,
+  "comparisons": {
+    "gain_over_best_blind": {
+      "mean": -6.20068359375,
+      "low": -6.402342937803264,
+      "high": -5.999024249696736
+    },
+    "drop_scramble": {
+      "mean": 0.00244140625,
+      "low": -0.009512880108160161,
+      "high": 0.014395692608160161
+    },
+    "drop_ablation": {
+      "mean": 0.2464599609375,
+      "low": 0.23723267848991278,
+      "high": 0.25568724338508725
+    }
+  },
+  "statistics": {
+    "0:T8": {
+      "correct": {
+        "mean": 0.7437744140625,
+        "low": 0.7330257192952406,
+        "high": 0.7545231088297594
+      },
+      "net": {
+        "mean": 13.87548828125,
+        "low": 13.660514385904813,
+        "high": 14.090462176595187
+      },
+      "consults": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:oracle": {
+      "correct": {
+        "mean": 0.7437744140625,
+        "low": 0.7330257192952406,
+        "high": 0.7545231088297594
+      },
+      "net": {
+        "mean": 13.87548828125,
+        "low": 13.660514385904813,
+        "high": 14.090462176595187
+      },
+      "consults": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:A": {
+      "correct": {
+        "mean": 0.49462890625,
+        "low": 0.4841095064871841,
+        "high": 0.5051483060128159
+      },
+      "net": {
+        "mean": 9.892578125,
+        "low": 9.682190129743683,
+        "high": 10.102966120256317
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:B": {
+      "correct": {
+        "mean": 0.50537109375,
+        "low": 0.4948516939871841,
+        "high": 0.5158904935128159
+      },
+      "net": {
+        "mean": 10.107421875,
+        "low": 9.897033879743683,
+        "high": 10.317809870256317
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:alternance": {
+      "correct": {
+        "mean": 0.500244140625,
+        "low": 0.490586060127351,
+        "high": 0.509902221122649
+      },
+      "net": {
+        "mean": 10.0048828125,
+        "low": 9.81172120254702,
+        "high": 10.19804442245298
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:aleatoire": {
+      "correct": {
+        "mean": 0.4962158203125,
+        "low": 0.48416167963616863,
+        "high": 0.5082699609888314
+      },
+      "net": {
+        "mean": 9.92431640625,
+        "low": 9.683233592723372,
+        "high": 10.165399219776628
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:brouille": {
+      "correct": {
+        "mean": 0.4940185546875,
+        "low": 0.4851691136220691,
+        "high": 0.502867995752931
+      },
+      "net": {
+        "mean": 8.88037109375,
+        "low": 8.703382272441383,
+        "high": 9.057359915058617
+      },
+      "consults": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:ablation": {
+      "correct": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "net": {
+        "mean": -0.00390625,
+        "low": -0.00390625,
+        "high": -0.00390625
+      },
+      "consults": {
+        "mean": 1.0,
+        "low": 1.0,
+        "high": 1.0
+      },
+      "omissions": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:cout-haut-informe": {
+      "correct": {
+        "mean": 0.7437744140625,
+        "low": 0.7330257192952406,
+        "high": 0.7545231088297594
+      },
+      "net": {
+        "mean": 6.87548828125,
+        "low": 6.660514385904812,
+        "high": 7.090462176595188
+      },
+      "consults": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:cout-haut-rationnel": {
+      "correct": {
+        "mean": 0.49462890625,
+        "low": 0.4841095064871841,
+        "high": 0.5051483060128159
+      },
+      "net": {
+        "mean": 9.892578125,
+        "low": 9.682190129743683,
+        "high": 10.102966120256317
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:candidat": {
+      "correct": {
+        "mean": 0.2464599609375,
+        "low": 0.23723267848991278,
+        "high": 0.25568724338508725
+      },
+      "net": {
+        "mean": 4.42919921875,
+        "low": 4.244653569798255,
+        "high": 4.613744867701745
+      },
+      "consults": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "omissions": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:candidat-brouille": {
+      "correct": {
+        "mean": 0.2440185546875,
+        "low": 0.2360679111891985,
+        "high": 0.2519691981858015
+      },
+      "net": {
+        "mean": 4.38037109375,
+        "low": 4.22135822378397,
+        "high": 4.53938396371603
+      },
+      "consults": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "omissions": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:candidat-ablation": {
+      "correct": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "net": {
+        "mean": -1.0,
+        "low": -1.0,
+        "high": -1.0
+      },
+      "consults": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "omissions": {
+        "mean": 256.0,
+        "low": 256.0,
+        "high": 256.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:candidat-haut": {
+      "correct": {
+        "mean": 0.2464599609375,
+        "low": 0.23723267848991278,
+        "high": 0.25568724338508725
+      },
+      "net": {
+        "mean": 0.92919921875,
+        "low": 0.7446535697982555,
+        "high": 1.1137448677017445
+      },
+      "consults": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "omissions": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:lookup": {
+      "correct": {
+        "mean": 0.49462890625,
+        "low": 0.4841095064871841,
+        "high": 0.5051483060128159
+      },
+      "net": {
+        "mean": 9.892578125,
+        "low": 9.682190129743683,
+        "high": 10.102966120256317
+      },
+      "consults": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "omissions": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "0:candidat-aveugle": {
+      "correct": {
+        "mean": 0.2486572265625,
+        "low": 0.24017227911731606,
+        "high": 0.25714217400768397
+      },
+      "net": {
+        "mean": 4.47314453125,
+        "low": 4.303445582346321,
+        "high": 4.642843480153679
+      },
+      "consults": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "omissions": {
+        "mean": 128.0,
+        "low": 128.0,
+        "high": 128.0
+      },
+      "deaths": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0
+      }
+    }
+  }
+}

@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
 
 enum { EPISODES=256, SEEDS=32, ENERGY=100000 };
 typedef struct { int h,c1,c2,k; } Episode;
@@ -171,6 +174,15 @@ static void selftest(void) {
         for(int j=0;j<20;j++)if(((i+j)%5==0)==split){row[(i^j)&1]++;col[(j^i)&1]++;}
         assert(row[0]==row[1] && col[0]==col[1]);
     }
+    /* Le contrôleur lookup prescrit une action après deux lectures : sa
+     * longueur doit aussi être celle utilisée par le pointeur de la VM. */
+    g=program(2,2,0);c=init_creature(&g);
+    for(int ep=0;ep<256;ep++) {
+        Episode e=episode(2,0,ep,0);g=program(2,2,e.h);
+        memcpy(c.dna,g.dna,(size_t)g.len);c.len=g.len;
+        x=run_episode(w,&c,&g,e,2,1,0,0,0,0,ep,0,NULL,"lookup-test");
+        assert(x.action==e.h && x.cost==2 && x.metab==11);
+    }
     free(w);puts("selftest OK : VM, coûts, NEURAL, immédiats, rétention, contrefactuels, reprise, partition M2");
 }
 static int campaign(int task,const char *path,const char *outdir) {
@@ -199,6 +211,7 @@ static int campaign(int task,const char *path,const char *outdir) {
                 if(arm==16)action=task==2 && split==0?((e.c1^e.c2)&1):0;
                 g=program(task,arm==16 && task==2?2:0,action);
                 memcpy(c.dna,g.dna,(size_t)g.len);
+                c.len=g.len;
             }
             int price=arm==8||arm==9||arm==13?8:1;
             int scramble=arm==6||arm==11?1:arm==14||arm==15?2:0;
@@ -211,9 +224,117 @@ static int campaign(int task,const char *path,const char *outdir) {
     }
     if(fclose(log)||fclose(sum)){perror("écriture résultats");return 2;}return 0;
 }
+enum { ECO_CAP=160 };
+typedef struct {
+    uint64_t magic,step,births,deaths,next_id,seed;
+    long series_offset,events_offset;
+    int n;Rng rng;Creature cs[ECO_CAP];PoolEntry gs[ECO_CAP];
+} Ecology;
+static volatile sig_atomic_t stopping;
+static void stop_handler(int sig){(void)sig;stopping=1;}
+static FILE *eco_file(const char *dir,const char *name,const char *mode) {
+    char path[4096];snprintf(path,sizeof path,"%s/%s",dir,name);
+    FILE *f=fopen(path,mode);if(!f){perror(path);exit(2);}return f;
+}
+static void save_ecology(const char *dir,Ecology *e,FILE *series,FILE *events) {
+    if(fflush(series)||fflush(events)||fsync(fileno(series))||fsync(fileno(events)))exit(2);
+    e->series_offset=ftell(series);e->events_offset=ftell(events);
+    FILE *f=eco_file(dir,"checkpoint.tmp","wb");
+    if(fwrite(e,sizeof *e,1,f)!=1 || fflush(f) || fsync(fileno(f)))exit(2);
+    if(fclose(f))exit(2);
+    char a[4096],b[4096];snprintf(a,sizeof a,"%s/checkpoint.tmp",dir);
+    snprintf(b,sizeof b,"%s/checkpoint.bin",dir);if(rename(a,b))exit(2);
+}
+static int ecology(const char *dir,uint64_t cycles,int pause_ms) {
+    Ecology *e=calloc(1,sizeof *e);if(!e)return 2;
+    char path[4096];snprintf(path,sizeof path,"%s/checkpoint.bin",dir);
+    FILE *f=fopen(path,"rb");int resume=f!=NULL;
+    if(resume) {
+        if(fread(e,sizeof *e,1,f)!=1 || fgetc(f)!=EOF || e->magic!=UINT64_C(0x43484F4958454331) || e->n<0 || e->n>ECO_CAP)return 2;
+        fclose(f);
+        for(int i=0;i<e->n;i++)if(e->gs[i].len<1||e->gs[i].len>MAX_LEN||e->cs[i].len!=e->gs[i].len)return 2;
+    } else {
+        e->magic=UINT64_C(0x43484F4958454331);e->seed=20261025;rng_seed(&e->rng,e->seed);
+        const char *paths[]={"seeds/general.adn","seeds/echo.adn","seeds/neural.adn","seeds/forager.adn"};
+        for(int i=0;i<64;i++) {
+            e->gs[i]=load_genome(paths[i%4]);e->cs[i]=init_creature(&e->gs[i]);
+            e->cs[i].e=160;e->cs[i].id=(int)e->next_id++;e->cs[i].species=i%4;
+        }
+        e->n=64;
+    }
+    FILE *series=eco_file(dir,"series.tsv",resume?"r+":"wx");
+    FILE *events=eco_file(dir,"events.tsv",resume?"r+":"wx");
+    if(resume) {
+        if(ftruncate(fileno(series),e->series_offset)||ftruncate(fileno(events),e->events_offset))return 2;
+        fseek(series,0,SEEK_END);fseek(events,0,SEEK_END);
+    } else {
+        fputs("t\tepisode\tpop\tgenotypes\tbirths\tdeaths\tcorrect\tconsults\tomissions\tmean_energy\n",series);
+        fputs("episode\tevent\tid\tparent\tgenome_fnv\n",events);
+        save_ecology(dir,e,series,events);
+    }
+    signal(SIGTERM,stop_handler);signal(SIGINT,stop_handler);
+    World *w=arena(&e->rng);uint64_t count=0;
+    while(e->n && !stopping && (!cycles||count<cycles)) {
+        int n0=e->n,alive=0,nb=0,correct=0,consults=0,omissions=0;
+        Creature children[ECO_CAP];PoolEntry genomes[ECO_CAP];
+        for(int i=0;i<n0;i++) {
+            Creature c=e->cs[i];PoolEntry g=e->gs[i];
+            /* L'environnement est adressé par épisode et individu : aucun
+             * accès du candidat ne fait avancer le flux du milieu. */
+            Episode ep=episode(1,c.id,(int)e->step,0);
+            Outcome o=run_episode(w,&c,&g,ep,1,1,0,0,0,c.id,(int)e->step,0,NULL,"ecologie");
+            correct+=o.action==ep.h;consults+=o.reads>0;omissions+=o.action<0;
+            if(c.e<=0) {
+                e->deaths++;fprintf(events,"%llu\tdeath\t%d\t%d\t%016llx\n",(unsigned long long)e->step,c.id,c.parent,(unsigned long long)fnv1a(g.dna,(size_t)g.len,FNV_INIT));
+                continue;
+            }
+            if(c.e>=120 && n0+nb<ECO_CAP) {
+                c.e-=60;PoolEntry child=g;
+                for(int k=0;k<child.len;k++)if(rng_below(&e->rng,100)==0)child.dna[k]=(uint8_t)rng_below(&e->rng,256);
+                genomes[nb]=child;children[nb]=init_creature(&child);
+                children[nb].e=60;children[nb].id=(int)e->next_id++;
+                children[nb].parent=c.id;children[nb].species=c.species;
+                fprintf(events,"%llu\tbirth\t%d\t%d\t%016llx\n",(unsigned long long)e->step,children[nb].id,c.id,(unsigned long long)fnv1a(child.dna,(size_t)child.len,FNV_INIT));
+                nb++;e->births++;
+            }
+            e->cs[alive]=c;e->gs[alive++]=g;
+        }
+        for(int i=0;i<nb;i++){e->cs[alive]=children[i];e->gs[alive++]=genomes[i];}
+        e->n=alive;e->step++;count++;
+        int types=0;long energy=0;
+        for(int i=0;i<e->n;i++) {
+            energy+=e->cs[i].e;int seen=0;
+            for(int j=0;j<i;j++)if(e->gs[i].len==e->gs[j].len && !memcmp(e->gs[i].dna,e->gs[j].dna,(size_t)e->gs[i].len)){seen=1;break;}
+            types+=!seen;
+        }
+        fprintf(series,"%llu\t%llu\t%d\t%d\t%llu\t%llu\t%d\t%d\t%d\t%.6f\n",
+            (unsigned long long)e->step*10,(unsigned long long)e->step,e->n,types,
+            (unsigned long long)e->births,(unsigned long long)e->deaths,correct,consults,omissions,e->n?(double)energy/e->n:0);
+        save_ecology(dir,e,series,events);
+        if(pause_ms>0){struct timespec pause={pause_ms/1000,(pause_ms%1000)*1000000L};nanosleep(&pause,NULL);}
+    }
+    save_ecology(dir,e,series,events);fclose(series);fclose(events);free(w);
+    printf("ecologie episode=%llu pop=%d births=%llu deaths=%llu\n",(unsigned long long)e->step,e->n,(unsigned long long)e->births,(unsigned long long)e->deaths);
+    free(e);return 0;
+}
+static int export_ecology(const char *dir,const char *out) {
+    FILE *f=eco_file(dir,"checkpoint.bin","rb");Ecology *e=calloc(1,sizeof *e);
+    if(!e || fread(e,sizeof *e,1,f)!=1 || e->magic!=UINT64_C(0x43484F4958454331) || e->n<0 || e->n>ECO_CAP)return 2;
+    fclose(f);FILE *index=eco_file(out,"genomes.tsv","wx");
+    fputs("episode\tid\tparent\tenergy\tgenome\n",index);
+    for(int i=0;i<e->n;i++) {
+        PoolEntry *g=&e->gs[i];if(g->len<1||g->len>MAX_LEN)return 2;
+        char name[100];snprintf(name,sizeof name,"individu-%d.adn",e->cs[i].id);
+        f=eco_file(out,name,"wx");if(fwrite(g->dna,1,(size_t)g->len,f)!=(size_t)g->len)return 2;fclose(f);
+        fprintf(index,"%llu\t%d\t%d\t%d\t%s\n",(unsigned long long)e->step,e->cs[i].id,e->cs[i].parent,e->cs[i].e,name);
+    }
+    fclose(index);free(e);return 0;
+}
 int main(int argc,char **argv) {
     if(argc==2 && !strcmp(argv[1],"selftest")){selftest();return 0;}
     if(argc==5 && !strcmp(argv[1],"run") && (!strcmp(argv[2],"M1")||!strcmp(argv[2],"M2")))
         return campaign(argv[2][1]-'0',argv[3],argv[4]);
-    fprintf(stderr,"usage: %s selftest | run M1|M2 candidat.adn répertoire-neuf\n",argv[0]);return 2;
+    if(argc==5 && !strcmp(argv[1],"ecology"))return ecology(argv[2],strtoull(argv[3],NULL,10),atoi(argv[4]));
+    if(argc==4 && !strcmp(argv[1],"export"))return export_ecology(argv[2],argv[3]);
+    fprintf(stderr,"usage: %s selftest | run M1|M2 candidat.adn répertoire-neuf | ecology répertoire cycles(0=infini) pause_ms | export répertoire sortie-neuve\n",argv[0]);return 2;
 }

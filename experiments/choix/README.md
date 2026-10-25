@@ -97,9 +97,13 @@ par phase sont compressées après calcul, accompagnées de leur SHA256.
 Les résultats par graine, IC, tous les échecs et verdicts sont conservés.
 Une exception interrompt avec échec ; aucun résultat partiel n'est un succès.
 
-Le passage à une écologie sélectionnant survie/reproduction exige un dispositif
+Règle initiale v1 (résultats conservés ; corrigée pour la phase distincte E1
+dans [ECOLOGIE.md](ECOLOGIE.md)) : le passage à une écologie exige un dispositif
 valide ET un candidat démontrant l'usage d'information : sans cela on s'arrête
 au résultat négatif du banc et on ne lance pas un monde présenté comme validé.
 Cette règle d'arrêt est fixée ici avant toute mesure. Cette campagne n'entraîne
 aucun génome ; elle ne peut donc pas établir une émergence par sélection.
 Le monde écologique n'est pas implémenté tant que cette porte n'est pas passée.
+La phase prospective E1 applique désormais la porte du plan validé : dispositifs
+M1/M2 valides, puis test de sélection par survie/reproduction, sans prétendre
+que le candidat general est déjà adapté.

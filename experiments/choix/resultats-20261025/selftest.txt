@@ -1,0 +1,1 @@
+selftest OK : VM, coûts, NEURAL, immédiats, rétention, contrefactuels, reprise, partition M2
