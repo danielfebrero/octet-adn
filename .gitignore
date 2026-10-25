@@ -81,3 +81,6 @@ TASK.md
 
 # Verrou local du superviseur des mondes
 .octet-mondes-superviseur.lock
+# Banc de choix : ELF et journaux volumineux ; résultats résumés sous choix/.
+/experiments/choix-build/
+/experiments/choix-runs/
