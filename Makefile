@@ -9,6 +9,12 @@ LDLIBS  := -lm
 # Exemple : make experiments/rencontres-build/essai-001/terrarium
 RENCONTRES_SRC := experiments/rencontres.c experiments/terrarium.c $(wildcard experiments/rencontres-ligne/*.[ch])
 RENCONTRES_CORE := src/rng.c src/isa.c src/vm.c src/mutate.c src/world.c src/labs.c src/store.c src/runner.c src/seeds.S src/labs_h.c src/novelty.c src/soup.c
+# Arène du raisonnement : dix milieux, même VM, ELF neuf (experiments/raison/PROTOCOLE.md).
+experiments/raison-build/%/raison: experiments/raison.c src/vm.c src/rng.c src/isa.c include/octet.h
+	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS) -static -o $@ $< src/vm.c src/rng.c src/isa.c $(LDLIBS)
+
 # Banc de choix : même VM, milieu d'épisodes séparé, aucun objet des vivants.
 experiments/choix-build/%/choix: experiments/choix.c src/vm.c src/rng.c src/isa.c include/octet.h
 	@test ! -e "$@" && test ! -L "$@" || { echo "Refus : choisir un chemin ELF neuf ($@ existe)"; exit 1; }
