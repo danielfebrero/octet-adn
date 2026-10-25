@@ -361,12 +361,13 @@ void selftest() {
 int main(int argc, char **argv) { try {
     if (argc == 2 && std::string(argv[1]) == "selftest") { selftest(); return 0; }
     if (argc < 3 || std::string(argv[1]) != "run")
-        throw std::runtime_error("usage: monde2 run DIR [--ticks N --pause-ms N] [--seed S --period P --imprint 0|1|2 --n N --box L --grid G --modes M --temp T --gamma G --bind-r R --gain K --window W --rep A --xi X --rcut R --spec S --cool K]");
-    std::filesystem::path dir = argv[2]; World w; int pause = 0; uint64_t ticks = 4096; bool config = false;
+        throw std::runtime_error("usage: monde2 run DIR [--ticks N --pause-ms N --events 0|1] [--seed S --period P --imprint 0|1|2 --n N --box L --grid G --modes M --temp T --gamma G --bind-r R --gain K --window W --rep A --xi X --rcut R --spec S --cool K]");
+    std::filesystem::path dir = argv[2]; World w; int pause = 0; uint64_t ticks = 4096; bool config = false, events = true;
     for (int j = 3; j < argc; j += 2) {
         if (j + 1 >= argc) throw std::runtime_error("option sans valeur");
         std::string k = argv[j], v = argv[j + 1];
         if (k == "--ticks") ticks = std::stoull(v); else if (k == "--pause-ms") pause = std::stoi(v);
+        else if (k == "--events") events = v != "0";   // journal des projections : exécution seulement, hors checkpoint
         else { config = true;
             if (k == "--seed") w.P.seed = std::stoull(v); else if (k == "--period") w.P.period = std::stoull(v);
             else if (k == "--imprint") w.P.imprint = std::stoull(v); else if (k == "--n") w.P.n = std::stoull(v);
@@ -395,7 +396,7 @@ int main(int argc, char **argv) { try {
     }
     uint64_t end = w.t + ticks;
     while (!ticks || w.t < end) {
-        w.step(&ev, &bl);
+        w.step(events ? &ev : nullptr, &bl);
         if (w.t % 128 == 0) { w.metrics(log); log.flush(); ev.flush(); bl.flush(); w.save(ck); if (pause) std::this_thread::sleep_for(std::chrono::milliseconds(pause)); }
     }
     if (w.t % 128) w.metrics(log);
