@@ -1,5 +1,7 @@
 # Saison
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche de vie-forces-societes : saison douce sur la repousse, les fermes et les technologies (amplitude 0,35, période 24 000).
 
 ## Identité et fonctionnement

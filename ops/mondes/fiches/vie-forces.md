@@ -1,5 +1,7 @@
 # Forces
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche du monde initial : prédation portée par ATTACK, repousse réduite et expansion douce de l’archipel.
 
 ## Identité et fonctionnement

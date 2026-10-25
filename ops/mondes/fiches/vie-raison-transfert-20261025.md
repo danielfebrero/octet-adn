@@ -1,5 +1,7 @@
 # Raison — transfert
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Extraire le bit 4 de x, y compris pour des entrées tenues hors entraînement. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

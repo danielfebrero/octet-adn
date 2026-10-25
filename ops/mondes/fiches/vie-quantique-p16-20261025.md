@@ -1,5 +1,7 @@
 # Q1 — période 16
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 64 octets classiques en 3D, champ moyen complexe fini. Les liens persistants définissent les assemblages ; une boucle réciproque ensemble–point déclenche une projection après 16 ticks. Graine 101. La valeur projetée reste sans effet sur les octets ; ni reproduction ni filiation dans Q1.
 
 ## Identité et fonctionnement

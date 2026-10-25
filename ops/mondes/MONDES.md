@@ -1,6 +1,8 @@
-# Mondes vivants
+# Les mondes — archives et relève
 
-Inventaire vérifié le **2026-10-25T17:04:16+00:00** : **34 processus vivants**, chacun avec sa fiche Markdown versionnée. Les mesures sont des instantanés datés ; les journaux locaux restent la source pour les regards suivants. Documentation seule : aucun processus, ELF ou checkpoint modifié.
+**Les 34 anciens ont été arrêtés et archivés le 25 octobre 2026 sur ordre de Daniel.** [Preuves et limites](../archives/20261025/README.md). Successeur : [Relief](../../experiments/relief-20261025/README.md). Ne pas relancer les processus historiques.
+
+Inventaire historique vérifié le **2026-10-25T17:04:16+00:00** : **34 processus vivants**, chacun avec sa fiche Markdown versionnée. Les mesures sont des instantanés datés ; les journaux locaux restent la source pour les regards suivants. Documentation seule : aucun processus, ELF ou checkpoint modifié.
 
 [**Faits remarquables : index transversal et récits par monde**](FAITS-REMARQUABLES.md).
 

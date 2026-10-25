@@ -1,5 +1,7 @@
 # Raison — memoire
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Conserver un indice fiable à 75 % du tick 0 jusqu’à la décision au tick 5. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

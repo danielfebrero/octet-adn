@@ -1,5 +1,7 @@
 # Q2 — empreinte E
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 96 octets classiques dans un champ moyen de phase. Bain thermique, queue répulsive et champ relaxé limitent les assemblages ; la projection écrit une empreinte dans un octet libre. Suivi des identités, fissions et naissances par empreinte. Bras E, graine 101. Hérédité mesurable, sans sélection adaptative démontrée.
 
 ## Identité et fonctionnement

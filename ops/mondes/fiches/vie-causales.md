@@ -1,5 +1,7 @@
 # Causales
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche de vie-traits : parler aux siens déplace de la nourriture ; parler aux autres pose une marque lisible au tick suivant.
 
 ## Identité et fonctionnement

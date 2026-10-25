@@ -1,5 +1,7 @@
 # Raison — patience
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Conditionner l’attente d’un paiement différé à l’information sur son délai. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

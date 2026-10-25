@@ -1,6 +1,9 @@
 #!/bin/sh
 # Inventaire relu à chaque passage ; aucune interruption des mondes vivants.
 set -u
+# ARCHIVED-20f62d86: all34 retired by direct operator order.
+echo "Mondes archivés le 25/10/2026 : reprise automatique désactivée." >&2
+exit 0
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 manifest=${OCTET_MANIFEST:-$script_dir/mondes.tsv}
 cd "${OCTET_REPO_DIR:-/data/eternalgrok-grok-workspace/produits/octet-adn}" || exit 1

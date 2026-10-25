@@ -1,5 +1,7 @@
 # Sénescence
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil senescence : âge maximal = 100 + 8 × octet(len−2). Suivre les morts d’âge et life_byte face au témoin neutre ; les bras contrôlés sont documentés séparément.
 
 ## Identité et fonctionnement

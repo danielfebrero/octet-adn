@@ -1,5 +1,7 @@
 # Causes
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche du monde initial avec forces 2 : YIELD producteur, attraction AND/ADD, répulsion XOR et drain SUB.
 
 ## Identité et fonctionnement

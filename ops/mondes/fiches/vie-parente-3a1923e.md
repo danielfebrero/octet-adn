@@ -1,5 +1,7 @@
 # Parenté
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil parente : don d’énergie à un voisin affamé, selon une propension portée par le dernier octet. Comparer give_byte au témoin neutral_byte sur plusieurs relevés.
 
 ## Identité et fonctionnement

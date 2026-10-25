@@ -1,5 +1,7 @@
 # Raison — relation
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Décider si x = y, notamment pour des valeurs jamais vues. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

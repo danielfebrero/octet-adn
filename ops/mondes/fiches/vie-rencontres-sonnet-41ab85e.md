@@ -1,5 +1,7 @@
 # Rencontres Sonnet
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil all, version Sonnet : échanges à fenêtre bouclée, repos 32 et colonnes de refus. Instance indépendante du premier monde rencontres.
 
 ## Identité et fonctionnement

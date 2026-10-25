@@ -1,5 +1,7 @@
 # Attention
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Le calcul précédant un acte dépose de la chaleur ; les actes sur sol chaud ont des effets locaux et laissent un écho observable.
 
 ## Identité et fonctionnement

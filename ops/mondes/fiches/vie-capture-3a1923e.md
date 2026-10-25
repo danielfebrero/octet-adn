@@ -1,5 +1,7 @@
 # Capture
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil capture : un porteur ATTACK prélève jusqu’à huit octets d’un voisin différent dans son soma et son germen. Suivre la circulation et la distance ADN, pas seulement le nombre de captures.
 
 ## Identité et fonctionnement

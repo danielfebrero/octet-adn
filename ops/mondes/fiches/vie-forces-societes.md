@@ -1,5 +1,7 @@
 # Forces et sociétés
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Monde à briques et mesure des dépendances sociales entre voisins. Une corrélation brute ne suffit pas : lire paires, témoin et excès, ainsi que les événements societe_intra/inter.
 
 ## Identité et fonctionnement

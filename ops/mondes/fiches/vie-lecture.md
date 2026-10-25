@@ -1,5 +1,7 @@
 # Lecture
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche du tronc dont l’ABI permet aussi de lire les briques. Les plugins lecture et trace peuvent observer et marquer les constructions ; un comptage seul ne prouve pas un usage évolué.
 
 ## Identité et fonctionnement

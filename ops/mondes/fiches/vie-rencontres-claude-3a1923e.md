@@ -1,5 +1,7 @@
 # Rencontres Claude
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil all du moteur claude-3a1923e, un petit monde indépendant avec échanges, nurserie et rendez-vous. Les profils capture/parenté/sénescence sont trois autres instances.
 
 ## Identité et fonctionnement

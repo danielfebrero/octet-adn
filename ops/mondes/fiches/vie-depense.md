@@ -1,5 +1,7 @@
 # Dépense
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Fourche de vie-attention : au plafond de l’archipel, les carrés de recettes distinctes perdent des briques. La dépense rouvre des trous dans les infrastructures.
 
 ## Identité et fonctionnement

@@ -1,5 +1,7 @@
 # Jardin — senescence-parente
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Jardin sous les règles de sénescence : origine A = vie-senescence-3a1923e, origine B = vie-parente-3a1923e. Fondation à partir de copies des sources, qui continuent indépendamment. Suivre la persistance de chaque origine.
 
 ## Identité et fonctionnement

@@ -1,5 +1,7 @@
 # Rencontres b129054c
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Profil all : échanges de segments, œufs en nurserie et pas vers les marques. Version historique à fenêtre non bouclée et repos 64 ; conserver son ELF propre.
 
 ## Identité et fonctionnement

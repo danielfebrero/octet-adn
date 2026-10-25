@@ -1,5 +1,7 @@
 # Raison — composition
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Combiner u et v ; prédire la parité de u XOR v, y compris sur des couples jamais vus. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

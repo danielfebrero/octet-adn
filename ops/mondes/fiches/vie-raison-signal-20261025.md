@@ -1,5 +1,7 @@
 # Raison — signal
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Un émetteur informé de H envoie un EMIT à un récepteur ; mesurer la réussite du récepteur avec canal intact ou coupé. Monde vivant du bras info, graine 101, distinct des 200 essais contrôlés.
 
 ## Identité et fonctionnement

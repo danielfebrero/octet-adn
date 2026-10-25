@@ -1,5 +1,7 @@
 # Traits
 
+> **Archivé le 25 octobre 2026 sur ordre de Daniel.** Processus arrêté, reprise automatique retirée. Relevés historiques. [Archive et limites](../../archives/20261025/README.md).
+
 Les caractéristiques sont découvertes dans les faits qui séparent durablement la population. Jusqu’à huit traits ; les niches sont leurs masques, plutôt qu’une grille de gestes fixée à l’avance.
 
 ## Identité et fonctionnement
