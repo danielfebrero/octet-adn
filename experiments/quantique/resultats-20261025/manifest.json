@@ -1,0 +1,9 @@
+{
+  "binary_sha256": "2b215fa5d5c5ad1e0359a7d0db263d4022b3234ea9418feb36a680330b603a93",
+  "source_sha256": "8956923cf0cbe78d442add4b91952ba0440e7b2b55bef78ca50501b6cc617b29",
+  "protocol_sha256": "3885b6e53a163f38babbef11e18e5d94052e1d3f19a5b25936d07153fead515f",
+  "commit": "c2b24a748a216d8fbb8589ed00e385a5787b9353",
+  "runs": 20,
+  "ticks_per_run": 4096,
+  "note": "All paired runs included. Finite-resolution hybrid invented model."
+}

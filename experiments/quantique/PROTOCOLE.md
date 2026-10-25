@@ -67,5 +67,6 @@ des paires, normalisation unitaire, probabilités de projection, aucun
 événement sans assemblage, déterminisme et reprise exacte d'une sauvegarde.
 
 Après vérification : trois instances indépendantes P=4,16,64, graine 101,
-dans un nouveau conteneur limité, ELF immuable, checkpoints atomiques.
+dans trois nouveaux conteneurs limités à 0,15 CPU chacun, ELF immuable,
+checkpoints atomiques. Une panne de l'un ne coupe pas les autres.
 Les processus et ELF des 19 expériences précédentes restent intacts.
