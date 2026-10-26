@@ -81,3 +81,7 @@ Chaque entrée pointe vers le récit détaillé dans la fiche : constat, chiffre
 3. Pour une société, conserver le type intra/inter, t, excès et nombre de paires de l’événement. Un excès dans une ligne de série ne remplace pas cet événement.
 4. Pour raison, interpréter m0…m3 selon le milieu : observation = m1−m2, patience = m1−m2, chaînage = m0−0,5×m1. −1 signifie non applicable. Séparer les mondes continus des essais et de leurs critères préenregistrés.
 5. Ajouter ou actualiser l’entrée de cet index avec un lien vers la fiche. Conserver un seul inventaire des mondes dans MONDES.md ; ne pas transformer l’index des faits en recette de relancement.
+
+## Monde courant — Relief
+
+<a id="relief"></a>**26 octobre 2026, 15:18 UTC — ticks 693 000 à 693 600.** [Fiche et preuves](fiches/vie-relief-20261025.md#faits-remarquables) : 11 069 naissances et autant de morts malgré une population pleine aux extrémités ; 118 870 dons, 59 159 actions de bénéficiaires après réception dans le même tick ; 7,88 % de décodages multi-instructions. État complet du rejeu instrumenté identique octet par octet au checkpoint vivant 693 600. Enchaînements séquentiels observés, sans preuve d'intention collective ni de bénéfice adaptatif. Matière conservée, ELF005 et conteneur inchangés.

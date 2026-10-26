@@ -1,0 +1,51 @@
+BASE tick=693000 population=65536 cells=524288 dimensions=1024x512 capacity=65536 seed=20261025
+births=16850868 deaths=16793524 matter=76840404 initial_matter=76840404 rng=ca103cc3d52eea16
+ACTION tick=693001 id=16838196 op=3 other=0 pos=509285->509285 energy=629->625 body=7->8 store=44->43 birth=0
+ACTION tick=693001 id=16827212 op=7 other=0 pos=479481->479481 energy=848->846 body=27->27 store=133->132 birth=0
+ACTION tick=693001 id=16826115 op=1 other=0 pos=520472->519448 energy=2886->2884 body=13->13 store=141->141 birth=0
+ACTION tick=693001 id=16739793 op=1 other=0 pos=191427->191428 energy=883->879 body=38->38 store=51->51 birth=0
+ACTION tick=693001 id=16814317 op=2 other=0 pos=520469->520469 energy=5120->5119 body=12->12 store=276->276 birth=0
+ACTION tick=693001 id=16800921 op=10 other=16802165 pos=174006->174006 energy=41->45 body=21->21 store=14->14 birth=0
+ACTION tick=693001 id=16821615 op=2 other=0 pos=177096->177096 energy=416->415 body=40->40 store=32->32 birth=0
+ACTION tick=693001 id=16818319 op=3 other=16854891 pos=470335->470335 energy=868->864 body=16->17 store=24->23 birth=0
+ACTION tick=693001 id=16834168 op=12 other=0 pos=323719->323719 energy=186->183 body=42->42 store=21->21 birth=0
+ACTION tick=693001 id=16732141 op=7 other=0 pos=479576->479576 energy=1156->1154 body=19->19 store=33->32 birth=0
+ACTION tick=693001 id=16837736 op=8 other=0 pos=329827->329827 energy=61->59 body=30->30 store=4->5 birth=0
+ACTION tick=693001 id=16795017 op=0 other=0 pos=488733->488733 energy=2245->2268 body=12->12 store=127->128 birth=0
+ACTION tick=693001 id=16826078 op=0 other=0 pos=477470->477470 energy=438->461 body=16->16 store=45->46 birth=0
+ACTION tick=693001 id=16840668 op=11 other=16726192 pos=509255->509255 energy=836->830 body=20->20 store=31->30 birth=0
+ACTION tick=693001 id=16841530 op=11 other=16854588 pos=489796->489796 energy=512->506 body=17->17 store=10->9 birth=0
+ACTION tick=693001 id=16797303 op=9 other=16840215 pos=471385->471385 energy=774->766 body=40->40 store=57->58 birth=0
+ACTION tick=693001 id=16857174 op=10 other=16857907 pos=235371->235371 energy=177->181 body=13->13 store=25->25 birth=0
+ACTION tick=693001 id=16781940 op=12 other=0 pos=475162->475162 energy=2271->2268 body=12->12 store=144->144 birth=0
+ACTION tick=693001 id=16795307 op=5 other=16831758 pos=201566->201566 energy=216->210 body=25->25 store=25->24 birth=0
+ACTION tick=693001 id=16807887 op=8 other=0 pos=167839->167839 energy=2->0 body=21->21 store=0->1 birth=0
+ACTION tick=693001 id=16831969 op=6 other=0 pos=225181->225181 energy=417->413 body=32->32 store=87->88 birth=0
+ACTION tick=693001 id=16780773 op=9 other=16800644 pos=391299->391299 energy=201->193 body=39->39 store=64->65 birth=0
+ACTION tick=693001 id=16790920 op=6 other=0 pos=268449->268449 energy=298->294 body=5->5 store=80->81 birth=0
+ACTION tick=693001 id=16777540 op=4 other=0 pos=68398->68398 energy=153->67 body=33->17 store=15->8 birth=1
+ACTION tick=693001 id=16838364 op=4 other=0 pos=473693->473693 energy=134->57 body=16->8 store=21->11 birth=1
+GIFT_THEN_ACT tick=693001 id=16778731 op=0 energy=2710 store=169
+ACTION tick=693001 id=16830869 op=5 other=0 pos=152845->152845 energy=933->927 body=29->29 store=77->76 birth=0
+GIFT_THEN_ACT tick=693001 id=16792253 op=11 energy=1240 store=92
+GIFT_THEN_ACT tick=693001 id=16818541 op=2 energy=413 store=46
+END tick=693600 population=65536 cells=524288 dimensions=1024x512 capacity=65536 seed=20261025
+births=16861937 deaths=16804593 matter=76840404 initial_matter=76840404 rng=16f5caa34ac652dc
+OP 0 attempts=11458978 effects=1830631
+OP 1 attempts=6199169 effects=4400513
+OP 2 attempts=2751426 effects=2703121
+OP 3 attempts=1674693 effects=1468058
+OP 4 attempts=10256625 effects=11069
+OP 5 attempts=150167 effects=139762
+OP 6 attempts=466982 effects=40346
+OP 7 attempts=1330286 effects=1295208
+OP 8 attempts=264898 effects=208166
+OP 9 attempts=859433 effects=88703
+OP 10 attempts=2109668 effects=234710
+OP 11 attempts=686676 effects=118870
+OP 12 attempts=97231 effects=92498
+OP 13 attempts=0 effects=0
+OP 14 attempts=0 effects=0
+OP 15 attempts=940948 effects=0
+VM decodes=39310573 multi=3095743 changed_memory=593986 reads=2049141 branches=2017612 sensor_diff=10544 memory_diff=169509 gift_then_act=59159
+FULL_STATE_VERIFY tick=693600 equal=1
