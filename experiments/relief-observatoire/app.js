@@ -4,8 +4,8 @@ tg?.ready();tg?.expand();
 let d=null,busy=false,sel={x:512,y:256,id:'0'},history=[];
 try{sel=JSON.parse(localStorage.getItem('relief.selection'))||sel;$('layer').value=localStorage.getItem('relief.layer')||'0';}catch{}
 const fmt=n=>Number(n).toLocaleString('fr-FR'),ops=['manger','avancer','orienter','croître','se reproduire','construire','défaire','déposer','reprendre','attaquer','parasiter','donner','émettre','percevoir','conditionner','attendre'];
-function tab(name){for(const s of ['obs','micro','rng'])$(s).hidden=s!==name;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));}
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));tab('obs');
+function tab(name){for(const s of ['world','obs','micro'])$(s).hidden=s!==name;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));tab('world');
 function remember(){localStorage.setItem('relief.selection',JSON.stringify(sel));localStorage.setItem('relief.layer',$('layer').value);}
 async function load(){
  if(busy||!tg?.initData)return;busy=true;$('err').textContent='';
@@ -17,7 +17,7 @@ function render(){
  const last=d.series.at(-1)||{},prev=d.series.at(-2),rows=[['Organismes',fmt(d.population)],['Lignées fondatrices',fmt(last.lineages||0)],['Empreintes génétiques',fmt(last.genotypes_hash||0)],['Matière conservée',d.matter===d.initial_matter?'Oui · '+fmt(d.matter):'ALERTE']];
  $('cards').innerHTML=rows.map(([k,v])=>`<div class="card"><strong>${v}</strong><span>${k}</span></div>`).join('');
  if(prev) $('cards').innerHTML+=`<div class="card"><strong>${fmt(last.births-prev.births)}</strong><span>Naissances / ${last.tick-prev.tick} ticks</span></div><div class="card"><strong>${fmt(last.deaths-prev.deaths)}</strong><span>Décès / même fenêtre</span></div>`;
- drawMap();chart();micro();if(!$('seed').value)$('seed').value=d.rng;
+ drawMap();chart();micro();window.dispatchEvent(new CustomEvent('relief-data',{detail:d}));
 }
 function drawMap(){if(!d)return;const ctx=$('map').getContext('2d'),img=ctx.createImageData(128,64),k=+$('layer').value,max=Math.max(1,...d.map.map(a=>a[k]));d.map.forEach((a,i)=>{const t=Math.log1p(a[k])/Math.log1p(max);img.data.set([Math.round(20+170*t),Math.round(32+190*t),Math.round(38+90*t),255],i*4);});ctx.putImageData(img,0,0);}
 $('layer').onchange=()=>{drawMap();remember();};
@@ -26,7 +26,7 @@ function chart(){if(!d)return;const c=$('chart'),ctx=c.getContext('2d'),key=$('m
 $('metric').onchange=chart;
 function micro(){
  $('zone').textContent=`Zone autour de (${d.x}, ${d.y}) · tick ${fmt(d.tick)}`;
- const ctx=$('zoom').getContext('2d');ctx.clearRect(0,0,340,340);d.nearby.forEach(c=>{const x=(c[0]-d.x+8)*20,y=(c[1]-d.y+8)*20;ctx.fillStyle=c[4]?'#62666b':c[5]!=='0'?'#a7cf85':`rgb(20,${Math.min(120,35+c[2])},55)`;ctx.fillRect(x,y,19,19);if(d.agent&&c[5]===d.agent.id){ctx.strokeStyle='white';ctx.strokeRect(x,y,19,19);}});
+ const ctx=$('zoom').getContext('2d');ctx.clearRect(0,0,340,340);d.nearby.filter(c=>Math.abs(c[0]-d.x)<=8&&Math.abs(c[1]-d.y)<=8).forEach(c=>{const x=(c[0]-d.x+8)*20,y=(c[1]-d.y+8)*20;ctx.fillStyle=c[4]?'#62666b':c[5]!=='0'?'#a7cf85':`rgb(20,${Math.min(120,35+c[2])},55)`;ctx.fillRect(x,y,19,19);if(d.agent&&c[5]===d.agent.id){ctx.strokeStyle='white';ctx.strokeRect(x,y,19,19);}});
  const a=d.agent;if(!a){$('agent').textContent=sel.id!=='0'?`Organisme ${sel.id} absent de cette sauvegarde (décédé ou identifiant inexistant).`:'Aucun organisme dans cette zone.';return;}
  if(sel.id!=='0')$('ident').value=sel.id;
  const fields=[['Identité',a.id],['Parent / lignée',a.parent+' / '+a.lineage],['Position / direction',`${a.x}, ${a.y} / ${['est','sud','ouest','nord'][a.dir]}`],['Âge / naissance',`${a.age} ticks / tick ${a.born}`],['Énergie / corps / réserve',`${a.energy} / ${a.body} / ${a.store}`],['Mémoire (8 octets)',a.memory.join(' · ')],['Perceptions actuelles',a.sensors.join(' · ')],['Choix décodé',`${ops[a.choice&15]} · argument ${a.choice>>4} · ${a.steps} instructions`],['Sans perceptions / sans mémoire',`${ops[a.no_sensors&15]} / ${ops[a.no_memory&15]}`]];
@@ -41,9 +41,7 @@ $('zoom').onclick=e=>{const r=e.target.getBoundingClientRect(),x=d.x-8+Math.floo
 $('search').onsubmit=e=>{e.preventDefault();if(/^\d{1,20}$/.test($('ident').value)){sel.id=$('ident').value;load();}};
 $('untrack').onclick=()=>{sel.id='0';$('ident').value='';load();};
 $('refresh').onclick=load;setInterval(()=>{if($('auto').checked&&!document.hidden)load();},15000);
-const mask=(1n<<64n)-1n;
-function step(x){x^=x>>12n;x^=(x<<25n)&mask;x^=x>>27n;return x&mask;}
-function apply(matrix,x){let r=0n,i=0;while(x){if(x&1n)r^=matrix[i];x>>=1n;i++;}return r;}
-function jump(x,n){let matrix=Array.from({length:64},(_,i)=>step(1n<<BigInt(i)));while(n){if(n&1n)x=apply(matrix,x);n>>=1n;if(n)matrix=matrix.map(v=>apply(matrix,v));}return x;}
-$('jump').onclick=()=>{try{if(!/^[0-9a-fA-F]{1,16}$/.test($('seed').value)||!/^\d{1,20}$/.test($('skip').value))throw Error('Valeurs invalides');let x=BigInt('0x'+$('seed').value),n=BigInt($('skip').value);if(!x||n>mask)throw Error('État nul ou saut hors 64 bits');x=jump(x,n);const lines=['État après saut : '+x.toString(16).padStart(16,'0')];for(let i=0;i<5;i++){x=step(x);lines.push(((x*2685821657736338717n)&mask).toString(16).padStart(16,'0'));}$('numbers').textContent=lines.join('\n');}catch(e){$('numbers').textContent=e.message;}};
 load();
+
+window.reliefSelect=(id,x,y,inspect=false)=>{sel={id:String(id||'0'),x:Math.round(x),y:Math.round(y)};if(inspect)tab('micro');load();};
+window.reliefData=()=>d;

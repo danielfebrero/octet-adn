@@ -28,3 +28,20 @@ assert next_d['agent']['id']==a['id']
 assert len(a['genome'])==64 and len(a['memory'])==8
 assert len(a['sensors'])==8
 print('OK: auth refusée sans signature, mauvais compte et expiration; carte, matière, séries, sélection et microscope. Tick',d['tick'])
+
+organisms=d['organisms']
+assert len(organisms)==d['population'] and len({a[0] for a in organisms})==len(organisms)
+assert all(0<=a[1]<d['width'] and 0<=a[2]<d['height'] for a in organisms)
+assert all(e['tick']<=d['tick'] for e in d['events'])
+ids={a[0] for a in organisms}
+assert all(c[5]=='0' or c[5] in ids for c in d['nearby'])
+for name in ('','world.js','three.module.js','three.core.js','OrbitControls.js'):
+    with urllib.request.urlopen('http://127.0.0.1:8774/relief/'+name) as r:
+        assert r.status==200
+        if name=='':assert 'Hasard' not in r.read().decode()
+req=urllib.request.Request('http://127.0.0.1:8774/relief/data',data=json.dumps({'init_data':raw}).encode(),headers={'Content-Type':'application/json','Accept-Encoding':'gzip'})
+import gzip
+with urllib.request.urlopen(req) as r:
+    assert r.headers['Content-Encoding']=='gzip'
+    assert json.loads(gzip.decompress(r.read()))['population']==d['population']
+print('OK: population 3D complète, identités uniques, coordonnées, loupe cohérente, événements datés, modules locaux, Hasard retiré et transfert gzip.')

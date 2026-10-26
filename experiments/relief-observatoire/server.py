@@ -1,5 +1,6 @@
 """Relief: read-only world mounted /world:ro. No world control endpoint."""
-import hashlib, hmac, json, os, subprocess, time, threading, csv
+import hashlib, hmac, json, os, subprocess, time, threading, csv, gzip
+from collections import deque
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, urlsplit, parse_qs
@@ -28,7 +29,10 @@ def snapshot(x,y,ident):
     with LOCK:
         if key in CACHE:return CACHE[key]
         data=json.loads(subprocess.check_output([str(ROOT/'reader'),WORLD,str(x),str(y),str(ident)],timeout=12))
-        data['saved_at']=Path(WORLD,'state.ck').stat().st_mtime
+        # Refuse mixed timestamps if an atomic checkpoint replacement raced the reader.
+        if Path(WORLD,'state.ck').stat().st_mtime_ns != stamp:
+            raise ValueError('checkpoint changed; retry')
+        data['saved_at']=stamp/1e9
         data['read_at']=time.time()
         rows=[]
         # series is currently unrotated; include closed series segments when present.
@@ -47,21 +51,51 @@ def snapshot(x,y,ident):
         stride=max(1,len(rows)//600)
         data['series']=rows[::stride]
         if rows and data['series'][-1]!=rows[-1]:data['series'].append(rows[-1])
+        data['events']=recent_events(data['tick'])
         data['source']='ELF005 checkpoint; lecteur séparé; aucune écriture sur le vivant'
-        if len(CACHE)>10:CACHE.clear()
+        CACHE.clear() # One full population snapshot: bounded observer memory.
         CACHE[key]=data
         return data
+
+def recent_events(tick):
+    events=[]
+    paths=sorted(Path(WORLD,'histoire').glob('events*.gz'))[-1:]+[Path(WORLD,'events.tsv')]
+    for path in paths:
+        try:
+            if path.suffix=='.gz':
+                with gzip.open(path,'rt') as f: lines=deque(f,maxlen=80000)
+            else:
+                with open(path,'rb') as f:
+                    f.seek(0,2); size=f.tell(); f.seek(max(0,size-8388608))
+                    if size>8388608:f.readline()
+                    lines=f.read().decode().splitlines()
+            for line in lines:
+                row=line.strip().split('\t')
+                if len(row)<8:continue
+                try:
+                    t=int(row[0]);pos=int(row[5])
+                    if tick-1200<=t<=tick:
+                        events.append({'tick':t,'kind':row[1],'id':row[2],'lineage':row[3],'other':row[4],'x':pos%1024,'y':pos//1024,'amount':int(row[6])})
+                except ValueError:continue
+        except FileNotFoundError:pass
+    return sorted(events,key=lambda e:e['tick'])[-80:]
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
     def send(self,status,data,kind='application/json; charset=utf-8'):
         raw=data if isinstance(data,bytes) else json.dumps(data,ensure_ascii=False).encode()
+        compressed=len(raw)>2048 and 'gzip' in self.headers.get('Accept-Encoding','')
+        if compressed:raw=gzip.compress(raw,compresslevel=3)
         self.send_response(status);self.send_header('Content-Type',kind)
+        if compressed:self.send_header('Content-Encoding','gzip')
+        self.send_header('Vary','Accept-Encoding')
         self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def do_GET(self):
         path=urlsplit(self.path).path
         files={'/relief/':'index.html','/relief/app.js':'app.js','/relief/app.css':'app.css','/relief/telegram-web-app.js':'telegram-web-app.js'}
+        for name in ('world.js','three.module.js','three.core.js','OrbitControls.js'):
+            files['/relief/'+name]=name
         if path=='/health':return self.send(200,{'ok':True,'readonly':True})
         if path in files:
             name=files[path];kind='text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'text/javascript'

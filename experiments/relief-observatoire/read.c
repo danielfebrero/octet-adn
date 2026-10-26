@@ -23,11 +23,15 @@ int main(int argc,char **argv) {
   if(!n)n=1;
   printf("%s[%u,%"PRIu64",%"PRIu64",%"PRIu64",%u]",bx||by?",":"",pop,food/n,elev/n,structure/n,rock);
  }
+ printf("],\"organisms\":[");unsigned living=0;
+ for(uint32_t i=0;i<w.c.capacity;i++){Agent *a=&w.agents[i];if(!a->alive)continue;
+  printf("%s[\"%"PRIu64"\",%u,%u,\"%"PRIu64"\",%u,%u,%u]",living++?",":"",a->id,a->pos%w.c.width,a->pos/w.c.width,a->lineage,a->dir,a->energy,a->body);
+ }
  printf("],\"x\":%u,\"y\":%u,\"nearby\":[",x,y);unsigned printed=0;
- for(int dy=-8;dy<=8;dy++)for(int dx=-8;dx<=8;dx++){
+ for(int dy=-24;dy<=24;dy++)for(int dx=-24;dx<=24;dx++){
   int cx=(int)x+dx,cy=(int)y+dy;if(cx<0||cy<0||cx>=(int)w.c.width||cy>=(int)w.c.height)continue;
   unsigned p=(unsigned)cy*w.c.width+(unsigned)cx;Cell*c=&w.cells[p];int a=w.occupancy[p];
-  printf("%s[%d,%d,%u,%u,%u,\"%"PRIu64"\"]",printed++?",":"",cx,cy,c->food,c->structure,c->rock,a<0?0:w.agents[a].id);
+  printf("%s[%d,%d,%u,%u,%u,\"%"PRIu64"\",%u,%u,%u,%u]",printed++?",":"",cx,cy,c->food,c->structure,c->rock,a<0?0:w.agents[a].id,c->elevation,c->moisture,c->cache,c->signal);
   if(!id&&!selected&&a>=0)selected=&w.agents[a];
  }
  printf("],\"agent\":");

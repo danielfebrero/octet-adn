@@ -15,9 +15,28 @@ URL `https://mcp.cdxxotus.com/relief/`, artifact
   au plus et comparaison aux perceptions/mémoire neutralisées.
 - Suivi entre sauvegardes : positions, âge, énergie. Un absent est signalé,
   jamais remplacé silencieusement par un autre organisme.
-- Laboratoire du hasard : xorshift64*, état interne hexadécimal, saut exact
-  logarithmique par exponentiation de la transformation linéaire sur GF(2),
-  puis cinq sorties. Aucun RNG ni checkpoint de production n'est modifié.
+- **Monde 3D** (26 octobre) : terrain aux altitudes réelles agrégées 8×8,
+  tous les organismes du checkpoint avec identités exactes, couleurs par lignée
+  ou énergie, calques nourriture/constructions, structures et roches.
+  Corps stylisés dans la zone locale (49×49), panorama, immersion, orbite
+  automatique, navigation tactile, sélection, suivi et accès au microscope.
+- Anneaux de lecture des événements réels, datés : naissances, décès,
+  constructions, dépôts, attaques, dons et parasitisme selon les traces présentes.
+  La sélection est limitée à 80 événements côté API, avec au plus quatre traces
+  de chaque type dans la liste visible. Les anneaux **rejouent en boucle** ces
+  traces ; ils ne représentent pas des actions survenant à l'instant du rendu.
+- La section **Hasard est supprimée**, ainsi que son code et ses contrôles.
+
+Les déplacements entre deux sauvegardes d'un même identifiant sont interpolés
+visuellement sur huit secondes (écarts de moins de 40 cases seulement ; les
+plus grands sont affichés sans interpolation). Le chemin réel entre relevés
+reste inconnu. Les halos sont décoratifs, les corps sont stylisés et la hauteur
+du terrain est réglable : aucune morphologie ou action n'est déduite de ces
+choix de rendu. Un organisme absent n'est jamais remplacé dans le suivi.
+Les options « Animations » et le réglage système de réduction du mouvement
+coupent halos animés, transitions et anneaux. Sans WebGL, carte et microscope
+restent accessibles. Les modules Three.js 0.180.0 et OrbitControls sont servis
+localement avec leur licence MIT ; aucun CDN n'est requis à l'ouverture.
 
 L'observation porte sur les checkpoints atomiques, généralement toutes les
 600 ticks (~60 s). La page les consulte toutes les 15 s lorsqu'elle est visible.
@@ -60,8 +79,7 @@ Ne pas recharger un ancien Caddyfile pour déployer cette app.
 Compilation C stricte réussie. Authentification : sans signature, mauvais compte
 et session expirée refusés. Lecture réelle tick130800 : matière76840404,
 8192 pixels, séries, génome64, mémoire8, perceptions8, sélection par identifiant.
-JS analysé et exécuté dans Node22 : 900 comparaisons saut/pas direct sur trois
-états et composition de grands sauts. Rendu Chromium isolé 412×1800 vérifié
+Le laboratoire du hasard avait été vérifié le 25 octobre ; il est désormais retiré. Rendu Chromium isolé 412×1800 vérifié
 sur un instantané réel tick131400 ; carte, courbes et microscope rendus.
 HTTPS page200 ; API publique sans signature403.
 
@@ -70,3 +88,26 @@ Moteur vivant conservé : SHA256
 conteneur octet-relief démarré à19:56:08Z, toujours en cours après déploiement.
 Le rejeu de l'écologie est déjà vérifié par les tests du moteur Relief ; cette
 mini-app n'initialise aucune écologie et ne crée aucun laboratoire vivant.
+
+
+## Validation 3D du 26 octobre 2026
+
+- Compilation stricte du lecteur et intégration dans le seul observatoire.
+- Tick 531000 : 65536 identités uniques, coordonnées dans le monde,
+  correspondance avec les occupants de la loupe ; aucune trace postérieure au
+  checkpoint exposée. Le serveur refuse une lecture si le checkpoint est
+  remplacé pendant l'extraction. Cache borné à une population complète.
+- Tests d'accès Telegram, population 3D, modules et réponse gzip :
+  `docker exec relief-observatoire python3 /app/check.py`.
+- Syntaxe Node22 : `node check-js.cjs`.
+- Chromium isolé, données réelles interceptées pour le rendu : mobile 412×915
+  et bureau 1440×1000. Panorama, immersion, calques, hauteur, agrandissement,
+  animations, carte et microscope vérifiés sans erreur JS/WebGL ; largeur
+  mobile de 412 pixels, sans débordement. Aucun secret dans les fixtures.
+- HTTPS `/relief/` : 200 ; `/relief/data` sans signature Telegram : 403.
+- Aucun redémarrage de `octet-relief`, ELF005 inchangé. Seul le serveur
+  d'observation a redémarré pour charger sa nouvelle API.
+
+Le rendu a été testé dans Chromium avec accélération logicielle ; la cadence
+sur un téléphone physique n'a pas été mesurée. Le plafond visé est 30 rendus/s,
+avec résolution limitée à 1,5× et arrêt du rendu quand la page est masquée.
