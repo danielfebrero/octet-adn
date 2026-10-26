@@ -45,3 +45,28 @@ with urllib.request.urlopen(req) as r:
     assert r.headers['Content-Encoding']=='gzip'
     assert json.loads(gzip.decompress(r.read()))['population']==d['population']
 print('OK: population 3D complète, identités uniques, coordonnées, loupe cohérente, événements datés, modules locaux, Hasard retiré et transfert gzip.')
+
+# Direct : ombre déterministe, trames K puis D enchaînées, vérification contre le checkpoint vivant.
+def live(raw,since):
+    req=urllib.request.Request('http://127.0.0.1:8774/relief/live',data=json.dumps({'init_data':raw,'since':since}).encode(),headers={'Content-Type':'application/json'})
+    try:
+        with urllib.request.urlopen(req) as r:return r.status,dict(r.headers),r.read()
+    except urllib.error.HTTPError as e:return e.code,{},b''
+assert live('',-1)[0]==403 and live(signed(uid+1),-1)[0]==403
+for _ in range(60):
+    status,headers,body=live(raw,-1)
+    if status==200:break
+    time.sleep(0.5)
+assert status==200 and body[:4]==b'RLV1' and chr(body[4])=='K'
+def walk(b):
+    o=0;out=[]
+    while o+20<=len(b):
+        n=int.from_bytes(b[o+8:o+12],'little');out.append((chr(b[o+4]),int.from_bytes(b[o+12:o+20],'little'),b[o+20:o+28]));o+=20+n
+    assert o==len(b);return out
+tick=walk(body)[-1][1];chained=0;t0=time.time()
+while time.time()-t0<8:
+    time.sleep(0.5);status,headers,body=live(raw,tick);assert status==200
+    for k,t,head in walk(body):
+        assert k=='D' and int.from_bytes(head,'little')==tick;tick=t;chained+=1
+assert chained>=8,chained
+print('OK: direct refusé sans signature ; image complète puis',chained,'trames de mouvement enchaînées sans trou ; tick',tick)

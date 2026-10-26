@@ -80,6 +80,65 @@ def recent_events(tick):
         except FileNotFoundError:pass
     return sorted(events,key=lambda e:e['tick'])[-80:]
 
+
+# ---------- Direct : ombre déterministe du monde, démarrée seulement quand quelqu'un regarde ----------
+class Live:
+    """Lit les trames de ./ombre (K image, D mouvements, V vérification). Aucune écriture sur le vivant."""
+    def __init__(self):
+        self.lock=threading.Lock();self.proc=None;self.key=None;self.deltas=deque(maxlen=240)
+        self.verified=None;self.touched=0.0;self.started=0.0
+    def touch(self):
+        with self.lock:
+            self.touched=time.time()
+            if self.proc is None or self.proc.poll() is not None:
+                self.key=None;self.deltas.clear();self.started=time.time()
+                self.proc=subprocess.Popen([str(ROOT/'ombre'),WORLD,'100'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,bufsize=0)
+                threading.Thread(target=self.read,args=(self.proc,),daemon=True).start()
+    def read(self,proc):
+        f=proc.stdout
+        def exact(n):
+            b=bytearray()
+            while len(b)<n:
+                part=f.read(n-len(b))
+                if not part:return None
+                b+=part
+            return bytes(b)
+        while True:
+            h=exact(20)
+            if not h or h[:4]!=b'RLV1':break
+            n=int.from_bytes(h[8:12],'little');tick=int.from_bytes(h[12:20],'little')
+            body=exact(n)
+            if body is None:break
+            kind=chr(h[4])
+            with self.lock:
+                if kind=='K':self.key=(tick,h+body)
+                elif kind=='D':self.deltas.append((int.from_bytes(body[:8],'little'),tick,h+body))
+                elif kind=='V':self.verified=(int.from_bytes(body[:8],'little'),body[16]==1,time.time())
+    def idle(self):
+        while True:
+            time.sleep(10)
+            with self.lock:
+                if self.proc and self.proc.poll() is None and time.time()-self.touched>90:
+                    self.proc.terminate();self.proc=None
+    def packet(self,since):
+        """Trames à envoyer : image + suite si le client n'a pas de base valide, sinon les mouvements après since."""
+        with self.lock:
+            if self.key is None:return None,'starting'
+            ds=list(self.deltas)
+            newest=ds[-1][1] if ds else self.key[0]
+            if since>=0 and since==newest:return b'','delta'
+            if since>=0 and any(d[0]==since for d in ds):
+                out=[];cur=since
+                for f,t,raw in ds:
+                    if f==cur:out.append(raw);cur=t
+                return b''.join(out),'delta'
+            kt,kraw=self.key
+            out=[kraw];cur=kt
+            for f,t,raw in ds:
+                if f==cur:out.append(raw);cur=t
+            return b''.join(out),'key'
+LIVE=Live();threading.Thread(target=LIVE.idle,daemon=True).start()
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self,*args):pass
     def send(self,status,data,kind='application/json; charset=utf-8'):
@@ -91,6 +150,23 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Vary','Accept-Encoding')
         self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+    def live(self):
+        try:
+            n=int(self.headers.get('Content-Length','0'))
+            if n<1 or n>16384:raise ValueError('size')
+            payload=json.loads(self.rfile.read(n));verify(payload.get('init_data',''))
+            since=int(payload.get('since',-1))
+        except Exception:return self.send(403,{'error':'Ouvrir depuis le bouton Telegram Relief.'})
+        LIVE.touch();raw,mode=LIVE.packet(since)
+        if raw is None:return self.send(202,{'starting':True})
+        v=LIVE.verified
+        compressed='gzip' in self.headers.get('Accept-Encoding','') and len(raw)>2048
+        body=gzip.compress(raw,compresslevel=1) if compressed else raw
+        self.send_response(200);self.send_header('Content-Type','application/octet-stream')
+        if compressed:self.send_header('Content-Encoding','gzip')
+        self.send_header('Cache-Control','no-store');self.send_header('X-Relief-Mode',mode)
+        if v:self.send_header('X-Relief-Verified',f'{v[0]}:{1 if v[1] else 0}')
+        self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
     def do_GET(self):
         path=urlsplit(self.path).path
         files={'/relief/':'index.html','/relief/app.js':'app.js','/relief/app.css':'app.css','/relief/telegram-web-app.js':'telegram-web-app.js'}
@@ -102,6 +178,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200,(ROOT/name).read_bytes(),kind+'; charset=utf-8')
         self.send(404,{'error':'introuvable'})
     def do_POST(self):
+        if urlsplit(self.path).path=='/relief/live':return self.live()
         if urlsplit(self.path).path!='/relief/data':return self.send(404,{})
         try:
             n=int(self.headers.get('Content-Length','0'))

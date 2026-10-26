@@ -111,3 +111,23 @@ mini-app n'initialise aucune écologie et ne crée aucun laboratoire vivant.
 Le rendu a été testé dans Chromium avec accélération logicielle ; la cadence
 sur un téléphone physique n'a pas été mesurée. Le plafond visé est 30 rendus/s,
 avec résolution limitée à 1,5× et arrêt du rendu quand la page est masquée.
+
+## Direct (26 octobre 2026)
+
+La vue 3D montre maintenant le monde **en temps réel**. `ombre.c` (lecteur séparé, comme `read.c`) charge
+le dernier checkpoint et rejoue Relief tick par tick, en mémoire, au rythme du vivant (100 ms). Le moteur est
+déterministe et `step` n'écrit rien quand le journal est fermé : l'ombre calcule exactement les mêmes ticks.
+À chaque nouveau checkpoint du vivant, elle compare son état au même tick (tick, RNG, naissances, décès,
+population) ; égal, la page affiche « vérifié ✓ au tick N » ; différent, l'ombre se recale sur le checkpoint.
+
+- Trames `RLV1` : K (image complète, 12 octets par case), D (toutes les 5 ticks : morts, naissances, grands
+  sauts, un octet de déplacement par case), V (vérification). Route `POST /relief/live` (signature Telegram).
+- L'ombre ne tourne que si quelqu'un regarde (arrêt après 90 s sans demande). Coût mesuré : ~15 % d'un cœur,
+  ~732 Kio à l'ouverture puis ~55 Kio/s compressés.
+- Dans la page, chaque lumière garde sa case et glisse vers sa nouvelle position toutes les 0,5 s ;
+  naissances et morts apparaissent au fil de l'eau ; la sélection et le suivi utilisent les positions en direct.
+  Repli automatique sur les sauvegardes si le direct est indisponible.
+- Essai du 26 octobre : 152 trames enchaînées sans trou en 75 s, vérification 591600 et 594600 égales au
+  vivant ; rendu Chromium 412×915 sans erreur, lumières déplacées entre deux captures à 1,5 s.
+
+Le monde vivant et son ELF005 ne sont ni modifiés ni redémarrés : seul l'observatoire redémarre.
