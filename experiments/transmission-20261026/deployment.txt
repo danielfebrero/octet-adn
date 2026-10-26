@@ -1,0 +1,2 @@
+/octet-transmission image=sha256:2333bd330d12de02514770b3585cad313644316047cdee24a7acfdece6de6efb pid=778547 started=2026-10-26T22:32:30.245652658Z running=true oom=false restarts=0 network=none memory=67108864 cpu_nano=500000000 readonly=true restart=on-failure
+/octet-transmission-library image=sha256:2333bd330d12de02514770b3585cad313644316047cdee24a7acfdece6de6efb pid=778609 started=2026-10-26T22:32:30.365994771Z running=true oom=false restarts=0 network=bridge memory=100663296 cpu_nano=250000000 readonly=true restart=on-failure
