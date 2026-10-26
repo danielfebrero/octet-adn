@@ -1,0 +1,10 @@
+date=2026-10-26T16:27:05Z
+disque_libre_go=262.4
+histoire_go=1.836
+segments_gz=139
+segments_xz=0
+ecrit_24h_gz_go=1.836
+ratio_xz_sur_gz=0.450
+rythme_stocke_go_jour=0.826
+jours_restants=318
+statut=ok

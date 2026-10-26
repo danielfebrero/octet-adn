@@ -1,0 +1,39 @@
+{
+  "task_id": "b8e25e22-c4a1-4e91-814f-a8dd2ce11876",
+  "verdict": "PASS",
+  "criteria": [
+    {
+      "criterion": "Exact ELF005; copied atomic checkpoint and byte-equal control vs captured living state",
+      "evidence": [
+        "results/replay-verification.json",
+        "results/window1-capture.json",
+        "results/window2-capture.json"
+      ]
+    },
+    {
+      "criterion": "Predefined transformations; strict forbidden-byte, matter and RNG checks",
+      "evidence": [
+        "PROTOCOLE.md",
+        "preregistration.json",
+        "results/check-results.json"
+      ]
+    },
+    {
+      "criterion": "6 bounded runs + complete birth/death and root/lineage analyses",
+      "evidence": [
+        "results/run-manifest.json",
+        "results/window1-analysis.json",
+        "results/window2-analysis.json"
+      ]
+    },
+    {
+      "criterion": "Raw artifacts retained and reproducible; living unchanged and no experiment container persists",
+      "evidence": [
+        "results/evidence-manifest.json",
+        "results/postflight.json",
+        "README.md"
+      ]
+    }
+  ],
+  "platform_note": "channel_work.proof_contract returned invalid_arguments; this local checkable contract records evidence, not a successful server registration."
+}

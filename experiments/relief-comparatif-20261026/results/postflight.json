@@ -1,0 +1,11 @@
+{
+  "at_utc": "2026-10-26T16:45:59.534489+00:00",
+  "docker_inspect": "{\"Status\":\"running\",\"Running\":true,\"Paused\":false,\"Restarting\":false,\"OOMKilled\":false,\"Dead\":false,\"Pid\":647691,\"ExitCode\":0,\"Error\":\"\",\"StartedAt\":\"2026-10-25T19:56:08.295975832Z\",\"FinishedAt\":\"0001-01-01T00:00:00Z\"} 0\n",
+  "live_inspect": "tick=745800 population=65536 cells=524288 dimensions=1024x512 capacity=65536 seed=20261025\nbirths=18443689 deaths=18386345 matter=76840404 initial_matter=76840404 rng=f53b28c534c6136e\n",
+  "elf_sha256": "c6f68f7e7ad5388f3c9b6603cc885ccaaa225c34a344e39195fe4c12be649480",
+  "source_sha256": "10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c",
+  "disk_df": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/md3        878G  590G  243G  71% /workspace\n",
+  "storage_report": "date=2026-10-26T16:37:05Z\ndisque_libre_go=261.7\nhistoire_go=1.861\nsegments_gz=141\nsegments_xz=0\necrit_24h_gz_go=1.861\nratio_xz_sur_gz=0.450\nrythme_stocke_go_jour=0.838\njours_restants=312\nstatut=ok\n",
+  "storage_log_exists": false,
+  "experiment_containers_remaining": ""
+}

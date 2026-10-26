@@ -1,0 +1,12 @@
+{
+  "captured_at": "2026-10-26T16:33:27Z",
+  "sha256": "a0bc658db6efa2ec191d939b5e981b26612eb5321bc8a5929fe82b701ada5974",
+  "source_inode": 22977216,
+  "source_mtime_ns": 1793032358831012802,
+  "inspect": "tick=738000 population=65536 cells=524288 dimensions=1024x512 capacity=65536 seed=20261025\nbirths=18201014 deaths=18143670 matter=76840404 initial_matter=76840404 rng=b4dc61e13b828aa1\n",
+  "delta_ticks": 600,
+  "full_checkpoint_byte_equal": true,
+  "replay_sha256": "a0bc658db6efa2ec191d939b5e981b26612eb5321bc8a5929fe82b701ada5974",
+  "wall_seconds": 6.095218759030104,
+  "returncode": 0
+}

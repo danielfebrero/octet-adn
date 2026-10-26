@@ -1,0 +1,21 @@
+{
+  "captured_at_utc": "2026-10-26T16:39:03.527367+00:00",
+  "method": "one fd on atomic checkpoint, read-only source",
+  "source": "/workspace/produits/octet-adn/experiments/vie-relief-20261025/state.ck",
+  "source_inode": 22977225,
+  "source_mtime_ns": 1793032721016493126,
+  "sha256": "80b71e35f9c67744ac915ac9097af1c1cc0c7853fde07e26e182468957d3e1ba",
+  "size": 25166104,
+  "elf_sha256": "c6f68f7e7ad5388f3c9b6603cc885ccaaa225c34a344e39195fe4c12be649480",
+  "commit": "ebfcedf25682cd1579ee06eaecf2a24bc96e440a",
+  "inspect": {
+    "text": "tick=741600 population=65536 cells=524288 dimensions=1024x512 capacity=65536 seed=20261025\nbirths=18309065 deaths=18251721 matter=76840404 initial_matter=76840404 rng=fa6d234e0aeed42e\n",
+    "tick": 741600,
+    "population": 65536,
+    "births": 18309065,
+    "deaths": 18251721,
+    "matter": 76840404,
+    "initial_matter": 76840404,
+    "rng": "fa6d234e0aeed42e"
+  }
+}

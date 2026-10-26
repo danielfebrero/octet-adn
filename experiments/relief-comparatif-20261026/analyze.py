@@ -113,6 +113,8 @@ def read_state(prefix):
     require(dict(lineages) == {row["lineage"]: row["population"] for row in state["lineages"]}, f"{prefix}: lineage export mismatch")
     exact = len({row["genome_hex"] for row in agents.values()})
     require(exact == state["diversity"]["genotypes_exact"], f"{prefix}: exact genome export mismatch")
+    hashes_count = len({row["genotype_hash"] for row in agents.values()})
+    require(hashes_count == state["diversity"].get("genotype_hashes", hashes_count), f"{prefix}: genotype hash export mismatch")
     return state, agents
 
 
@@ -335,6 +337,13 @@ class ArmAnalysis:
                 row[key] = agg[key]
             for key in ("body", "store", "energy", "local_cache", "local_food"):
                 row[key] = resources_by_lineage.get(lineage, {}).get(key, 0)
+            initial_lineage = next((value for value in self.initial["lineages"] if value["lineage"] == lineage), {})
+            row["initial_local_cache"] = initial_lineage.get("local_cache", 0)
+            row["initial_local_cache_per_initial_individual"] = ratio(row["initial_local_cache"], n0)
+            row["local_cache_per_current_individual"] = ratio(row["local_cache"], n)
+            occupied_cache_total = sum(value.get("local_cache", 0) for value in resources_by_lineage.values())
+            row["local_cache_share_of_occupied_cache"] = ratio(row["local_cache"], occupied_cache_total)
+            row["local_cache_share_divided_by_population_share"] = ratio(row["local_cache_share_of_occupied_cache"], row["share"]) if row["local_cache_share_of_occupied_cache"] is not None else None
             self.lineage_rows.append(row)
         sample_summary = {}
         for kind, sample in sorted(self.samples.items()):
@@ -386,6 +395,8 @@ class ArmAnalysis:
                       "dead_roots_at_risk": len(self.root_death_tick),
                       "dead_roots_with_extant_descendants_fraction": ratio(agg_global["dead_initial_roots_with_extant_descendants"], len(self.root_death_tick))},
                   "lineage_diversity": diversity(pop_by_lineage), "genotype_diversity_exact": diversity(genomes),
+                  "genotype_hashes_count": len({row["genotype_hash"] for row in agents.values()}),
+                  "genotype_hash_collision_gap": len(genomes) - len({row["genotype_hash"] for row in agents.values()}),
                   "resources": state["resources"], "matter": state["matter"],
                   "caches": state["caches"], "owner_trace": state.get("owner_trace", {}),
                   "cache_fraction_of_matter": ratio(state["resources"]["cache"], state["matter"]),
@@ -478,6 +489,7 @@ def analyze(window_dir, horizons):
                   "causality": "Paired deterministic trajectories from one checkpoint are conditional interventions, not independent replications. Additional initial windows test temporal robustness, not independent RNG seeds.",
                   "extinction": "The exact ELF stops when population becomes zero. An early-extinct export may have effective_tick < target_tick: population and genealogy are then carried as absorbing zero, while physical state/counters/RNG must remain exactly the extinct checkpoint; no founders or continuing world are created.",
                   "cohort_mean_warning": "When all initial IDs died, mean living descendants per initial ID equals final population / initial population by construction. Extant-root fraction, distribution, quantiles and lineage shares carry additional information.",
+                  "cache_lineage_normalization": "local_cache is cache physically under current occupants of a lineage, not owner-trace property. Per-current-individual divides by current lineage population; cache-share/population-share compares it with the global occupied cache per individual. Extinct lineages have undefined per-individual ratios.",
                   "descendant_quantiles": "Nearest-rank census quantiles across all initial roots including zeros; top 1% uses ceil(number of roots / 100).",
                   "population_tick_end": "Secondary refinement specified before outcome inspection: reconstruct exact census after every tick from complete births/deaths; keep distinct from predeclared 100-tick series samples and within-tick vacancies.",
                   "uncertainty": "No organism-level statistical confidence intervals: shared environment and descent violate independence. Census values are exact for the observed finite trajectories."},
@@ -569,6 +581,9 @@ def selftest():
         with (window / "cohort-results.tsv").open() as stream:
             rows = list(csv.DictReader(stream, delimiter="\t"))
         assert len(rows) == 9 and all(row["living_descendants_excluding_root"] == "0" for row in rows)
+        root_one = next(row for row in rows if row["arm"] == "control" and row["initial_id"] == "1")
+        root_three = next(row for row in rows if row["arm"] == "control" and row["initial_id"] == "3")
+        assert root_one["all_descendant_births"] == "2" and root_three["all_descendant_births"] == "0"
         # The initial individual 3 is its own root despite initial parent=1.
         lineage_one = [row for row in output["arms"]["control"]["initial"]["lineages"] if row["lineage"] == 1]
         assert lineage_one[0]["population"] == 2

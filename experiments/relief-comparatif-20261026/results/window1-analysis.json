@@ -1,0 +1,2589 @@
+{
+  "schema": "relief-comparatif-analysis-v1",
+  "window": "window1",
+  "prespecified_horizons": [
+    600,
+    4096,
+    8192
+  ],
+  "definitions": {
+    "cohort_root": "Every initial living ID is a distinct prospective root; follow post-start parent links until an initial ID is encountered. Existing parent links between initial IDs do not merge roots.",
+    "descendants": "Exclude the initial root itself; retain lineage attribution after the root dies.",
+    "at_risk": "Initial living individuals, by lineage; report denominators even for tiny lineages.",
+    "diversity": "Full 64-byte genome identity (not hash identity); Shannon entropy in nats; Hill effective counts; exact snapshot census.",
+    "interactions": "Global deltas from cumulative checkpoint counters are exhaustive. Logged gift/attack/parasite/deposit/build events are only a deterministic 1/256 actor-tick-kind sample; do not extrapolate or infer independent observations.",
+    "causality": "Paired deterministic trajectories from one checkpoint are conditional interventions, not independent replications. Additional initial windows test temporal robustness, not independent RNG seeds.",
+    "extinction": "The exact ELF stops when population becomes zero. An early-extinct export may have effective_tick < target_tick: population and genealogy are then carried as absorbing zero, while physical state/counters/RNG must remain exactly the extinct checkpoint; no founders or continuing world are created.",
+    "cohort_mean_warning": "When all initial IDs died, mean living descendants per initial ID equals final population / initial population by construction. Extant-root fraction, distribution, quantiles and lineage shares carry additional information.",
+    "cache_lineage_normalization": "local_cache is cache physically under current occupants of a lineage, not owner-trace property. Per-current-individual divides by current lineage population; cache-share/population-share compares it with the global occupied cache per individual. Extinct lineages have undefined per-individual ratios.",
+    "descendant_quantiles": "Nearest-rank census quantiles across all initial roots including zeros; top 1% uses ceil(number of roots / 100).",
+    "population_tick_end": "Secondary refinement specified before outcome inspection: reconstruct exact census after every tick from complete births/deaths; keep distinct from predeclared 100-tick series samples and within-tick vacancies.",
+    "uncertainty": "No organism-level statistical confidence intervals: shared environment and descent violate independence. Census values are exact for the observed finite trajectories."
+  },
+  "arms": {
+    "control": {
+      "initial": {
+        "schema": "relief.offline.state.v1",
+        "tick": 737400,
+        "population": 65536,
+        "rng_hex": "dc1a663677e1a60c",
+        "next_id": 18182219,
+        "initial_matter": 76840404,
+        "matter": 76840404,
+        "config": {
+          "width": 1024,
+          "height": 512,
+          "capacity": 65536,
+          "founders": 8192,
+          "season": 4096,
+          "sample": 100,
+          "checkpoint": 2000,
+          "seed": 20261025
+        },
+        "counters": {
+          "births": 18174026,
+          "deaths": 18116682,
+          "moves": 4723096461,
+          "eats": 7005840776,
+          "builds": 551360908,
+          "breaks": 165160017,
+          "gifts": 136362853,
+          "attacks": 65014030,
+          "parasites": 140924270,
+          "mutations": 4597174,
+          "energy_spent": 186736774345,
+          "solar_food": 9371836638,
+          "sensor_witness": 494266,
+          "memory_witness": 855171,
+          "witness_samples": 187950638
+        },
+        "resources": {
+          "mineral": 4175944,
+          "food": 220576,
+          "detritus": 1001305,
+          "structure": 847063,
+          "cache": 66980511,
+          "body": 1067237,
+          "store": 2547768,
+          "energy": 11211812
+        },
+        "diversity": {
+          "genotypes_exact": 28123,
+          "genotype_hashes": 28123,
+          "lineages": 27
+        },
+        "caches": {
+          "positive_cells": 447414,
+          "total": 66980511,
+          "gini_all_cells": 0.661828294317,
+          "top1pct_share_all_cells": 0.111768347064,
+          "occupied_total": 8972825,
+          "occupied_positive_cells": 60543,
+          "gini_occupied": 0.635014197302,
+          "top1pct_share_occupied": 0.11454798238
+        },
+        "owner_trace": {
+          "meaning": "historical builder lineage low32, not enforced cache ownership",
+          "positive_cache_cells_with_trace": 161597,
+          "cache_with_trace": 24456416,
+          "distinct_trace_values": 27
+        },
+        "lineages": [
+          {
+            "lineage": 209,
+            "population": 8,
+            "body": 184,
+            "store": 1287,
+            "energy": 1511,
+            "local_cache": 2353,
+            "local_food": 0
+          },
+          {
+            "lineage": 259,
+            "population": 1294,
+            "body": 17660,
+            "store": 40835,
+            "energy": 218793,
+            "local_cache": 160134,
+            "local_food": 253
+          },
+          {
+            "lineage": 871,
+            "population": 691,
+            "body": 9802,
+            "store": 28400,
+            "energy": 181948,
+            "local_cache": 107224,
+            "local_food": 289
+          },
+          {
+            "lineage": 905,
+            "population": 5429,
+            "body": 98386,
+            "store": 187223,
+            "energy": 229412,
+            "local_cache": 589274,
+            "local_food": 2630
+          },
+          {
+            "lineage": 1049,
+            "population": 558,
+            "body": 8705,
+            "store": 21086,
+            "energy": 93268,
+            "local_cache": 87318,
+            "local_food": 60
+          },
+          {
+            "lineage": 1241,
+            "population": 4286,
+            "body": 80827,
+            "store": 164447,
+            "energy": 440475,
+            "local_cache": 503661,
+            "local_food": 1807
+          },
+          {
+            "lineage": 1915,
+            "population": 218,
+            "body": 4551,
+            "store": 6595,
+            "energy": 21713,
+            "local_cache": 16248,
+            "local_food": 255
+          },
+          {
+            "lineage": 1920,
+            "population": 131,
+            "body": 1756,
+            "store": 5598,
+            "energy": 17292,
+            "local_cache": 17679,
+            "local_food": 0
+          },
+          {
+            "lineage": 2289,
+            "population": 10059,
+            "body": 153617,
+            "store": 374208,
+            "energy": 2031033,
+            "local_cache": 1697875,
+            "local_food": 1773
+          },
+          {
+            "lineage": 2400,
+            "population": 4489,
+            "body": 74857,
+            "store": 188851,
+            "energy": 1104601,
+            "local_cache": 587507,
+            "local_food": 2128
+          },
+          {
+            "lineage": 2648,
+            "population": 3017,
+            "body": 51115,
+            "store": 115289,
+            "energy": 244368,
+            "local_cache": 275085,
+            "local_food": 967
+          },
+          {
+            "lineage": 2881,
+            "population": 2022,
+            "body": 37693,
+            "store": 76385,
+            "energy": 139230,
+            "local_cache": 155818,
+            "local_food": 1984
+          },
+          {
+            "lineage": 2889,
+            "population": 159,
+            "body": 3219,
+            "store": 7354,
+            "energy": 11196,
+            "local_cache": 24305,
+            "local_food": 202
+          },
+          {
+            "lineage": 2933,
+            "population": 11183,
+            "body": 167318,
+            "store": 481545,
+            "energy": 2260329,
+            "local_cache": 1472463,
+            "local_food": 2356
+          },
+          {
+            "lineage": 3349,
+            "population": 318,
+            "body": 4089,
+            "store": 8614,
+            "energy": 55264,
+            "local_cache": 47907,
+            "local_food": 65
+          },
+          {
+            "lineage": 3467,
+            "population": 10500,
+            "body": 159697,
+            "store": 429892,
+            "energy": 2304438,
+            "local_cache": 1657849,
+            "local_food": 1773
+          },
+          {
+            "lineage": 3719,
+            "population": 120,
+            "body": 2279,
+            "store": 2910,
+            "energy": 937,
+            "local_cache": 11719,
+            "local_food": 0
+          },
+          {
+            "lineage": 3921,
+            "population": 7,
+            "body": 115,
+            "store": 147,
+            "energy": 45,
+            "local_cache": 829,
+            "local_food": 0
+          },
+          {
+            "lineage": 4161,
+            "population": 448,
+            "body": 8598,
+            "store": 16047,
+            "energy": 35430,
+            "local_cache": 63507,
+            "local_food": 64
+          },
+          {
+            "lineage": 4407,
+            "population": 821,
+            "body": 14028,
+            "store": 36459,
+            "energy": 224800,
+            "local_cache": 146425,
+            "local_food": 424
+          },
+          {
+            "lineage": 5077,
+            "population": 360,
+            "body": 8049,
+            "store": 11226,
+            "energy": 33191,
+            "local_cache": 46268,
+            "local_food": 332
+          },
+          {
+            "lineage": 5272,
+            "population": 3200,
+            "body": 50535,
+            "store": 125252,
+            "energy": 726213,
+            "local_cache": 489258,
+            "local_food": 593
+          },
+          {
+            "lineage": 5325,
+            "population": 439,
+            "body": 6951,
+            "store": 15637,
+            "energy": 120001,
+            "local_cache": 67694,
+            "local_food": 166
+          },
+          {
+            "lineage": 5425,
+            "population": 651,
+            "body": 12484,
+            "store": 23737,
+            "energy": 16071,
+            "local_cache": 50261,
+            "local_food": 247
+          },
+          {
+            "lineage": 5617,
+            "population": 2333,
+            "body": 46180,
+            "store": 82813,
+            "energy": 196528,
+            "local_cache": 239176,
+            "local_food": 1490
+          },
+          {
+            "lineage": 7293,
+            "population": 61,
+            "body": 1375,
+            "store": 1675,
+            "energy": 4453,
+            "local_cache": 5401,
+            "local_food": 37
+          },
+          {
+            "lineage": 7393,
+            "population": 2734,
+            "body": 43167,
+            "store": 94256,
+            "energy": 499272,
+            "local_cache": 449587,
+            "local_food": 1165
+          }
+        ]
+      },
+      "initial_lineage_diversity": {
+        "count": 27,
+        "entropy_nats": 2.5537878373017993,
+        "effective_shannon": 12.85570700052776,
+        "effective_simpson": 9.648797097659273,
+        "simpson_heterozygosity": 0.8963601379655302
+      },
+      "initial_genotype_diversity_exact": {
+        "count": 28123,
+        "entropy_nats": 9.89030556929805,
+        "effective_shannon": 19738.090371944523,
+        "effective_simpson": 13235.97283137951,
+        "simpson_heterozygosity": 0.9999244483187795
+      },
+      "ignored_preinitial_event_rows": 0,
+      "input_sha256": {
+        "initial.json": "77585ca813a453ca431002c07aaaa641814abf7703b0a320a033e499f0650712",
+        "initial.agents.tsv": "aa9c5e6efdb0752523075243a0858fe2b06bfcc81e1dd83b93e80b1e5175d1e4",
+        "events.tsv": "9f65d971b54d69d5f16bf9f4a1f782d159255bd0364baa3e78f5a4f33e5dee7b",
+        "series.tsv": "037c9caece58e7ada788251a6dfb2a3e1d08db4437bbdb4d452ec1c148a5a645",
+        "at600.json": "f2cce962506fb64262183c030314e723c4d18ea44566c34fc0ce34e8d517142c",
+        "at600.agents.tsv": "502f23527190acd3095534d23d174b48b821ca4c22edd4c63939ecff9d25beb6",
+        "at4096.json": "9e29e26324caed5752f4f22847adfcd905cff213ec13d0a810e730c18afefa7f",
+        "at4096.agents.tsv": "13c56282f2fd8c50ac20b10b0e1ec9af2b8f25742dca60066e332570563e6471",
+        "at8192.json": "4b45615e9c9f9de4667edbc90531a9a883a1e1765fe9df8cffe5df333c8cac8e",
+        "at8192.agents.tsv": "89465ebc3b31cb97ab72941a47dbd75aa0517bd0c1f135e9a5776b6326bf4b29"
+      },
+      "horizons": {
+        "600": {
+          "horizon": 600,
+          "tick": 738000,
+          "target_tick": 738000,
+          "effective_tick": 738000,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 26988,
+            "deaths": 26988,
+            "moves": 4413721,
+            "eats": 4391501,
+            "builds": 124773,
+            "breaks": 36869,
+            "gifts": 109784,
+            "attacks": 97234,
+            "parasites": 281722,
+            "mutations": 7047,
+            "energy_spent": 80410493,
+            "solar_food": 5678447,
+            "sensor_witness": 47,
+            "memory_witness": 634,
+            "witness_samples": 152832
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 7,
+            "observed_through_tick": 738000,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean_sampled_population": 65535.857142857145,
+            "sampled_ticks_below_capacity": 1,
+            "mean_sampled_capacity_deficit": 0.14285714285714285,
+            "maximum_sampled_capacity_deficit": 1
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 600,
+            "minimum": 65534,
+            "maximum": 65536,
+            "mean": 65535.98,
+            "ticks_at_capacity": 589,
+            "ticks_below_capacity": 11,
+            "fraction_ticks_at_capacity": 0.9816666666666667
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 22600,
+            "roots_with_extant_descendants": 16623,
+            "mean": 0.3448486328125,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 1,
+            "p99_nearest_rank": 3,
+            "max": 7,
+            "gini_including_zero_roots": 0.7993545856307038,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.10004424778761062
+          },
+          "renewal_births_per_initial_population": 0.41180419921875,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 42936,
+            "initial_roots_with_births": 19375,
+            "initial_roots_with_extant_descendants": 16623,
+            "dead_initial_roots_with_extant_descendants": 2007,
+            "direct_births_from_initial_roots": 23106,
+            "living_descendants_excluding_initial_roots": 22600,
+            "max_birth_depth": 5,
+            "survival_fraction": 0.6551513671875,
+            "with_births_fraction": 0.2956390380859375,
+            "with_extant_descendants_fraction": 0.2536468505859375,
+            "dead_roots_at_risk": 22600,
+            "dead_roots_with_extant_descendants_fraction": 0.08880530973451327
+          },
+          "lineage_diversity": {
+            "count": 27,
+            "entropy_nats": 2.5684346641159124,
+            "effective_shannon": 13.045388036173735,
+            "effective_simpson": 9.927764517568432,
+            "simpson_heterozygosity": 0.8992723892442882
+          },
+          "genotype_diversity_exact": {
+            "count": 27853,
+            "entropy_nats": 9.881030977410061,
+            "effective_shannon": 19555.873936788907,
+            "effective_simpson": 13167.072246236856,
+            "simpson_heterozygosity": 0.9999240529723465
+          },
+          "genotype_hashes_count": 27853,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 2960675,
+            "food": 447402,
+            "detritus": 637352,
+            "structure": 834246,
+            "cache": 66963698,
+            "body": 1419318,
+            "store": 3577713,
+            "energy": 43371182
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 445293,
+            "total": 66963698,
+            "gini_all_cells": 0.662261242871,
+            "top1pct_share_all_cells": 0.111841329312,
+            "occupied_total": 9005431,
+            "occupied_positive_cells": 60204,
+            "gini_occupied": 0.636161033957,
+            "top1pct_share_occupied": 0.116387544361
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 160537,
+            "cache_with_trace": 24404092,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.8714646789207408,
+          "sampled_events": {
+            "attack": {
+              "rows": 404,
+              "amount": 615,
+              "recipient_resolved": 404,
+              "same_lineage": 243,
+              "sample_only": true,
+              "same_lineage_fraction": 0.6014851485148515
+            },
+            "build": {
+              "rows": 482,
+              "amount": 3671,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 4884,
+              "amount": 4884,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 411,
+              "amount": 411,
+              "recipient_resolved": 411,
+              "same_lineage": 217,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5279805352798054
+            },
+            "parasite": {
+              "rows": 1120,
+              "amount": 8416,
+              "recipient_resolved": 1120,
+              "same_lineage": 581,
+              "sample_only": true,
+              "same_lineage_fraction": 0.51875
+            }
+          },
+          "rng_hex": "b4dc61e13b828aa1",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "4096": {
+          "horizon": 4096,
+          "tick": 741496,
+          "target_tick": 741496,
+          "effective_tick": 741496,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 124616,
+            "deaths": 124616,
+            "moves": 30661489,
+            "eats": 22813446,
+            "builds": 856943,
+            "breaks": 251598,
+            "gifts": 694416,
+            "attacks": 585394,
+            "parasites": 1791405,
+            "mutations": 31816,
+            "energy_spent": 613878926,
+            "solar_food": 28784655,
+            "sensor_witness": 266,
+            "memory_witness": 4120,
+            "witness_samples": 1044055
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 41,
+            "observed_through_tick": 741496,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean_sampled_population": 65535.9756097561,
+            "sampled_ticks_below_capacity": 1,
+            "mean_sampled_capacity_deficit": 0.024390243902439025,
+            "maximum_sampled_capacity_deficit": 1
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 4096,
+            "minimum": 65534,
+            "maximum": 65536,
+            "mean": 65535.992919921875,
+            "ticks_at_capacity": 4068,
+            "ticks_below_capacity": 28,
+            "fraction_ticks_at_capacity": 0.9931640625
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 61934,
+            "roots_with_extant_descendants": 18916,
+            "mean": 0.945037841796875,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 10,
+            "max": 24,
+            "gini_including_zero_roots": 0.8278514706723148,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.13088126069687087
+          },
+          "renewal_births_per_initial_population": 1.9014892578125,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 3602,
+            "initial_roots_with_births": 30840,
+            "initial_roots_with_extant_descendants": 18916,
+            "dead_initial_roots_with_extant_descendants": 16289,
+            "direct_births_from_initial_roots": 51385,
+            "living_descendants_excluding_initial_roots": 61934,
+            "max_birth_depth": 9,
+            "survival_fraction": 0.054962158203125,
+            "with_births_fraction": 0.4705810546875,
+            "with_extant_descendants_fraction": 0.28863525390625,
+            "dead_roots_at_risk": 61934,
+            "dead_roots_with_extant_descendants_fraction": 0.2630057803468208
+          },
+          "lineage_diversity": {
+            "count": 27,
+            "entropy_nats": 2.5465256341535056,
+            "effective_shannon": 12.762684427915536,
+            "effective_simpson": 9.594650423610728,
+            "simpson_heterozygosity": 0.8957752543501556
+          },
+          "genotype_diversity_exact": {
+            "count": 28258,
+            "entropy_nats": 9.901911625622562,
+            "effective_shannon": 19968.506284143896,
+            "effective_simpson": 13519.4508322631,
+            "simpson_heterozygosity": 0.9999260324984789
+          },
+          "genotype_hashes_count": 28258,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 4169965,
+            "food": 220037,
+            "detritus": 989849,
+            "structure": 796101,
+            "cache": 67023614,
+            "body": 1075263,
+            "store": 2565575,
+            "energy": 11390311
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 445987,
+            "total": 67023614,
+            "gini_all_cells": 0.663377877487,
+            "top1pct_share_all_cells": 0.112033439438,
+            "occupied_total": 9013169,
+            "occupied_positive_cells": 60198,
+            "gini_occupied": 0.639597513561,
+            "top1pct_share_occupied": 0.119840313657
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 159159,
+            "cache_with_trace": 24371294,
+            "distinct_trace_values": 26
+          },
+          "cache_fraction_of_matter": 0.8722444249512274,
+          "sampled_events": {
+            "attack": {
+              "rows": 2235,
+              "amount": 3519,
+              "recipient_resolved": 2235,
+              "same_lineage": 1246,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5574944071588367
+            },
+            "build": {
+              "rows": 3349,
+              "amount": 26665,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 34164,
+              "amount": 34164,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 2653,
+              "amount": 2653,
+              "recipient_resolved": 2653,
+              "same_lineage": 1443,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5439125518281192
+            },
+            "parasite": {
+              "rows": 6981,
+              "amount": 50512,
+              "recipient_resolved": 6981,
+              "same_lineage": 3570,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5113880532874946
+            }
+          },
+          "rng_hex": "292d25ebf6ffc572",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "8192": {
+          "horizon": 8192,
+          "tick": 745592,
+          "target_tick": 745592,
+          "effective_tick": 745592,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 249956,
+            "deaths": 249956,
+            "moves": 61579784,
+            "eats": 45593860,
+            "builds": 1684468,
+            "breaks": 494227,
+            "gifts": 1373776,
+            "attacks": 1164159,
+            "parasites": 3573397,
+            "mutations": 63464,
+            "energy_spent": 1227114795,
+            "solar_food": 57446455,
+            "sensor_witness": 526,
+            "memory_witness": 8358,
+            "witness_samples": 2088204
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 82,
+            "observed_through_tick": 745592,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean_sampled_population": 65535.98780487805,
+            "sampled_ticks_below_capacity": 1,
+            "mean_sampled_capacity_deficit": 0.012195121951219513,
+            "maximum_sampled_capacity_deficit": 1
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 8192,
+            "minimum": 65534,
+            "maximum": 65536,
+            "mean": 65535.99401855469,
+            "ticks_at_capacity": 8145,
+            "ticks_below_capacity": 47,
+            "fraction_ticks_at_capacity": 0.9942626953125
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 65536,
+            "roots_with_extant_descendants": 11110,
+            "mean": 1.0,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 16,
+            "max": 65,
+            "gini_including_zero_roots": 0.9076163428835571,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.21575927734375
+          },
+          "renewal_births_per_initial_population": 3.81402587890625,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 0,
+            "initial_roots_with_births": 30952,
+            "initial_roots_with_extant_descendants": 11110,
+            "dead_initial_roots_with_extant_descendants": 11110,
+            "direct_births_from_initial_roots": 52394,
+            "living_descendants_excluding_initial_roots": 65536,
+            "max_birth_depth": 13,
+            "survival_fraction": 0.0,
+            "with_births_fraction": 0.4722900390625,
+            "with_extant_descendants_fraction": 0.169525146484375,
+            "dead_roots_at_risk": 65536,
+            "dead_roots_with_extant_descendants_fraction": 0.169525146484375
+          },
+          "lineage_diversity": {
+            "count": 25,
+            "entropy_nats": 2.527718131006546,
+            "effective_shannon": 12.524893338000277,
+            "effective_simpson": 9.393511761258374,
+            "simpson_heterozygosity": 0.8935435409657657
+          },
+          "genotype_diversity_exact": {
+            "count": 28139,
+            "entropy_nats": 9.8934744054019,
+            "effective_shannon": 19800.73635033349,
+            "effective_simpson": 13343.546260050454,
+            "simpson_heterozygosity": 0.9999250574037433
+          },
+          "genotype_hashes_count": 28139,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 4166168,
+            "food": 219862,
+            "detritus": 997568,
+            "structure": 748158,
+            "cache": 67134987,
+            "body": 1061139,
+            "store": 2512522,
+            "energy": 11132439
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 446341,
+            "total": 67134987,
+            "gini_all_cells": 0.664742466923,
+            "top1pct_share_all_cells": 0.112254806871,
+            "occupied_total": 9065047,
+            "occupied_positive_cells": 60118,
+            "gini_occupied": 0.641470700681,
+            "top1pct_share_occupied": 0.120826179941
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 158043,
+            "cache_with_trace": 24179989,
+            "distinct_trace_values": 26
+          },
+          "cache_fraction_of_matter": 0.87369383169823,
+          "sampled_events": {
+            "attack": {
+              "rows": 4512,
+              "amount": 7174,
+              "recipient_resolved": 4512,
+              "same_lineage": 2469,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5472074468085106
+            },
+            "build": {
+              "rows": 6608,
+              "amount": 52848,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 68423,
+              "amount": 68423,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 5405,
+              "amount": 5405,
+              "recipient_resolved": 5405,
+              "same_lineage": 2975,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5504162812210915
+            },
+            "parasite": {
+              "rows": 13806,
+              "amount": 100103,
+              "recipient_resolved": 13806,
+              "same_lineage": 7073,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5123134868897581
+            }
+          },
+          "rng_hex": "8346e1f07efe5f35",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        }
+      }
+    },
+    "unlock": {
+      "initial": {
+        "schema": "relief.offline.state.v1",
+        "tick": 737400,
+        "population": 65536,
+        "rng_hex": "dc1a663677e1a60c",
+        "next_id": 18182219,
+        "initial_matter": 76840404,
+        "matter": 76840404,
+        "config": {
+          "width": 1024,
+          "height": 512,
+          "capacity": 65536,
+          "founders": 8192,
+          "season": 4096,
+          "sample": 100,
+          "checkpoint": 2000,
+          "seed": 20261025
+        },
+        "counters": {
+          "births": 18174026,
+          "deaths": 18116682,
+          "moves": 4723096461,
+          "eats": 7005840776,
+          "builds": 551360908,
+          "breaks": 165160017,
+          "gifts": 136362853,
+          "attacks": 65014030,
+          "parasites": 140924270,
+          "mutations": 4597174,
+          "energy_spent": 186736774345,
+          "solar_food": 9371836638,
+          "sensor_witness": 494266,
+          "memory_witness": 855171,
+          "witness_samples": 187950638
+        },
+        "resources": {
+          "mineral": 4175944,
+          "food": 16797793,
+          "detritus": 1001305,
+          "structure": 847063,
+          "cache": 50403294,
+          "body": 1067237,
+          "store": 2547768,
+          "energy": 11211812
+        },
+        "diversity": {
+          "genotypes_exact": 28123,
+          "genotype_hashes": 28123,
+          "lineages": 27
+        },
+        "caches": {
+          "positive_cells": 447414,
+          "total": 50403294,
+          "gini_all_cells": 0.660113956995,
+          "top1pct_share_all_cells": 0.111435177233,
+          "occupied_total": 6752393,
+          "occupied_positive_cells": 60543,
+          "gini_occupied": 0.633128703359,
+          "top1pct_share_occupied": 0.114199810349
+        },
+        "owner_trace": {
+          "meaning": "historical builder lineage low32, not enforced cache ownership",
+          "positive_cache_cells_with_trace": 161597,
+          "cache_with_trace": 18403141,
+          "distinct_trace_values": 27
+        },
+        "lineages": [
+          {
+            "lineage": 209,
+            "population": 8,
+            "body": 184,
+            "store": 1287,
+            "energy": 1511,
+            "local_cache": 1769,
+            "local_food": 584
+          },
+          {
+            "lineage": 259,
+            "population": 1294,
+            "body": 17660,
+            "store": 40835,
+            "energy": 218793,
+            "local_cache": 120566,
+            "local_food": 39821
+          },
+          {
+            "lineage": 871,
+            "population": 691,
+            "body": 9802,
+            "store": 28400,
+            "energy": 181948,
+            "local_cache": 80663,
+            "local_food": 26850
+          },
+          {
+            "lineage": 905,
+            "population": 5429,
+            "body": 98386,
+            "store": 187223,
+            "energy": 229412,
+            "local_cache": 443726,
+            "local_food": 148178
+          },
+          {
+            "lineage": 1049,
+            "population": 558,
+            "body": 8705,
+            "store": 21086,
+            "energy": 93268,
+            "local_cache": 65691,
+            "local_food": 21687
+          },
+          {
+            "lineage": 1241,
+            "population": 4286,
+            "body": 80827,
+            "store": 164447,
+            "energy": 440475,
+            "local_cache": 379214,
+            "local_food": 126254
+          },
+          {
+            "lineage": 1915,
+            "population": 218,
+            "body": 4551,
+            "store": 6595,
+            "energy": 21713,
+            "local_cache": 12262,
+            "local_food": 4241
+          },
+          {
+            "lineage": 1920,
+            "population": 131,
+            "body": 1756,
+            "store": 5598,
+            "energy": 17292,
+            "local_cache": 13301,
+            "local_food": 4378
+          },
+          {
+            "lineage": 2289,
+            "population": 10059,
+            "body": 153617,
+            "store": 374208,
+            "energy": 2031033,
+            "local_cache": 1276947,
+            "local_food": 422701
+          },
+          {
+            "lineage": 2400,
+            "population": 4489,
+            "body": 74857,
+            "store": 188851,
+            "energy": 1104601,
+            "local_cache": 442248,
+            "local_food": 147387
+          },
+          {
+            "lineage": 2648,
+            "population": 3017,
+            "body": 51115,
+            "store": 115289,
+            "energy": 244368,
+            "local_cache": 207259,
+            "local_food": 68793
+          },
+          {
+            "lineage": 2881,
+            "population": 2022,
+            "body": 37693,
+            "store": 76385,
+            "energy": 139230,
+            "local_cache": 117559,
+            "local_food": 40243
+          },
+          {
+            "lineage": 2889,
+            "population": 159,
+            "body": 3219,
+            "store": 7354,
+            "energy": 11196,
+            "local_cache": 18281,
+            "local_food": 6226
+          },
+          {
+            "lineage": 2933,
+            "population": 11183,
+            "body": 167318,
+            "store": 481545,
+            "energy": 2260329,
+            "local_cache": 1108370,
+            "local_food": 366449
+          },
+          {
+            "lineage": 3349,
+            "population": 318,
+            "body": 4089,
+            "store": 8614,
+            "energy": 55264,
+            "local_cache": 36035,
+            "local_food": 11937
+          },
+          {
+            "lineage": 3467,
+            "population": 10500,
+            "body": 159697,
+            "store": 429892,
+            "energy": 2304438,
+            "local_cache": 1247054,
+            "local_food": 412568
+          },
+          {
+            "lineage": 3719,
+            "population": 120,
+            "body": 2279,
+            "store": 2910,
+            "energy": 937,
+            "local_cache": 8835,
+            "local_food": 2884
+          },
+          {
+            "lineage": 3921,
+            "population": 7,
+            "body": 115,
+            "store": 147,
+            "energy": 45,
+            "local_cache": 623,
+            "local_food": 206
+          },
+          {
+            "lineage": 4161,
+            "population": 448,
+            "body": 8598,
+            "store": 16047,
+            "energy": 35430,
+            "local_cache": 47792,
+            "local_food": 15779
+          },
+          {
+            "lineage": 4407,
+            "population": 821,
+            "body": 14028,
+            "store": 36459,
+            "energy": 224800,
+            "local_cache": 110108,
+            "local_food": 36741
+          },
+          {
+            "lineage": 5077,
+            "population": 360,
+            "body": 8049,
+            "store": 11226,
+            "energy": 33191,
+            "local_cache": 34821,
+            "local_food": 11779
+          },
+          {
+            "lineage": 5272,
+            "population": 3200,
+            "body": 50535,
+            "store": 125252,
+            "energy": 726213,
+            "local_cache": 368074,
+            "local_food": 121777
+          },
+          {
+            "lineage": 5325,
+            "population": 439,
+            "body": 6951,
+            "store": 15637,
+            "energy": 120001,
+            "local_cache": 50926,
+            "local_food": 16934
+          },
+          {
+            "lineage": 5425,
+            "population": 651,
+            "body": 12484,
+            "store": 23737,
+            "energy": 16071,
+            "local_cache": 37883,
+            "local_food": 12625
+          },
+          {
+            "lineage": 5617,
+            "population": 2333,
+            "body": 46180,
+            "store": 82813,
+            "energy": 196528,
+            "local_cache": 180171,
+            "local_food": 60495
+          },
+          {
+            "lineage": 7293,
+            "population": 61,
+            "body": 1375,
+            "store": 1675,
+            "energy": 4453,
+            "local_cache": 4074,
+            "local_food": 1364
+          },
+          {
+            "lineage": 7393,
+            "population": 2734,
+            "body": 43167,
+            "store": 94256,
+            "energy": 499272,
+            "local_cache": 338141,
+            "local_food": 112611
+          }
+        ]
+      },
+      "initial_lineage_diversity": {
+        "count": 27,
+        "entropy_nats": 2.5537878373017993,
+        "effective_shannon": 12.85570700052776,
+        "effective_simpson": 9.648797097659273,
+        "simpson_heterozygosity": 0.8963601379655302
+      },
+      "initial_genotype_diversity_exact": {
+        "count": 28123,
+        "entropy_nats": 9.89030556929805,
+        "effective_shannon": 19738.090371944523,
+        "effective_simpson": 13235.97283137951,
+        "simpson_heterozygosity": 0.9999244483187795
+      },
+      "ignored_preinitial_event_rows": 0,
+      "input_sha256": {
+        "initial.json": "29fb1fa4cef16aab6a92394fdffbc14d27577fa795aeca1e34604c5353929ba1",
+        "initial.agents.tsv": "aa9c5e6efdb0752523075243a0858fe2b06bfcc81e1dd83b93e80b1e5175d1e4",
+        "events.tsv": "1ea559a2fd9658e379092848b998cc13c5bdd992b1786d15bbe0bad4eb01d769",
+        "series.tsv": "486924366f3307e977744ddc1ad65b6091759bf327084bf755f8274793d26d43",
+        "at600.json": "8a9d364ec961a01a756a3bff3a3480ff92447256f274d9b732d9abeee854991a",
+        "at600.agents.tsv": "a9e69850020b75529853e49050f418011e0b964b1ac4fe7929f9cb76482252c5",
+        "at4096.json": "b4cdc4a56498a8a52bf4a978c0b4655aa6bc9a060d89e343af5c0c014619c4df",
+        "at4096.agents.tsv": "1d6a6d93d24b1d781162588b0976ddb7935ef17d0629842726e9bd6acb126563",
+        "at8192.json": "1873e680e6c5ab73e0333fb943c7379cffb05291a8fa0734f2a6a9fe5243d06d",
+        "at8192.agents.tsv": "2e4113ac590d12ca3e5b73e8a7cd7c77a38f2c7a2141c7ad197efb8d1a5a5128"
+      },
+      "horizons": {
+        "600": {
+          "horizon": 600,
+          "tick": 738000,
+          "target_tick": 738000,
+          "effective_tick": 738000,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 5405,
+            "deaths": 5405,
+            "moves": 4691538,
+            "eats": 12856859,
+            "builds": 161577,
+            "breaks": 45391,
+            "gifts": 114393,
+            "attacks": 92521,
+            "parasites": 271181,
+            "mutations": 1415,
+            "energy_spent": 119867643,
+            "solar_food": 5968498,
+            "sensor_witness": 301,
+            "memory_witness": 1440,
+            "witness_samples": 152919
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 7,
+            "observed_through_tick": 738000,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 600,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean": 65535.99833333334,
+            "ticks_at_capacity": 599,
+            "ticks_below_capacity": 1,
+            "fraction_ticks_at_capacity": 0.9983333333333333
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 5361,
+            "roots_with_extant_descendants": 4949,
+            "mean": 0.0818023681640625,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 0,
+            "p99_nearest_rank": 1,
+            "max": 4,
+            "gini_including_zero_roots": 0.9298723160697995,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.19921656407386681
+          },
+          "renewal_births_per_initial_population": 0.0824737548828125,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 60175,
+            "initial_roots_with_births": 4986,
+            "initial_roots_with_extant_descendants": 4949,
+            "dead_initial_roots_with_extant_descendants": 200,
+            "direct_births_from_initial_roots": 5186,
+            "living_descendants_excluding_initial_roots": 5361,
+            "max_birth_depth": 3,
+            "survival_fraction": 0.9181976318359375,
+            "with_births_fraction": 0.076080322265625,
+            "with_extant_descendants_fraction": 0.0755157470703125,
+            "dead_roots_at_risk": 5361,
+            "dead_roots_with_extant_descendants_fraction": 0.03730647267300877
+          },
+          "lineage_diversity": {
+            "count": 27,
+            "entropy_nats": 2.5476676597246914,
+            "effective_shannon": 12.777268065747826,
+            "effective_simpson": 9.57090350444899,
+            "simpson_heterozygosity": 0.8955166563391685
+          },
+          "genotype_diversity_exact": {
+            "count": 28261,
+            "entropy_nats": 9.898728392252105,
+            "effective_shannon": 19905.04293150236,
+            "effective_simpson": 13373.46117151789,
+            "simpson_heterozygosity": 0.9999252250418067
+          },
+          "genotype_hashes_count": 28261,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 3103562,
+            "food": 7307289,
+            "detritus": 896471,
+            "structure": 853447,
+            "cache": 50430597,
+            "body": 2157580,
+            "store": 12091458,
+            "energy": 195703075
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 446132,
+            "total": 50430597,
+            "gini_all_cells": 0.660166777369,
+            "top1pct_share_all_cells": 0.111478632704,
+            "occupied_total": 7309077,
+            "occupied_positive_cells": 60431,
+            "gini_occupied": 0.643549811885,
+            "top1pct_share_occupied": 0.146195887661
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 167263,
+            "cache_with_trace": 19496599,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.6563031214671906,
+          "sampled_events": {
+            "attack": {
+              "rows": 367,
+              "amount": 583,
+              "recipient_resolved": 367,
+              "same_lineage": 190,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5177111716621253
+            },
+            "build": {
+              "rows": 636,
+              "amount": 3749,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 5220,
+              "amount": 5220,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 439,
+              "amount": 439,
+              "recipient_resolved": 439,
+              "same_lineage": 224,
+              "sample_only": true,
+              "same_lineage_fraction": 0.510250569476082
+            },
+            "parasite": {
+              "rows": 1037,
+              "amount": 8095,
+              "recipient_resolved": 1037,
+              "same_lineage": 519,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5004821600771456
+            }
+          },
+          "rng_hex": "3856c2b36ab757e7",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "4096": {
+          "horizon": 4096,
+          "tick": 741496,
+          "target_tick": 741496,
+          "effective_tick": 741496,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 81873,
+            "deaths": 81873,
+            "moves": 32454433,
+            "eats": 41151084,
+            "builds": 1036512,
+            "breaks": 281568,
+            "gifts": 695879,
+            "attacks": 524578,
+            "parasites": 1653737,
+            "mutations": 20664,
+            "energy_spent": 983734890,
+            "solar_food": 34288526,
+            "sensor_witness": 782,
+            "memory_witness": 5753,
+            "witness_samples": 1044006
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 41,
+            "observed_through_tick": 741496,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 4096,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean": 65535.9970703125,
+            "ticks_at_capacity": 4084,
+            "ticks_below_capacity": 12,
+            "fraction_ticks_at_capacity": 0.9970703125
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 59910,
+            "roots_with_extant_descendants": 17187,
+            "mean": 0.914154052734375,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 10,
+            "max": 26,
+            "gini_including_zero_roots": 0.8450235157016124,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.1356534802203305
+          },
+          "renewal_births_per_initial_population": 1.2492828369140625,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 5626,
+            "initial_roots_with_births": 24435,
+            "initial_roots_with_extant_descendants": 17187,
+            "dead_initial_roots_with_extant_descendants": 12920,
+            "direct_births_from_initial_roots": 37496,
+            "living_descendants_excluding_initial_roots": 59910,
+            "max_birth_depth": 8,
+            "survival_fraction": 0.085845947265625,
+            "with_births_fraction": 0.3728485107421875,
+            "with_extant_descendants_fraction": 0.2622528076171875,
+            "dead_roots_at_risk": 59910,
+            "dead_roots_with_extant_descendants_fraction": 0.2156568185611751
+          },
+          "lineage_diversity": {
+            "count": 26,
+            "entropy_nats": 2.4702591910120884,
+            "effective_shannon": 11.825511520761388,
+            "effective_simpson": 8.571506880787133,
+            "simpson_heterozygosity": 0.8833343992009759
+          },
+          "genotype_diversity_exact": {
+            "count": 26482,
+            "entropy_nats": 9.833329956191067,
+            "effective_shannon": 18644.9377925183,
+            "effective_simpson": 12876.918198716796,
+            "simpson_heterozygosity": 0.9999223416671157
+          },
+          "genotype_hashes_count": 26482,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 5128183,
+            "food": 677738,
+            "detritus": 10158248,
+            "structure": 857599,
+            "cache": 51322110,
+            "body": 1512533,
+            "store": 7183993,
+            "energy": 34374577
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 451501,
+            "total": 51322110,
+            "gini_all_cells": 0.656894224258,
+            "top1pct_share_all_cells": 0.110862784091,
+            "occupied_total": 7936780,
+            "occupied_positive_cells": 61092,
+            "gini_occupied": 0.641260174104,
+            "top1pct_share_occupied": 0.162168284871
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 174280,
+            "cache_with_trace": 20923384,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.6679052598422048,
+          "sampled_events": {
+            "attack": {
+              "rows": 2061,
+              "amount": 3300,
+              "recipient_resolved": 2061,
+              "same_lineage": 1144,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5550703541969918
+            },
+            "build": {
+              "rows": 4048,
+              "amount": 27855,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 37023,
+              "amount": 37023,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 2660,
+              "amount": 2660,
+              "recipient_resolved": 2660,
+              "same_lineage": 1545,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5808270676691729
+            },
+            "parasite": {
+              "rows": 6352,
+              "amount": 47948,
+              "recipient_resolved": 6352,
+              "same_lineage": 3453,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5436083123425692
+            }
+          },
+          "rng_hex": "d3fec0bc8736e619",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "8192": {
+          "horizon": 8192,
+          "tick": 745592,
+          "target_tick": 745592,
+          "effective_tick": 745592,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 164329,
+            "deaths": 164329,
+            "moves": 66033763,
+            "eats": 75977526,
+            "builds": 2246294,
+            "breaks": 587840,
+            "gifts": 1346515,
+            "attacks": 1010162,
+            "parasites": 3192569,
+            "mutations": 41708,
+            "energy_spent": 1868065647,
+            "solar_food": 76540507,
+            "sensor_witness": 1169,
+            "memory_witness": 10433,
+            "witness_samples": 2088109
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 82,
+            "observed_through_tick": 745592,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 8192,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean": 65535.99743652344,
+            "ticks_at_capacity": 8171,
+            "ticks_below_capacity": 21,
+            "fraction_ticks_at_capacity": 0.9974365234375
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 65536,
+            "roots_with_extant_descendants": 9512,
+            "mean": 1.0,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 17,
+            "max": 47,
+            "gini_including_zero_roots": 0.9199002454988658,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.2277984619140625
+          },
+          "renewal_births_per_initial_population": 2.5074615478515625,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 0,
+            "initial_roots_with_births": 24538,
+            "initial_roots_with_extant_descendants": 9512,
+            "dead_initial_roots_with_extant_descendants": 9512,
+            "direct_births_from_initial_roots": 38328,
+            "living_descendants_excluding_initial_roots": 65536,
+            "max_birth_depth": 11,
+            "survival_fraction": 0.0,
+            "with_births_fraction": 0.374420166015625,
+            "with_extant_descendants_fraction": 0.1451416015625,
+            "dead_roots_at_risk": 65536,
+            "dead_roots_with_extant_descendants_fraction": 0.1451416015625
+          },
+          "lineage_diversity": {
+            "count": 26,
+            "entropy_nats": 2.4110883966772185,
+            "effective_shannon": 11.146085908459046,
+            "effective_simpson": 7.936000471130399,
+            "simpson_heterozygosity": 0.8739919429644942
+          },
+          "genotype_diversity_exact": {
+            "count": 26062,
+            "entropy_nats": 9.807681606361589,
+            "effective_shannon": 18172.806481847758,
+            "effective_simpson": 12513.525478839016,
+            "simpson_heterozygosity": 0.9999200864695013
+          },
+          "genotype_hashes_count": 26062,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 5155674,
+            "food": 473223,
+            "detritus": 8327866,
+            "structure": 881656,
+            "cache": 53102436,
+            "body": 1568858,
+            "store": 7330691,
+            "energy": 33129158
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 457748,
+            "total": 53102436,
+            "gini_all_cells": 0.650056417727,
+            "top1pct_share_all_cells": 0.109086558666,
+            "occupied_total": 8422248,
+            "occupied_positive_cells": 61837,
+            "gini_occupied": 0.625263752585,
+            "top1pct_share_occupied": 0.14634821962
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 186168,
+            "cache_with_trace": 23505251,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.6910743988279916,
+          "sampled_events": {
+            "attack": {
+              "rows": 3980,
+              "amount": 6403,
+              "recipient_resolved": 3980,
+              "same_lineage": 2254,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5663316582914573
+            },
+            "build": {
+              "rows": 8772,
+              "amount": 59821,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 76806,
+              "amount": 76806,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 5203,
+              "amount": 5203,
+              "recipient_resolved": 5203,
+              "same_lineage": 3104,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5965788967903133
+            },
+            "parasite": {
+              "rows": 12446,
+              "amount": 94117,
+              "recipient_resolved": 12446,
+              "same_lineage": 7042,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5658042744656918
+            }
+          },
+          "rng_hex": "bfee6944bfa52626",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        }
+      }
+    },
+    "redistribute": {
+      "initial": {
+        "schema": "relief.offline.state.v1",
+        "tick": 737400,
+        "population": 65536,
+        "rng_hex": "dc1a663677e1a60c",
+        "next_id": 18182219,
+        "initial_matter": 76840404,
+        "matter": 76840404,
+        "config": {
+          "width": 1024,
+          "height": 512,
+          "capacity": 65536,
+          "founders": 8192,
+          "season": 4096,
+          "sample": 100,
+          "checkpoint": 2000,
+          "seed": 20261025
+        },
+        "counters": {
+          "births": 18174026,
+          "deaths": 18116682,
+          "moves": 4723096461,
+          "eats": 7005840776,
+          "builds": 551360908,
+          "breaks": 165160017,
+          "gifts": 136362853,
+          "attacks": 65014030,
+          "parasites": 140924270,
+          "mutations": 4597174,
+          "energy_spent": 186736774345,
+          "solar_food": 9371836638,
+          "sensor_witness": 494266,
+          "memory_witness": 855171,
+          "witness_samples": 187950638
+        },
+        "resources": {
+          "mineral": 4175944,
+          "food": 220576,
+          "detritus": 1001305,
+          "structure": 847063,
+          "cache": 66980511,
+          "body": 1067237,
+          "store": 2547768,
+          "energy": 11211812
+        },
+        "diversity": {
+          "genotypes_exact": 28123,
+          "genotype_hashes": 28123,
+          "lineages": 27
+        },
+        "caches": {
+          "positive_cells": 447414,
+          "total": 66980511,
+          "gini_all_cells": 0.625700812004,
+          "top1pct_share_all_cells": 0.103472963949,
+          "occupied_total": 8972825,
+          "occupied_positive_cells": 60543,
+          "gini_occupied": 0.185688053048,
+          "top1pct_share_occupied": 0.0324088567424
+        },
+        "owner_trace": {
+          "meaning": "historical builder lineage low32, not enforced cache ownership",
+          "positive_cache_cells_with_trace": 161597,
+          "cache_with_trace": 24595039,
+          "distinct_trace_values": 27
+        },
+        "lineages": [
+          {
+            "lineage": 209,
+            "population": 8,
+            "body": 184,
+            "store": 1287,
+            "energy": 1511,
+            "local_cache": 1652,
+            "local_food": 0
+          },
+          {
+            "lineage": 259,
+            "population": 1294,
+            "body": 17660,
+            "store": 40835,
+            "energy": 218793,
+            "local_cache": 177491,
+            "local_food": 253
+          },
+          {
+            "lineage": 871,
+            "population": 691,
+            "body": 9802,
+            "store": 28400,
+            "energy": 181948,
+            "local_cache": 99882,
+            "local_food": 289
+          },
+          {
+            "lineage": 905,
+            "population": 5429,
+            "body": 98386,
+            "store": 187223,
+            "energy": 229412,
+            "local_cache": 673238,
+            "local_food": 2630
+          },
+          {
+            "lineage": 1049,
+            "population": 558,
+            "body": 8705,
+            "store": 21086,
+            "energy": 93268,
+            "local_cache": 78266,
+            "local_food": 60
+          },
+          {
+            "lineage": 1241,
+            "population": 4286,
+            "body": 80827,
+            "store": 164447,
+            "energy": 440475,
+            "local_cache": 574700,
+            "local_food": 1807
+          },
+          {
+            "lineage": 1915,
+            "population": 218,
+            "body": 4551,
+            "store": 6595,
+            "energy": 21713,
+            "local_cache": 28253,
+            "local_food": 255
+          },
+          {
+            "lineage": 1920,
+            "population": 131,
+            "body": 1756,
+            "store": 5598,
+            "energy": 17292,
+            "local_cache": 18135,
+            "local_food": 0
+          },
+          {
+            "lineage": 2289,
+            "population": 10059,
+            "body": 153617,
+            "store": 374208,
+            "energy": 2031033,
+            "local_cache": 1398142,
+            "local_food": 1773
+          },
+          {
+            "lineage": 2400,
+            "population": 4489,
+            "body": 74857,
+            "store": 188851,
+            "energy": 1104601,
+            "local_cache": 625099,
+            "local_food": 2128
+          },
+          {
+            "lineage": 2648,
+            "population": 3017,
+            "body": 51115,
+            "store": 115289,
+            "energy": 244368,
+            "local_cache": 381303,
+            "local_food": 967
+          },
+          {
+            "lineage": 2881,
+            "population": 2022,
+            "body": 37693,
+            "store": 76385,
+            "energy": 139230,
+            "local_cache": 272194,
+            "local_food": 1984
+          },
+          {
+            "lineage": 2889,
+            "population": 159,
+            "body": 3219,
+            "store": 7354,
+            "energy": 11196,
+            "local_cache": 22007,
+            "local_food": 202
+          },
+          {
+            "lineage": 2933,
+            "population": 11183,
+            "body": 167318,
+            "store": 481545,
+            "energy": 2260329,
+            "local_cache": 1613706,
+            "local_food": 2356
+          },
+          {
+            "lineage": 3349,
+            "population": 318,
+            "body": 4089,
+            "store": 8614,
+            "energy": 55264,
+            "local_cache": 43296,
+            "local_food": 65
+          },
+          {
+            "lineage": 3467,
+            "population": 10500,
+            "body": 159697,
+            "store": 429892,
+            "energy": 2304438,
+            "local_cache": 1436501,
+            "local_food": 1773
+          },
+          {
+            "lineage": 3719,
+            "population": 120,
+            "body": 2279,
+            "store": 2910,
+            "energy": 937,
+            "local_cache": 18363,
+            "local_food": 0
+          },
+          {
+            "lineage": 3921,
+            "population": 7,
+            "body": 115,
+            "store": 147,
+            "energy": 45,
+            "local_cache": 761,
+            "local_food": 0
+          },
+          {
+            "lineage": 4161,
+            "population": 448,
+            "body": 8598,
+            "store": 16047,
+            "energy": 35430,
+            "local_cache": 59002,
+            "local_food": 64
+          },
+          {
+            "lineage": 4407,
+            "population": 821,
+            "body": 14028,
+            "store": 36459,
+            "energy": 224800,
+            "local_cache": 122448,
+            "local_food": 424
+          },
+          {
+            "lineage": 5077,
+            "population": 360,
+            "body": 8049,
+            "store": 11226,
+            "energy": 33191,
+            "local_cache": 46062,
+            "local_food": 332
+          },
+          {
+            "lineage": 5272,
+            "population": 3200,
+            "body": 50535,
+            "store": 125252,
+            "energy": 726213,
+            "local_cache": 444142,
+            "local_food": 593
+          },
+          {
+            "lineage": 5325,
+            "population": 439,
+            "body": 6951,
+            "store": 15637,
+            "energy": 120001,
+            "local_cache": 70785,
+            "local_food": 166
+          },
+          {
+            "lineage": 5425,
+            "population": 651,
+            "body": 12484,
+            "store": 23737,
+            "energy": 16071,
+            "local_cache": 68389,
+            "local_food": 247
+          },
+          {
+            "lineage": 5617,
+            "population": 2333,
+            "body": 46180,
+            "store": 82813,
+            "energy": 196528,
+            "local_cache": 302028,
+            "local_food": 1490
+          },
+          {
+            "lineage": 7293,
+            "population": 61,
+            "body": 1375,
+            "store": 1675,
+            "energy": 4453,
+            "local_cache": 7982,
+            "local_food": 37
+          },
+          {
+            "lineage": 7393,
+            "population": 2734,
+            "body": 43167,
+            "store": 94256,
+            "energy": 499272,
+            "local_cache": 388998,
+            "local_food": 1165
+          }
+        ]
+      },
+      "initial_lineage_diversity": {
+        "count": 27,
+        "entropy_nats": 2.5537878373017993,
+        "effective_shannon": 12.85570700052776,
+        "effective_simpson": 9.648797097659273,
+        "simpson_heterozygosity": 0.8963601379655302
+      },
+      "initial_genotype_diversity_exact": {
+        "count": 28123,
+        "entropy_nats": 9.89030556929805,
+        "effective_shannon": 19738.090371944523,
+        "effective_simpson": 13235.97283137951,
+        "simpson_heterozygosity": 0.9999244483187795
+      },
+      "ignored_preinitial_event_rows": 0,
+      "input_sha256": {
+        "initial.json": "7f7444ae67ff44d3b6c84ddb74574e6dd78a7831c483fa88985927bf367f72ca",
+        "initial.agents.tsv": "aa9c5e6efdb0752523075243a0858fe2b06bfcc81e1dd83b93e80b1e5175d1e4",
+        "events.tsv": "58fba85a3f196618d9de4ff86417741d0cecc77ded1d430e35376d73ab2c25b9",
+        "series.tsv": "d32ea127c6962c60576951892181b692d874c63b23f06809f288afd52c699d9d",
+        "at600.json": "d7f207d97575c35b18dee9e70439b8113412a28e814cd7a89ba55015b9d210ff",
+        "at600.agents.tsv": "0918bbf09ee3fb5f3069292a1c654aee75e75e2cdefe9513d5d85a49faaa96f5",
+        "at4096.json": "3a53ce352856faea25b3c23d4d681cba8ab233cca983d6077bd840f931dc3bbe",
+        "at4096.agents.tsv": "815cefac18074bf4ff41408c45628f3955aabefde45fd370a4fab4c2660cec80",
+        "at8192.json": "907618c51117852ca9fca2ad88dc4ebdf0910d493fa067ef417752b9082a010c",
+        "at8192.agents.tsv": "c9c71b2b54111a23792399ea18f4b9c4ca055638384d8138de11e4b7f3e25853"
+      },
+      "horizons": {
+        "600": {
+          "horizon": 600,
+          "tick": 738000,
+          "target_tick": 738000,
+          "effective_tick": 738000,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 26952,
+            "deaths": 26952,
+            "moves": 4419810,
+            "eats": 4397445,
+            "builds": 124316,
+            "breaks": 36854,
+            "gifts": 109658,
+            "attacks": 97201,
+            "parasites": 280579,
+            "mutations": 6915,
+            "energy_spent": 80432622,
+            "solar_food": 5676422,
+            "sensor_witness": 48,
+            "memory_witness": 657,
+            "witness_samples": 152768
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 7,
+            "observed_through_tick": 738000,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 600,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean": 65535.986666666664,
+            "ticks_at_capacity": 592,
+            "ticks_below_capacity": 8,
+            "fraction_ticks_at_capacity": 0.9866666666666667
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 22655,
+            "roots_with_extant_descendants": 16656,
+            "mean": 0.3456878662109375,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 1,
+            "p99_nearest_rank": 3,
+            "max": 6,
+            "gini_including_zero_roots": 0.7989558334199043,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.10006621054954756
+          },
+          "renewal_births_per_initial_population": 0.4112548828125,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 42881,
+            "initial_roots_with_births": 19392,
+            "initial_roots_with_extant_descendants": 16656,
+            "dead_initial_roots_with_extant_descendants": 2061,
+            "direct_births_from_initial_roots": 23058,
+            "living_descendants_excluding_initial_roots": 22655,
+            "max_birth_depth": 4,
+            "survival_fraction": 0.6543121337890625,
+            "with_births_fraction": 0.2958984375,
+            "with_extant_descendants_fraction": 0.254150390625,
+            "dead_roots_at_risk": 22655,
+            "dead_roots_with_extant_descendants_fraction": 0.09097329507834916
+          },
+          "lineage_diversity": {
+            "count": 27,
+            "entropy_nats": 2.5681816819250276,
+            "effective_shannon": 13.042088202744546,
+            "effective_simpson": 9.929328021055385,
+            "simpson_heterozygosity": 0.8992882501333952
+          },
+          "genotype_diversity_exact": {
+            "count": 27779,
+            "entropy_nats": 9.87672211079436,
+            "effective_shannon": 19471.791564397212,
+            "effective_simpson": 13044.303274008382,
+            "simpson_heterozygosity": 0.9999233381822705
+          },
+          "genotype_hashes_count": 27779,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 2958716,
+            "food": 443191,
+            "detritus": 633899,
+            "structure": 833943,
+            "cache": 66956055,
+            "body": 1423908,
+            "store": 3590692,
+            "energy": 43479503
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 448007,
+            "total": 66956055,
+            "gini_all_cells": 0.626128949767,
+            "top1pct_share_all_cells": 0.103545228284,
+            "occupied_total": 9048286,
+            "occupied_positive_cells": 60953,
+            "gini_occupied": 0.563622507992,
+            "top1pct_share_occupied": 0.0956248509386
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 162090,
+            "cache_with_trace": 24571436,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.8713652130199627,
+          "sampled_events": {
+            "attack": {
+              "rows": 391,
+              "amount": 642,
+              "recipient_resolved": 391,
+              "same_lineage": 226,
+              "sample_only": true,
+              "same_lineage_fraction": 0.578005115089514
+            },
+            "build": {
+              "rows": 446,
+              "amount": 2720,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 4935,
+              "amount": 4935,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 419,
+              "amount": 419,
+              "recipient_resolved": 419,
+              "same_lineage": 213,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5083532219570406
+            },
+            "parasite": {
+              "rows": 1134,
+              "amount": 8492,
+              "recipient_resolved": 1134,
+              "same_lineage": 583,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5141093474426808
+            }
+          },
+          "rng_hex": "b694fa54a6fd2ce1",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "4096": {
+          "horizon": 4096,
+          "tick": 741496,
+          "target_tick": 741496,
+          "effective_tick": 741496,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 124527,
+            "deaths": 124527,
+            "moves": 30710308,
+            "eats": 22852474,
+            "builds": 858076,
+            "breaks": 250667,
+            "gifts": 692456,
+            "attacks": 583680,
+            "parasites": 1786520,
+            "mutations": 31534,
+            "energy_spent": 614717626,
+            "solar_food": 28822311,
+            "sensor_witness": 256,
+            "memory_witness": 4159,
+            "witness_samples": 1043924
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 41,
+            "observed_through_tick": 741496,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 4096,
+            "minimum": 65535,
+            "maximum": 65536,
+            "mean": 65535.995849609375,
+            "ticks_at_capacity": 4079,
+            "ticks_below_capacity": 17,
+            "fraction_ticks_at_capacity": 0.995849609375
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 61973,
+            "roots_with_extant_descendants": 18694,
+            "mean": 0.9456329345703125,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 10,
+            "max": 28,
+            "gini_including_zero_roots": 0.8296940862481348,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.1297984606199474
+          },
+          "renewal_births_per_initial_population": 1.9001312255859375,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 3563,
+            "initial_roots_with_births": 30555,
+            "initial_roots_with_extant_descendants": 18694,
+            "dead_initial_roots_with_extant_descendants": 16100,
+            "direct_births_from_initial_roots": 51102,
+            "living_descendants_excluding_initial_roots": 61973,
+            "max_birth_depth": 8,
+            "survival_fraction": 0.0543670654296875,
+            "with_births_fraction": 0.4662322998046875,
+            "with_extant_descendants_fraction": 0.285247802734375,
+            "dead_roots_at_risk": 61973,
+            "dead_roots_with_extant_descendants_fraction": 0.2597905539509141
+          },
+          "lineage_diversity": {
+            "count": 27,
+            "entropy_nats": 2.5469194611962216,
+            "effective_shannon": 12.767711708055355,
+            "effective_simpson": 9.594997663159061,
+            "simpson_heterozygosity": 0.8957790262065828
+          },
+          "genotype_diversity_exact": {
+            "count": 27844,
+            "entropy_nats": 9.883339830977302,
+            "effective_shannon": 19601.07775050059,
+            "effective_simpson": 13262.211814111472,
+            "simpson_heterozygosity": 0.9999245977960527
+          },
+          "genotype_hashes_count": 27844,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 4183796,
+            "food": 221512,
+            "detritus": 1024214,
+            "structure": 796495,
+            "cache": 66948200,
+            "body": 1073857,
+            "store": 2592330,
+            "energy": 11361451
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 450113,
+            "total": 66948200,
+            "gini_all_cells": 0.627745740008,
+            "top1pct_share_all_cells": 0.103852739879,
+            "occupied_total": 9088891,
+            "occupied_positive_cells": 61068,
+            "gini_occupied": 0.57372182112,
+            "top1pct_share_occupied": 0.102498533649
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 161231,
+            "cache_with_trace": 24384081,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.8712629881539925,
+          "sampled_events": {
+            "attack": {
+              "rows": 2365,
+              "amount": 3812,
+              "recipient_resolved": 2365,
+              "same_lineage": 1329,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5619450317124736
+            },
+            "build": {
+              "rows": 3317,
+              "amount": 26328,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 34143,
+              "amount": 34143,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 2840,
+              "amount": 2840,
+              "recipient_resolved": 2840,
+              "same_lineage": 1526,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5373239436619718
+            },
+            "parasite": {
+              "rows": 7041,
+              "amount": 51540,
+              "recipient_resolved": 7041,
+              "same_lineage": 3616,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5135634142877432
+            }
+          },
+          "rng_hex": "cf7bf448fed9dcb5",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        },
+        "8192": {
+          "horizon": 8192,
+          "tick": 745592,
+          "target_tick": 745592,
+          "effective_tick": 745592,
+          "absorbing_extinction_extension": false,
+          "population": 65536,
+          "capacity": 65536,
+          "population_at_capacity": true,
+          "extinct": false,
+          "counter_deltas_exhaustive": {
+            "births": 246754,
+            "deaths": 246754,
+            "moves": 61516989,
+            "eats": 45821799,
+            "builds": 1694065,
+            "breaks": 496076,
+            "gifts": 1367988,
+            "attacks": 1168293,
+            "parasites": 3581938,
+            "mutations": 62277,
+            "energy_spent": 1232245300,
+            "solar_food": 57737450,
+            "sensor_witness": 513,
+            "memory_witness": 8287,
+            "witness_samples": 2087982
+          },
+          "population_sample_grid_predeclared": {
+            "definition": "Initial census plus actual regular series samples (tick divisible by config.sample); off-grid endpoint samples excluded. No samples invented after early extinction.",
+            "sample_period_ticks": 100,
+            "samples_including_initial": 82,
+            "observed_through_tick": 745592,
+            "minimum": 65536,
+            "maximum": 65536,
+            "mean_sampled_population": 65536.0,
+            "sampled_ticks_below_capacity": 0,
+            "mean_sampled_capacity_deficit": 0.0,
+            "maximum_sampled_capacity_deficit": 0
+          },
+          "population_tick_end_secondary_refinement": {
+            "definition": "Exact final census at every post-start tick, reconstructed from exhaustive birth/death events; does not measure within-tick vacancies.",
+            "ticks": 8192,
+            "minimum": 65532,
+            "maximum": 65536,
+            "mean": 65535.99353027344,
+            "ticks_at_capacity": 8142,
+            "ticks_below_capacity": 50,
+            "fraction_ticks_at_capacity": 0.993896484375
+          },
+          "initial_root_descendant_distribution": {
+            "initial_roots_denominator": 65536,
+            "living_descendants_total": 65536,
+            "roots_with_extant_descendants": 11142,
+            "mean": 1.0,
+            "median_nearest_rank": 0,
+            "p90_nearest_rank": 3,
+            "p99_nearest_rank": 16,
+            "max": 51,
+            "gini_including_zero_roots": 0.9065312691964209,
+            "top1pct_initial_roots_count": 656,
+            "top1pct_initial_roots_descendant_share": 0.2093353271484375
+          },
+          "renewal_births_per_initial_population": 3.765167236328125,
+          "initial_cohort": {
+            "initial_roots_at_risk": 65536,
+            "initial_roots_surviving": 0,
+            "initial_roots_with_births": 30683,
+            "initial_roots_with_extant_descendants": 11142,
+            "dead_initial_roots_with_extant_descendants": 11142,
+            "direct_births_from_initial_roots": 52153,
+            "living_descendants_excluding_initial_roots": 65536,
+            "max_birth_depth": 13,
+            "survival_fraction": 0.0,
+            "with_births_fraction": 0.4681854248046875,
+            "with_extant_descendants_fraction": 0.170013427734375,
+            "dead_roots_at_risk": 65536,
+            "dead_roots_with_extant_descendants_fraction": 0.170013427734375
+          },
+          "lineage_diversity": {
+            "count": 26,
+            "entropy_nats": 2.539254313520745,
+            "effective_shannon": 12.670219436008347,
+            "effective_simpson": 9.535374486179824,
+            "simpson_heterozygosity": 0.8951273490674794
+          },
+          "genotype_diversity_exact": {
+            "count": 27768,
+            "entropy_nats": 9.875861551876682,
+            "effective_shannon": 19455.042148486587,
+            "effective_simpson": 13143.057829894793,
+            "simpson_heterozygosity": 0.9999239142052829
+          },
+          "genotype_hashes_count": 27768,
+          "genotype_hash_collision_gap": 0,
+          "resources": {
+            "mineral": 4193696,
+            "food": 220276,
+            "detritus": 1052337,
+            "structure": 744074,
+            "cache": 66880452,
+            "body": 1090364,
+            "store": 2659205,
+            "energy": 11423220
+          },
+          "matter": 76840404,
+          "caches": {
+            "positive_cells": 449360,
+            "total": 66880452,
+            "gini_all_cells": 0.630352184557,
+            "top1pct_share_all_cells": 0.104339874976,
+            "occupied_total": 8962925,
+            "occupied_positive_cells": 61066,
+            "gini_occupied": 0.577185222714,
+            "top1pct_share_occupied": 0.0988326913368
+          },
+          "owner_trace": {
+            "meaning": "historical builder lineage low32, not enforced cache ownership",
+            "positive_cache_cells_with_trace": 159167,
+            "cache_with_trace": 24133890,
+            "distinct_trace_values": 27
+          },
+          "cache_fraction_of_matter": 0.8703813165792309,
+          "sampled_events": {
+            "attack": {
+              "rows": 4651,
+              "amount": 7389,
+              "recipient_resolved": 4651,
+              "same_lineage": 2575,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5536443775532144
+            },
+            "build": {
+              "rows": 6556,
+              "amount": 49894,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "deposit": {
+              "rows": 67991,
+              "amount": 67991,
+              "sample_only": true,
+              "same_lineage_fraction": null
+            },
+            "gift": {
+              "rows": 5492,
+              "amount": 5492,
+              "recipient_resolved": 5492,
+              "same_lineage": 3010,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5480699198834669
+            },
+            "parasite": {
+              "rows": 14075,
+              "amount": 102809,
+              "recipient_resolved": 14075,
+              "same_lineage": 7246,
+              "sample_only": true,
+              "same_lineage_fraction": 0.5148134991119006
+            }
+          },
+          "rng_hex": "1434ccf30e58b9b0",
+          "checks": {
+            "matter_conserved": true,
+            "complete_birth_death_flow": true,
+            "living_ids_and_genomes_match_export": true,
+            "lineage_flows_match_export": true,
+            "prospective_cohort_partition_exact": true,
+            "founder_events": 0
+          }
+        }
+      }
+    }
+  },
+  "paired_start_checks": {
+    "identical_initial_agents": true,
+    "identical_rng_and_counters": true,
+    "identical_total_matter_and_config": true
+  }
+}

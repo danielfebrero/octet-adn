@@ -1,0 +1,66 @@
+{
+  "schema": "relief.offline.check.v1",
+  "source": "/workspace/produits/octet-adn/experiments/relief-comparatif-20261026/data/window1/base",
+  "source_sha256": "91b3e0877773a6eb594e31024f1fbde383637c0fbd7969261255ff7437cd6b84",
+  "tool_sha256": "626a7736411d7064abd4ddd1f07eae5578db2d161f106972e6963caf6b0f2dec",
+  "source_tool_c_sha256": "2988e9f3dacd5bfdee9783e0de6db478f46d46efee12ce988916fde52a1604a4",
+  "abi": {
+    "Header": 280,
+    "World": 232,
+    "Cell": 32,
+    "Agent": 128
+  },
+  "tests": [
+    {
+      "mode": "control",
+      "deterministic_files": "PASS",
+      "export_conservation": "PASS",
+      "rng_and_initial_population": "PASS",
+      "sha256": "91b3e0877773a6eb594e31024f1fbde383637c0fbd7969261255ff7437cd6b84",
+      "full_forbidden_byte_comparison": "PASS",
+      "positive_support": "PASS",
+      "independent_rule_check": "PASS",
+      "changed_cache_fields": 0,
+      "changed_food_fields": 0,
+      "released_cache_to_food": 0
+    },
+    {
+      "mode": "unlock",
+      "deterministic_files": "PASS",
+      "export_conservation": "PASS",
+      "rng_and_initial_population": "PASS",
+      "sha256": "79f9a510913b92077e907893877a6059c930dd25b84a9277ea7740e83fbc483c",
+      "full_forbidden_byte_comparison": "PASS",
+      "positive_support": "PASS",
+      "independent_rule_check": "PASS",
+      "changed_cache_fields": 387459,
+      "changed_food_fields": 387459,
+      "released_cache_to_food": 16577217
+    },
+    {
+      "mode": "redistribute",
+      "deterministic_files": "PASS",
+      "export_conservation": "PASS",
+      "rng_and_initial_population": "PASS",
+      "sha256": "592944bdcd49aa9e92b7abece1eae22a8957da67f06863943ba3e11571ad8c50",
+      "full_forbidden_byte_comparison": "PASS",
+      "positive_support": "PASS",
+      "independent_rule_check": "PASS",
+      "changed_cache_fields": 60430,
+      "changed_food_fields": 0,
+      "released_cache_to_food": 0
+    },
+    {
+      "existing_directory_refused_without_mutation": "PASS"
+    },
+    {
+      "live_destination_and_symlink_refused_without_mutation": "PASS"
+    },
+    {
+      "corrupt_checksum_refused_without_output": "PASS"
+    }
+  ],
+  "ecological_ticks_executed": 0,
+  "source_unchanged": true,
+  "all_passed": true
+}
