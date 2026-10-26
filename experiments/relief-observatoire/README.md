@@ -68,11 +68,13 @@ sh run.sh # crée relief-observatoire, échoue s'il existe déjà
 docker exec relief-observatoire python3 /app/check.py
 ```
 
-`deploy_route.py` ajoute uniquement `/relief/*` sur `mcp.cdxxotus.com` aux
-routes Caddy actives, préserve tous les autres handlers et ajoute la même route
-au Caddyfile de redémarrage. Exécution en réseau container:Caddy avec dossier
-deploy monté. Sauvegardes `relief-caddy-before.json`, `Caddyfile.before-relief`.
-Ne pas recharger un ancien Caddyfile pour déployer cette app.
+`deploy_route.py` utilise l’installateur commun `/deploy/miniapps/install_routes.py`,
+persiste Relief et RPC dans le Caddyfile monté, puis charge la configuration
+adaptée de ce même fichier. Il refuse une divergence entre état à chaud et
+fichier pour préserver les routes des autres applications. Exécuter dans le
+réseau container:Caddy avec le dossier deploy monté. Une route ajoutée seulement
+par l’API disparaît au reload : ne plus utiliser ce chemin.
+
 
 ## Vérification de livraison
 

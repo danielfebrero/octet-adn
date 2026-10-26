@@ -1,6 +1,9 @@
 'use strict';
 const $=id=>document.getElementById(id),tg=window.Telegram?.WebApp;
 tg?.ready();tg?.expand();
+// Keep camera controls at the top with the main navigation.
+const worldTools=document.querySelector('.world-tools');
+if(worldTools) $('world').insertBefore(worldTools,$('world').firstChild);
 let d=null,busy=false,sel={x:512,y:256,id:'0'},history=[];
 try{sel=JSON.parse(localStorage.getItem('relief.selection'))||sel;$('layer').value=localStorage.getItem('relief.layer')||'0';}catch{}
 const fmt=n=>Number(n).toLocaleString('fr-FR'),ops=['manger','avancer','orienter','croître','se reproduire','construire','défaire','déposer','reprendre','attaquer','parasiter','donner','émettre','percevoir','conditionner','attendre'];

@@ -1,25 +1,42 @@
-"""Add only /relief to live Caddy routes, preserve all other live handlers.
-Run in Caddy's network namespace, /opt/.../deploy mounted at /deploy.
-The Caddyfile gets the same additive route for future standard restarts.
+"""Persist the mini-app routes, then load that exact Caddyfile.
+
+Run in Caddy's network namespace, host deploy mounted at /deploy.
+Refuse runtime/file drift rather than discarding somebody else's routes.
 """
-import json, urllib.request
+import json, urllib.request, sys
 from pathlib import Path
-base='http://127.0.0.1:2019'
-def get(path):return json.load(urllib.request.urlopen(base+path))
-config=get('/config/')
-Path('/deploy/relief-caddy-before.json').write_text(json.dumps(config))
-route={'match':[{'host':['mcp.cdxxotus.com'],'path':['/relief/*']}],
-       'handle':[{'handler':'reverse_proxy','upstreams':[{'dial':'relief-observatoire:8774'}]}],'terminal':True}
-for name,server in config['apps']['http']['servers'].items():
-    if not any(r.get('match')==route['match'] for r in server['routes']):
-        server['routes'].insert(0,route)
-req=urllib.request.Request(base+'/load',data=json.dumps(config).encode(),headers={'Content-Type':'application/json'},method='POST')
-urllib.request.urlopen(req).read()
-p=Path('/deploy/Caddyfile');text=p.read_text()
-if 'handle /relief/*' not in text:
-    Path('/deploy/Caddyfile.before-relief').write_text(text)
-    anchor='http://{$MCP_DOMAIN}, {$MCP_DOMAIN} {'
-    if anchor not in text:raise RuntimeError('MCP vhost missing')
-    text=text.replace(anchor,anchor+'\n\thandle /relief/* {\n\t\treverse_proxy relief-observatoire:8774\n\t}\n',1)
-    p.write_text(text)
-print('Route /relief/* ajoutée ; autres handlers conservés.')
+sys.path.insert(0, '/deploy/miniapps')
+from install_routes import patch
+
+base = 'http://127.0.0.1:2019'
+def post(path, body, kind):
+    req = urllib.request.Request(base+path, data=body, headers={'Content-Type':kind}, method='POST')
+    with urllib.request.urlopen(req) as r: return r.read()
+def adapt(text):
+    config = json.loads(post('/adapt', text.encode(), 'text/caddyfile'))['result']
+    # The API adapter has no filename; CLI reload adds the absolute config path
+    # to file_server.hide. Match that metadata, without ignoring route changes.
+    def filename(value):
+        if isinstance(value, dict):
+            if value.get('handler') == 'file_server' and 'hide' in value:
+                value['hide'] = ['/etc/caddy/Caddyfile' if x == './Caddyfile' else x for x in value['hide']]
+            for child in value.values(): filename(child)
+        elif isinstance(value, list):
+            for child in value: filename(child)
+    filename(config)
+    return config
+
+p = Path('/deploy/Caddyfile')
+old = p.read_text()
+with urllib.request.urlopen(base+'/config/') as r: live = json.load(r)
+if live != adapt(old): raise RuntimeError('Caddy runtime differs from persisted file; reconcile before loading')
+new = patch(old)
+config = adapt(new)
+Path('/deploy/Caddyfile.before-relief').write_text(old)
+p.write_text(new)
+try:
+    post('/load', json.dumps(config).encode(), 'application/json')
+except Exception:
+    p.write_text(old)
+    raise
+print('Routes Relief et RPC persistées et chargées depuis le même Caddyfile.')

@@ -3395,3 +3395,59 @@
   WebView.postEvent('web_app_request_content_safe_area');
 
 })();
+
+// eg-fullscreen-bundle:start
+/* EG fullscreen v1: shared by the shell, app pages and authentication gates. */
+(function () {
+  'use strict';
+  if (window.egFullscreenInstalled) return;
+  window.egFullscreenInstalled = true;
+  function boot() {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (!tg || !tg.initData) return;
+    var root = document.documentElement;
+    var shell = location.pathname.indexOf('/miniapp/') === 0;
+    var managed = /\/(rpc-monitor)\//.test(location.pathname);
+    var target = shell ? document.querySelector('main') : document.body;
+    var base = target ? getComputedStyle(target) : null;
+    var padding = {};
+    ['top', 'bottom', 'left', 'right'].forEach(function (edge) {
+      padding[edge] = base ? parseFloat(base.getPropertyValue('padding-' + edge)) || 0 : 0;
+    });
+    var style = document.createElement('style');
+    // Fixed media viewers bypass body padding and need their own safe area.
+    style.textContent = '.eg-telegram-safe { box-sizing:border-box; padding-top:calc(var(--eg-safe-top,0px) + var(--eg-base-top,0px))!important; padding-bottom:calc(var(--eg-safe-bottom,0px) + var(--eg-base-bottom,0px))!important; padding-left:calc(var(--eg-safe-left,0px) + var(--eg-base-left,0px))!important; padding-right:calc(var(--eg-safe-right,0px) + var(--eg-base-right,0px))!important; }' +
+      '.now,#viewer,.recall-detail{padding-top:var(--eg-safe-top,0px)!important;padding-bottom:var(--eg-safe-bottom,0px)!important;}' +
+      '.eg-telegram-safe > header,.eg-telegram-safe .topbar,body.live.eg-telegram-safe header{top:var(--eg-safe-top,0px);}' +
+      '#viewer #close{top:calc(10px + var(--eg-safe-top,0px))!important;}' +
+      '.dock{padding-bottom:max(env(safe-area-inset-bottom),var(--eg-safe-bottom,0px))!important;}';
+    document.head.appendChild(style);
+    if (target && !managed) {
+      target.classList.add('eg-telegram-safe');
+      Object.keys(padding).forEach(function (edge) { target.style.setProperty('--eg-base-' + edge, padding[edge] + 'px'); });
+    }
+    function update() {
+      var system = tg.safeAreaInset || {}, content = tg.contentSafeAreaInset || {};
+      ['top', 'bottom', 'left', 'right'].forEach(function (edge) {
+        var a = Math.max(0, Number(system[edge]) || 0);
+        var b = Math.max(0, Number(content[edge]) || 0);
+        // Some clients deliver insets after fullscreenChanged. Reserve the controls meanwhile.
+        var fallback = edge === 'top' && tg.isFullscreen ? 80 : 0;
+        root.style.setProperty('--eg-safe-' + edge, Math.max(a + b, fallback) + 'px');
+      });
+    }
+    ['safeAreaChanged', 'contentSafeAreaChanged', 'fullscreenChanged', 'viewportChanged'].forEach(function (event) {
+      if (tg.onEvent) tg.onEvent(event, update);
+    });
+    try { tg.ready(); } catch (_) {}
+    try { tg.expand(); } catch (_) {}
+    update();
+    try {
+      if (!tg.isFullscreen && typeof tg.requestFullscreen === 'function' &&
+          (!tg.isVersionAtLeast || tg.isVersionAtLeast('8.0'))) tg.requestFullscreen();
+    } catch (_) { /* The expanded view remains usable on unsupported clients. */ }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
+})();
+// eg-fullscreen-bundle:end
