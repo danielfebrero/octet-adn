@@ -44,3 +44,37 @@ Seuils qui déclenchent une proposition : disque libre < 100 Go, ou histoire > 1
    (1,3 Go) peuvent être recompressées en xz sans perte.
 
 Aucune suppression de l'histoire de Relief n'est faite sans export vérifié et accord explicite.
+
+## Niveau 3 — autorisé et appliqué le 26/10/2026 : GitHub Releases
+
+Ordre Daniel : « Fais le tout de suite et libère notre stockage. Push releases. »
+
+`releases.py` exporte chaque heure les seuls segments `events-*.tsv.gz` et
+`events-*.tsv.xz` fermés depuis plus d'une heure. Les deux derniers gzip restent
+sur le VPS pour l'observatoire ; toutes les séries restent locales. L'état vivant,
+l'ELF et les journaux ouverts ne sont jamais montés dans ce service.
+
+- Releases publiques de `danielfebrero/octet-adn`, tags `relief-history-YYYYMMDD`.
+- TAR sans recompression, groupes de 480 Mio maximum hors en-têtes. Les segments
+  originaux conservent exactement leurs octets. Manifeste JSON par archive : nom,
+  taille et SHA-256 de chaque segment, SHA-256 du TAR.
+- Relecture locale des membres du TAR, upload sans écrasement, puis téléchargement
+  intégral du TAR et du manifeste depuis GitHub et comparaison SHA-256.
+- Tous les originaux sont revérifiés avant le premier retrait. Au moindre échec,
+  conservation locale et ligne ERREUR. Journal durable `histoire/releases.jsonl`
+  synchronisé avant retrait ; retrait uniquement des fichiers vérifiés.
+- Verrou partagé `.archive.lock` avec la recompression pour exclure les mutations
+  simultanées. Le monde ne prend pas ce verrou et continue de tourner.
+- Service `relief-releases`, redémarrage automatique ; seul `histoire/` est monté
+  en écriture. Jeton GitHub monté en lecture seule, jamais copié dans les archives.
+- L'estimation de production compte aussi les fichiers exportés ; les jours
+  restants décrivent le scénario **sans exports futurs**, sur disque partagé.
+
+Restauration : télécharger le TAR et son JSON depuis la release, vérifier le
+SHA-256 du TAR, extraire dans un dossier de travail, puis vérifier chaque SHA-256
+et taille du manifeste. Lire les segments par `zcat` ou `xzcat`. Ne pas extraire
+sur le monde vivant. Les gros TAR ne sont jamais ajoutés à Git.
+
+Ce stockage dépend de la disponibilité du compte et de GitHub ; c'est un export
+vérifié, pas une garantie d'archivage perpétuel. Le journal local garde les URL et
+empreintes nécessaires à la récupération.

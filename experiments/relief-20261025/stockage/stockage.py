@@ -8,7 +8,7 @@ Règles (voir STRATEGIE.md) :
 - écrit l'état du disque dans histoire/STOCKAGE.txt et une ligne par segment dans histoire/stockage.log.
 Le monde vivant, son état et ses journaux ouverts (events.tsv, series.tsv) ne sont pas montés ici.
 """
-import gzip, hashlib, lzma, os, sys, time
+import gzip, hashlib, lzma, os, sys, time, fcntl, json
 from pathlib import Path
 
 HIST = Path(os.environ.get('HISTOIRE', '/histoire'))
@@ -64,6 +64,22 @@ def etat():
         try: return time.mktime(time.strptime(p.name.split('-', 1)[1][:15], '%Y%m%dT%H%M%S')) - time.timezone
         except (IndexError, ValueError): return p.stat().st_mtime
     jour_gz = sum(p.stat().st_size for p in gz if time.time() - ferme(p) < 86400) / 1e9
+    exportes = {}
+    dernier_export = {}
+    try:
+        for line in (HIST / 'releases.jsonl').read_text().splitlines():
+            row = json.loads(line)
+            dernier_export = row
+            if row.get('status') == 'verified':
+                for entry in row['files']: exportes[entry['name']] = entry['size']
+    except FileNotFoundError: pass
+    # Keep the production estimate meaningful after offloading; no double counting.
+    locaux = {p.name for p in gz + xz}
+    for name, size in exportes.items():
+        if name not in locaux:
+            try: stamp = time.mktime(time.strptime(name.split('-', 1)[1][:15], '%Y%m%dT%H%M%S')) - time.timezone
+            except (ValueError, IndexError): continue
+            if time.time() - stamp < 86400: jour_gz += size / 1e9
     ratio = 0.45
     try:
         r = [int(c.split('=')[1]) for l in open(HIST / 'stockage.log') for c in l.split('\t') if c.startswith(('gz=', 'xz='))]
@@ -72,12 +88,13 @@ def etat():
     jour = jour_gz * ratio
     lignes = [f'date={time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}',
               f'disque_libre_go={libre:.1f}', f'histoire_go={total:.3f}', f'segments_gz={len(gz)}', f'segments_xz={len(xz)}',
-              f'ecrit_24h_gz_go={jour_gz:.3f}', f'ratio_xz_sur_gz={ratio:.3f}', f'rythme_stocke_go_jour={jour:.3f}', f'jours_restants={libre / max(jour, 1e-3):.0f}',
-              'statut=' + ('ALERTE disque < %.0f Go' % ALERTE_GO if libre < ALERTE_GO else 'ok')]
+              f'export_verifie_go={sum(exportes.values()) / 1e9:.3f}', f'segments_exportes={len(exportes)}', f'ecrit_24h_gz_go={jour_gz:.3f}', f'ratio_xz_sur_gz={ratio:.3f}', f'rythme_stocke_go_jour={jour:.3f}', f'jours_restants={libre / max(jour, 1e-3):.0f}', 'projection=sans_exports_futurs_disque_partage',
+              'dernier_export=' + dernier_export.get('date', 'aucun'),
+              'statut=' + ('ALERTE export GitHub en erreur' if dernier_export.get('status') == 'ERREUR' else ('ALERTE disque < %.0f Go' % ALERTE_GO if libre < ALERTE_GO else 'ok'))]
     tmp = HIST / 'STOCKAGE.txt.tmp'
     tmp.write_text('\n'.join(lignes) + '\n'); os.replace(tmp, HIST / 'STOCKAGE.txt')
 
-def cycle():
+def cycle_locked():
     for t in HIST.glob('*.xz.tmp'): t.unlink()                     # reste d'un arrêt brutal : jamais un fichier validé
     vieux = sorted(p for p in HIST.glob('*.tsv.gz') if time.time() - p.stat().st_mtime > AGE)
     faits = 0
@@ -85,6 +102,11 @@ def cycle():
         try: convertir(gz); faits += 1
         except Exception as e: log(f'ERREUR\t{e}'); break
     etat(); return faits
+
+def cycle():
+    with (HIST / '.archive.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return cycle_locked()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'une-fois': print(cycle(), 'segment(s) recompressé(s)'); sys.exit(0)

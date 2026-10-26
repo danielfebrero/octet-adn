@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-26",
+  "task_id": "f9c1897f-08a3-436c-a7a9-69416c79cce8",
+  "evicted_bytes": 1975865204,
+  "evicted_segments": 150,
+  "verified_archives": [
+    {
+      "bytes": 491458494,
+      "date": "2026-10-26T18:42:01.352950+00:00",
+      "manifest_url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261025/relief-events-20261025T200610--events-20261026T024913.json",
+      "sha256": "3683e992a164675490618767d88d5ca084a9df00ab5950060bac493386f6f992",
+      "status": "verified",
+      "url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261025/relief-events-20261025T200610--events-20261026T024913.tar",
+      "segments": 38
+    },
+    {
+      "bytes": 502086229,
+      "date": "2026-10-26T18:42:45.508381+00:00",
+      "manifest_url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T025916--events-20261026T080452.json",
+      "sha256": "01cc049e6a1bdb06cf62c35d8e4dc1fdff3caac848d4865c3d74c1f90fc501f9",
+      "status": "verified",
+      "url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T025916--events-20261026T080452.tar",
+      "segments": 37
+    },
+    {
+      "bytes": 495766621,
+      "date": "2026-10-26T18:43:29.080040+00:00",
+      "manifest_url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T081355--events-20261026T130326.json",
+      "sha256": "3a52faa9e293ee2eb4bae046256c4bf2aff4466691e6ae87740d5a75a468e9e1",
+      "status": "verified",
+      "url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T081355--events-20261026T130326.tar",
+      "segments": 37
+    },
+    {
+      "bytes": 486553860,
+      "date": "2026-10-26T18:44:16.299719+00:00",
+      "manifest_url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T131129--events-20261026T173801.json",
+      "sha256": "3391e62030af2c5467ffef340a47a520dbb22e3c7fdf3e776ae6d38b84be8411",
+      "status": "verified",
+      "url": "https://github.com/danielfebrero/octet-adn/releases/download/relief-history-20261026/relief-events-20261026T131129--events-20261026T173801.tar",
+      "segments": 38
+    }
+  ],
+  "remaining_history_bytes": 114505933,
+  "tests": [
+    "each TAR member SHA-256 checked before upload",
+    "every remote TAR and JSON downloaded in full, SHA-256 checked",
+    "every source segment rechecked before eviction",
+    "simulated remote digest mismatch: original retained",
+    "matching remote digest: eviction and durable audit verified",
+    "relief-releases service started with isolated history mount",
+    "octet-relief running since 2026-10-25T19:56:08.295975832Z, unchanged"
+  ],
+  "errors": []
+}
