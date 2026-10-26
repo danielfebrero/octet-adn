@@ -2,6 +2,8 @@
 
 [**Relief : le nouveau monde**](experiments/relief-20261025/README.md).
 
+[**Transmission : conserver et nous écrire, monde distinct vivant**](experiments/transmission-20261026/README.md).
+
 [**Les 34 anciens : archives et fiches**](ops/mondes/MONDES.md).
 [**Archivage, preuves et limites**](ops/archives/20261025/README.md).
 

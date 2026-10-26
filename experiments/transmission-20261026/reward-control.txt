@@ -1,0 +1,7 @@
+initial_document_control disabled=0 tick=10000 population=8 perfect=64 energy_reward=77132
+initial_document_control disabled=1 tick=4070 population=0 perfect=24 energy_reward=0
+200000-tick control, no external library, no disk/mail side effects:
+tick=200000 population=128 custodians=128 descendants=128 births=1664 deaths=1568 mutations=860
+restorations=98046 perfect=97034 descendant_perfect=96930 awarded=19753 reward_energy=29540983 document_bytes=1174 document_fnv64=a86a1a282ed55f74
+mail=181 mail_bytes=211576 mail_rejected=99876 requests=25 request_rejected=1995 library_reads=12587 library_imports=0 shared_writes=7267 ram_writes=7267 code_writes=0
+books=0,0,0,0,0,0,0,0

@@ -1,0 +1,1 @@
+Originaux emis par la VM, non executes. Lettre 1 : 42 NUL puis 214 octets extraits de Grokipedia Evolution par un echantillonneur humainement amorce. Lettres 2 a 6 : copies du document initial par les programmes conservateurs ecrits par nous. Conservation fonctionnelle, aucune comprehension demontree. Voir manifest.json pour provenance et empreintes.

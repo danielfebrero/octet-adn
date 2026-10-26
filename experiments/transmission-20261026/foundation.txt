@@ -1,0 +1,4 @@
+tick=0 population=32 custodians=8 descendants=0 births=0 deaths=0 mutations=0
+restorations=0 perfect=0 descendant_perfect=0 awarded=0 reward_energy=0 document_bytes=1174 document_fnv64=a86a1a282ed55f74
+mail=0 mail_bytes=0 mail_rejected=0 requests=0 request_rejected=0 library_reads=0 library_imports=0 shared_writes=0 ram_writes=0 code_writes=0
+books=0,0,0,0,0,0,0,0

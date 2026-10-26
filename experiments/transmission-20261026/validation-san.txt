@@ -1,0 +1,18 @@
+cc -O1 -g -std=c11 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o 'build-san-final/transmission' transmission.c
+'build-san-final/transmission' selftest
+tick=6000 population=128 custodians=128 descendants=120 births=120 deaths=24 mutations=69
+restorations=6898 perfect=6874 descendant_perfect=5882 awarded=596 reward_energy=666328 document_bytes=47 document_fnv64=7c6c3eb2ac96f7fa
+mail=11 mail_bytes=517 mail_rejected=6947 requests=24 request_rejected=60 library_reads=11799 library_imports=0 shared_writes=7199 ram_writes=7199 code_writes=0
+books=0,0,0,0,0,0,0,0
+reward_ablation disabled=0 tick=6000 population=8 energy_reward=54962
+reward_ablation disabled=1 tick=3573 population=0 energy_reward=0
+SELFTEST PASS: hidden oracle, exact reward, decoded shared representation, cooldown, URL rejection, deterministic continuation, reproduction, mail, extinction
+sh tests.sh 'build-san-final/transmission'
+tick=7000 population=122 custodians=122 descendants=114 births=122 deaths=32 mutations=65
+restorations=240 perfect=232 descendant_perfect=192 awarded=232 reward_energy=745680 document_bytes=1174 document_fnv64=a86a1a282ed55f74
+mail=6 mail_bytes=6126 mail_rejected=294 requests=24 request_rejected=60 library_reads=11789 library_imports=0 shared_writes=7175 ram_writes=7175 code_writes=0
+books=0,0,0,0,0,0,0,0
+{"time": 1793053919, "slot": 0, "request_sha256": "4d8c0fab329a832f91bf99093e27450785cd8b244ad095b6ac4cb34df9de0d8f", "tick": 64, "organism": 9, "sequence": 1, "slug": "Artificial_life", "cache_hit": false, "url": "https://grokipedia.com/page/Artificial_life", "sha256": "2d331be6694ab1e0be255dbd7afeb34d8ade502c8d4e4fa96acfd5b666f33bfe", "bytes": 23, "retrieved_at": 1793053919, "status": "ok"}
+{"time": 1793053919, "slot": 1, "request_sha256": "3f9b003567a2ef1982b7728e75e628d38fca079a38cb86509ac9282a063366d0", "status": "rejected", "error": "invalid request"}
+BROKER PASS: strict slug allowlist, bounded import, provenance, invalid URLs rejected
+CLI PASS: exact replay across checkpoint, mail provenance and commit cursor, corruption rejection, exclusive writer, SIGTERM, extinction without reseeding

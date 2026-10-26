@@ -1,0 +1,117 @@
+{
+  "picked_at": 1793053950,
+  "tick_observed": 7000,
+  "after": 0,
+  "through": 6,
+  "messages": [
+    {
+      "sequence": 1,
+      "metadata": {
+        "sequence": "1",
+        "tick": "533",
+        "id": "16",
+        "parent": "0",
+        "lineage": "16",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "1",
+        "bytes": "256",
+        "fnv64": "6ee546f401d45e21"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000001.bin",
+      "sha256": "b61f7ea889085b82fc3b522cde363c32bbf46a4ba8393375dcc4486c62365c21",
+      "bytes": 256
+    },
+    {
+      "sequence": 2,
+      "metadata": {
+        "sequence": "2",
+        "tick": "1176",
+        "id": "1",
+        "parent": "0",
+        "lineage": "1",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "0",
+        "bytes": "1174",
+        "fnv64": "a86a1a282ed55f74"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000002.bin",
+      "sha256": "2260e4d6466b9a44c21a9bb18b668a6e6e63e8ec8fa5fe3b32fc3adb65ae5a7b",
+      "bytes": 1174
+    },
+    {
+      "sequence": 3,
+      "metadata": {
+        "sequence": "3",
+        "tick": "2351",
+        "id": "2",
+        "parent": "0",
+        "lineage": "2",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "0",
+        "bytes": "1174",
+        "fnv64": "a86a1a282ed55f74"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000003.bin",
+      "sha256": "2260e4d6466b9a44c21a9bb18b668a6e6e63e8ec8fa5fe3b32fc3adb65ae5a7b",
+      "bytes": 1174
+    },
+    {
+      "sequence": 4,
+      "metadata": {
+        "sequence": "4",
+        "tick": "3526",
+        "id": "1",
+        "parent": "0",
+        "lineage": "1",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "0",
+        "bytes": "1174",
+        "fnv64": "a86a1a282ed55f74"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000004.bin",
+      "sha256": "2260e4d6466b9a44c21a9bb18b668a6e6e63e8ec8fa5fe3b32fc3adb65ae5a7b",
+      "bytes": 1174
+    },
+    {
+      "sequence": 5,
+      "metadata": {
+        "sequence": "5",
+        "tick": "4701",
+        "id": "2",
+        "parent": "0",
+        "lineage": "2",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "0",
+        "bytes": "1174",
+        "fnv64": "a86a1a282ed55f74"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000005.bin",
+      "sha256": "2260e4d6466b9a44c21a9bb18b668a6e6e63e8ec8fa5fe3b32fc3adb65ae5a7b",
+      "bytes": 1174
+    },
+    {
+      "sequence": 6,
+      "metadata": {
+        "sequence": "6",
+        "tick": "5876",
+        "id": "1",
+        "parent": "0",
+        "lineage": "1",
+        "born": "0",
+        "founder": "1",
+        "seed_program": "0",
+        "bytes": "1174",
+        "fnv64": "a86a1a282ed55f74"
+      },
+      "path": "/workspace/produits/octet-adn/experiments/vie-transmission-20261026/mail/0000000000000006.bin",
+      "sha256": "2260e4d6466b9a44c21a9bb18b668a6e6e63e8ec8fa5fe3b32fc3adb65ae5a7b",
+      "bytes": 1174
+    }
+  ],
+  "interpretation": "None. Payloads are untrusted organism bytes; founder programs are human-authored."
+}

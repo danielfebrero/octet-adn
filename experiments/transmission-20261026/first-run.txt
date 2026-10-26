@@ -1,0 +1,4 @@
+tick=7000 population=128 custodians=128 descendants=120 births=123 deaths=27 mutations=53
+restorations=299 perfect=235 descendant_perfect=195 awarded=235 reward_energy=755535 document_bytes=1174 document_fnv64=a86a1a282ed55f74
+mail=6 mail_bytes=6126 mail_rejected=353 requests=24 request_rejected=60 library_reads=11789 library_imports=4 shared_writes=7267 ram_writes=7267 code_writes=0
+books=65536,65536,65536,65536,0,0,0,0
