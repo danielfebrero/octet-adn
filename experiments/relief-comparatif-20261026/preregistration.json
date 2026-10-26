@@ -1,0 +1,18 @@
+{
+  "frozen_at_utc": "2026-10-26T16:34:48.260792+00:00",
+  "protocol_sha256": "77596ac492c3e1f4879061178a05bdaad55c80eedd45ed345c968b61c86f7def",
+  "phase": "before comparative simulations",
+  "horizons": [
+    600,
+    4096,
+    8192
+  ],
+  "arms": [
+    "control",
+    "unlock",
+    "redistribute"
+  ],
+  "windows": 2,
+  "max_simulated_ticks": 60000,
+  "max_data_bytes": 2147483648
+}
