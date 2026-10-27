@@ -14,6 +14,10 @@ TYPES={'legacy':Legacy,'relief':Relief,'transmission':Transmission}
 EXPECTED={'legacy':2360,'relief':128,'transmission':8784}
 def sha(b):return hashlib.sha256(b).hexdigest()
 def binary(isa,expected_sha=None):
+ if isinstance(expected_sha,dict):
+  path=pathlib.Path(expected_sha['path'])
+  if path.is_file() and path.stat().st_mode&0o111 and sha(path.read_bytes())==expected_sha['sha256']:return path
+  raise ValueError('missing or mismatched manifest native adapter '+isa)
  candidates=[HERE/'native/build'/isa,HERE/'native'/isa]
  if isa=='legacy':candidates.insert(0,HERE/'native/build/legacy-terra')
  for path in candidates:

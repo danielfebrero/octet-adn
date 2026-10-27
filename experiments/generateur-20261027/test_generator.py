@@ -7,6 +7,15 @@ import unittest
 import generator as g
 
 class Tests(unittest.TestCase):
+ def test_successor_adapter_manifest_path_and_digest(self):
+  import hashlib
+  import select_successors as s
+  with tempfile.TemporaryDirectory() as d:
+   adapter=Path(d)/'pinned-adapter';adapter.write_bytes(b'fixture');adapter.chmod(0o700)
+   entry={'path':str(adapter),'sha256':hashlib.sha256(b'fixture').hexdigest()}
+   self.assertEqual(adapter,s.binary('legacy',entry))
+   adapter.write_bytes(b'changed')
+   with self.assertRaises(ValueError):s.binary('legacy',entry)
  def test_reproducible_properties_and_mutation(self):
   r=g.defaults(2026102701)
   self.assertEqual(r,g.defaults(2026102701))
