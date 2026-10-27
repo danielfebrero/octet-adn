@@ -363,6 +363,9 @@ def run(world, batches=0, realtime=True):
   # Fixed-size ring of 256 reports, no unbounded event stream.
   reports=world/'reports';reports.mkdir(exist_ok=True);write_json(reports/f'{status["batches"]%256:03}.json',status)
   finish_transaction(world)
+  # Immutable committed reports are offloaded automatically by ops/history.
+  history=world/'histoire'/'reports';history.mkdir(parents=True,exist_ok=True)
+  write_json(history/f'{status["batches"]:016d}.json',status)
   acknowledge_injections(world,status)
   count+=1
   if status['population']==0:break
