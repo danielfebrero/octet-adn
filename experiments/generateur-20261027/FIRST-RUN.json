@@ -1,0 +1,30 @@
+{
+  "batches": 32,
+  "chemistry": {
+    "artifacts": 157,
+    "bridges": 32,
+    "catalyses": 36,
+    "compositions": 158,
+    "decayed": 1,
+    "emissions": 1691874,
+    "free_atoms": 65517,
+    "functional_tools": 22,
+    "mass_in": 542533,
+    "mass_reservoir": 180,
+    "overflow": 1628018,
+    "reaction_energy": 412,
+    "reaction_energy_spent": 36,
+    "reactions": 36,
+    "total_mass": 559949
+  },
+  "founders": 420,
+  "law_version": 1,
+  "population": 11435,
+  "summary": {
+    "legacy": "tick=1024 population=7279 births=8812 deaths=1533 emits=1625053 islands=32 laws=0 capacity=131072 hash=9fc1408762b7f771 forces=3 stress=1 attention=1 traits=1 depense=1 causales=1 saison=1 tronc=1",
+    "relief": "tick=1024 population=4096 cells=16384 dimensions=128x128 capacity=4096 seed=202610270138\nbirths=4448 deaths=412 matter=2397624 initial_matter=2397624 rng=7233d9a4e5366c1a",
+    "transmission": "tick=1024 population=60 custodians=60 descendants=0 births=0 deaths=0 mutations=0\nrestorations=60 perfect=60 descendant_perfect=0 awarded=0 reward_energy=0 document_bytes=1174 document_fnv64=a86a1a282ed55f74\nmail=0 mail_bytes=0 mail_rejected=60 requests=0 request_rejected=0 library_reads=0 library_imports=0 shared_writes=0 ram_writes=0 code_writes=0\nbooks=65536,65536,65536,65536,0,0,0,0"
+  },
+  "ticks_requested": 1024,
+  "updated_at": "2026-10-27T01:48:48Z"
+}

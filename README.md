@@ -324,3 +324,7 @@ Construire chaque ELF dans un chemin **jamais utilisé**, sans `make` nu ni
 `experiments/approches-build/IDENTIFIANT_NEUF/{perception-sequence,selection-episodes,symbiose-metabolique,corrections,historiques,sonde-phase}`
 compilent directement les sources et refusent d'écraser un ELF. Aucun `.so`,
 état de monde ou fichier de run n'est nécessaire pour ces mesures.
+
+## Générateur de mondes successifs — Passage (27/10/2026)
+
+Pour les prochaines fondations compatibles, utiliser désormais [`experiments/generateur-20261027/generator.py`](experiments/generateur-20261027/README.md): paramètres aléatoires reproductibles, transplantation d'états natifs existants, chimie des256valeurs d'octet, mises à jour et injections en vie. La cohorte initiale contient420descendants de32mondes, sans transcodage des génomes ou mémoires. Le premier monde `vie-passage-001-20261027` vit dans `octet-passage-001`, avec son broker Grokipedia séparé. Relief et Transmission précédents restent vivants et distincts; aucun ancien monde arrêté n'est relancé. Les protocoles quantiques et certaines tâches de laboratoire restent des contextes catalogués, pas des lois prétendues exécutées. Voir le README du générateur pour les limites et la sélection d'une cohorte suivante.

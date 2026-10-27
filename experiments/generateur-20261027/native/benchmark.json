@@ -1,0 +1,20 @@
+[
+  {
+    "action": "init",
+    "elapsed_seconds": 0.005815648939460516,
+    "peak_child_rss_kib": 11924,
+    "report": "tick=0 population=300 births=300 deaths=0 emits=0 islands=4 laws=0 capacity=16384 hash=d00b98d21b0edfe4 forces=3 stress=1 attention=1 traits=1 depense=1 causales=1 saison=1 tronc=1"
+  },
+  {
+    "action": "step",
+    "elapsed_seconds": 0.12411243421956897,
+    "peak_child_rss_kib": 45020,
+    "report": "tick=32 population=2551 births=3188 deaths=637 emits=6840 islands=5 laws=0 capacity=20480 hash=8b1c8ded3303a481 forces=3 stress=1 attention=1 traits=1 depense=1 causales=1 saison=1 tronc=1"
+  },
+  {
+    "action": "inspect",
+    "elapsed_seconds": 0.015174346044659615,
+    "peak_child_rss_kib": 45020,
+    "report": "tick=32 population=2551 births=3188 deaths=637 emits=6840 islands=5 laws=0 capacity=20480 hash=8b1c8ded3303a481 forces=3 stress=1 attention=1 traits=1 depense=1 causales=1 saison=1 tronc=1"
+  }
+]

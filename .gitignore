@@ -98,3 +98,6 @@ TASK.md
 
 /experiments/vie-relief-*/
 /experiments/vie-transmission-*/
+
+# Generated living worlds: native state and output are runtime data.
+experiments/vie-passage-*/

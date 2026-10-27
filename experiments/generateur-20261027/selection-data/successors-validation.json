@@ -1,0 +1,12 @@
+{
+  "native_abi_decode_420": true,
+  "successor_export_count": 420,
+  "source_checkpoints_unchanged": true,
+  "duplicate_native_ids_handled": true,
+  "insufficient_living_population_rejected": true,
+  "quotas": {
+    "legacy": 300,
+    "relief": 60,
+    "transmission": 60
+  }
+}

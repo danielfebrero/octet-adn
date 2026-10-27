@@ -1,0 +1,9 @@
+test_crash_transaction_restores_all (test_generator.Tests.test_crash_transaction_restores_all) ... ok
+test_hot_update_idempotent (test_generator.Tests.test_hot_update_idempotent) ... ok
+test_patch_rejection (test_generator.Tests.test_patch_rejection) ... ok
+test_reproducible_properties_and_mutation (test_generator.Tests.test_reproducible_properties_and_mutation) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.188s
+
+OK

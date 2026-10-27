@@ -1,0 +1,23 @@
+{
+  "legacy": {
+    "initial": "tick=0 population=300 births=300 deaths=0 emits=0 stores=0 eaten=0 hash=aaf04d1e56daee3f",
+    "after": "tick=30 population=347 births=974 deaths=628 emits=2406 stores=3761 eaten=7911 hash=f531482e040142d5",
+    "checkpoint_restart_identical": true,
+    "corruption_rejected": true,
+    "injection_ok": true
+  },
+  "relief": {
+    "initial": "tick=0 population=60 cells=16384 dimensions=128x128 capacity=4096 seed=123456\nbirths=0 deaths=0 matter=2396890 initial_matter=2396890 rng=365b61414587bfd1",
+    "after": "tick=30 population=127 cells=16384 dimensions=128x128 capacity=4096 seed=123456\nbirths=69 deaths=3 matter=2397059 initial_matter=2397059 rng=8eaa7a7e0243659c",
+    "checkpoint_restart_identical": true,
+    "corruption_rejected": true,
+    "injection_ok": true
+  },
+  "transmission": {
+    "initial": "tick=0 population=60 custodians=60 descendants=0 births=0 deaths=0 mutations=0\nrestorations=0 perfect=0 descendant_perfect=0 awarded=0 reward_energy=0 document_bytes=1174 document_fnv64=a86a1a282ed55f74\nmail=0 mail_bytes=0 mail_rejected=0 requests=0 request_rejected=0 library_reads=0 library_imports=0 shared_writes=0 ram_writes=0 code_writes=0\nbooks=65536,65536,65536,65536,0,0,0,0",
+    "after": "tick=30 population=61 custodians=61 descendants=0 births=0 deaths=0 mutations=0\nrestorations=0 perfect=0 descendant_perfect=0 awarded=0 reward_energy=0 document_bytes=1174 document_fnv64=a86a1a282ed55f74\nmail=0 mail_bytes=0 mail_rejected=0 requests=0 request_rejected=0 library_reads=0 library_imports=0 shared_writes=0 ram_writes=0 code_writes=0\nbooks=65536,65536,65536,65536,0,0,0,0",
+    "checkpoint_restart_identical": true,
+    "corruption_rejected": true,
+    "injection_ok": true
+  }
+}

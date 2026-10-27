@@ -1,0 +1,12 @@
+{
+  "count": 420,
+  "sources_verified": 32,
+  "native_records_verified": {
+    "legacy": 300,
+    "relief": 60,
+    "transmission": 60
+  },
+  "unique_genomes": 379,
+  "parents_nonzero": 420,
+  "manifest_sha256": "ede212fc7a24d8831f2fd4b1a974390dd2124de19d0eb706886d327e97f62325"
+}

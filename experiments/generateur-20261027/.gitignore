@@ -1,0 +1,9 @@
+__pycache__/
+native/build/
+selection-data/snapshots/
+selection-data/exporters/
+selection-data/*.raw
+selection-data/extractors/legacy
+selection-data/extractors/raison
+selection-data/extractors/relief
+selection-data/extractors/transmission

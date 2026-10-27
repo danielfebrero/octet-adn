@@ -1,0 +1,6 @@
+{
+  "note": "Exemple opérateur : nouvelle réaction et instruction chimique, sans transcodage des génomes.",
+  "native_params": {"relief": {"season": 4096}},
+  "reactions": [{"id":"operateur-reaction-1","left":7,"right":11,"product":18,"rate":0.5,"spec":"7 + 11 → 18 ; masse résiduelle au réservoir et coût énergétique.","descr":"Réaction définie par opérateur et catalysée par les chaînes."}],
+  "instructions": [{"id":"operateur-instruction-1","left":1,"right":2,"product":3,"rate":0.25,"spec":"1 + 2 → 3 dans la machine chimique du milieu.","descr":"Instruction du milieu ; les ISA natives gardent leur sémantique."}]
+}

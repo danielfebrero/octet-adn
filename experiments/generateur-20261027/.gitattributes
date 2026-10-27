@@ -1,0 +1,4 @@
+# Native bytecode is binary data, including bytes that look like whitespace.
+native/seeds/*.adn binary
+# Preserve the frozen historical source exactly, including its original whitespace.
+native/frozen/terrarium.c -whitespace

@@ -1,0 +1,4201 @@
+# Lois de Passage
+
+Graine : 202610270138
+
+Three native habitats share an emitted-byte chemistry and sensory bridge; no inter-ISA reproduction. Historical protocols remain catalogued, not all executed.
+
+## Paramètres natifs effectifs
+
+```json
+{
+  "legacy": {
+    "attack_steal": 7,
+    "attention": 1,
+    "causales": 1,
+    "depense": 1,
+    "dup_rate": 0.021905582141125226,
+    "food_regrow": 3,
+    "forces": 3,
+    "germline": 0,
+    "max_pop": 1456,
+    "migrate": 560,
+    "mut_rate": 0.004676138490538978,
+    "ops_per_tick": 16,
+    "osmo": 3,
+    "regs": 0,
+    "saison": 1,
+    "season_amp": 0.2471291695429311,
+    "season_period": 8089,
+    "split_energy": 102,
+    "stress": 1,
+    "tronc": 1
+  },
+  "relief": {
+    "season": 4323
+  },
+  "transmission": {
+    "native_eat_gain": 7,
+    "native_max_age": 26789,
+    "native_mutation_divisor": 15
+  }
+}
+```
+
+## legacy.ecology
+
+**Statut :** native-supported
+**Spec :** Monde torique : nourriture, énergie, voisinage, stimulus externe, prédation.
+**Descr :** Grille torique, nourriture locale et repousse; entretien, mouvement, ingestion, reproduction, prédation et extinction.
+
+Source : {'path': 'src/world.c', 'sha256': '52099c1c3d93ec0ccdf62329974d9ad2dc7d9f15faa3052ccdbec24514ca8a74'}
+
+## legacy.vm
+
+**Statut :** native-supported
+**Spec :** La VM (le « ribosome ») : lit le génome octet par octet. Déterministe : tout l'aléa passe par world->rng.
+**Descr :** Deux registres octets, pointeur, soma éditable et budget VM; immédiats et branchements selon ISA originale.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.mutation
+
+**Statut :** native-supported
+**Spec :** Mutations : substitution, micro-dérive, insertion, délétion, duplication de bloc, crossover.
+**Descr :** Substitution par octet, duplication/indels, croisement et paramètres évolutifs portés par le génome selon profil.
+
+Source : {'path': 'src/mutate.c', 'sha256': '5e259ef87913ff146bbf237595e78257ffa367d5e38b26348be407c3f4a24be1'}
+
+## legacy.labs
+
+**Statut :** historical-context
+**Spec :** Les 10 éprouvettes : même moteur, objectifs (fitness) différents.
+**Descr :** Vingt dispositifs de sélection et métriques, contextes distincts du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## legacy.labs-human
+
+**Statut :** historical-context
+**Spec :** Labos « humanité » : versions jouets de problèmes réels. Chacun garde le même moteur ; les mécanismes propres passent par les hooks de labo (init, pre, post, before_vm), jamais par un changement de comportement des 10 labos historiques. Ce sont des terrains d'entraînement, pas des percées : un gagnant est un algorithme à étudier.
+**Descr :** Pliage HP, médicament, SEIR, biens communs, réparation, évolution et apprentissage: récompenses propres aux bancs.
+
+Source : {'path': 'src/labs_h.c', 'sha256': '672afc821a9d2750a227748094391824d1a9847dbcc7c1869e488f71272cd002'}
+
+## terrarium.archipelago
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Îles, migration en anneau, environnement Markov et émission sociale du voisin au tick précédent.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.forces
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Espèce dérivée des opcodes du germen; masque de rôles ATTACK/YIELD/EMIT/XOR/AND/SUB/NEURAL/ADD.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.causes
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** YIELD nourrit; AND/ADD attirent vers semblables; XOR détourne des différents; SUB draine leur énergie.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.bricks
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** EMIT pose une brique à recette; carré 2×2 mixte irrigue; seuil de briques ouvre une île.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.stress
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Mutation multipliée par 1+7×stress; stress combine faible énergie, pauvreté et densité.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.attention
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Calcul avant action dépose chaleur; choix dépense chaleur et modifie nourriture, écho et voisins.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.traits
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Traits mesurés depuis instructions exécutées et relations; fréquence5–95%, non-redondance et persistance.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.expense
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Archipel plein: un carré mixte ne nourrit plus et une brique est retirée au relevé.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.causal-signals
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Signal aux siens déplace nourriture; signal aux autres laisse une marque perceptible.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.season
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** Saison module repousse et porte de ferme/technologie.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## terrarium.dynamic-laws
+
+**Statut :** native-supported
+**Spec :** Terrarium : un monde ouvert, peuplé, qui tourne longtemps — sans fitness de labo. Écologie libre : nourriture qui repousse, énergie, SPLIT normal (cœur inchangé : world_step + hook before_vm). Pour dépasser le plafond d'un World (64×32, 1024 créatures), le terrarium est un archipel de K îles (un World chacune, un thread chacune) reliées en anneau par une migration lente. Canal social : à chaque tick, chaque créature reçoit dans le quartet bas du stimulus la valeur EMIT (& 15) d'UN voisin (3×3) qui a émis au tick précédent, tiré au hasard ; le quartet haut porte un environnement de Markov (change avec p = 1/50). Sans voisin émetteur, le quartet bas = l'environnement. --channel off : rien n'est livré (témoin). Mesures (une ligne de series.tsv par échantillon, voir README) : - population, génotypes distincts (hash fonctionnel : opcodes valides + imm, à leur position), entropie, - nouveauté cumulée façon Bedau-Packard, à deux niveaux : · génotypes nouveaux ayant PERSISTÉ ≥ P échantillons consécutifs avec ≥ CLONES porteurs, contre une ombre neutre (mêmes naissances/morts/taux d'innovation, sans sélection) ; · composants : 5-grammes d'opcodes valides (sans position ni immédiats) portés par ≥ 1 % de la pop pendant P échantillons (comp_cum) — le niveau génotype est trop fin (≈ un génotype par individu), - longueur et octets codants des génomes, - MI sociale : L(a|a₋₁) − L(a|a₋₁, sig) où sig = l'émission LIVRÉE, contre le témoin « voisin non livré » (un autre voisin émetteur au même tick, même environnement local) ; excès = réel − témoin (bits/paire), - spécialisation : niches compo
+**Descr :** ABI LoiMonde charge des lois .so neuves au relevé; contrat limité aux champs exposés.
+
+Source : {'path': 'experiments/terrarium.c', 'sha256': '6418196397dbb80d04daffede9596bdcbe71c29780ba804e4775d4e0a8028c9f'}
+
+## rencontres.exchange
+
+**Statut :** historical-context
+**Spec :** Rencontres et transfert horizontal, independants de SPLIT et du plafond. Aucun nouveau-ne, deplacement, don d'energie ou octet gratuit n'est cree. Deux voisins echangent leurs octets aux memes adresses, dans le soma et le germen separement. Leurs longueurs et leurs compteurs de naissance restent identiques. Le moteur appelant recalcule ses caches de genotype.
+**Descr :** Deux voisins échangent un segment de soma et germen sans changer la population, coût et repos.
+
+Source : {'path': 'experiments/rencontres-ligne/echange.c', 'sha256': '677174f2ac4b363dff14342f53307ff06c658029e82106c8f8dcb73fb3cd6d38'}
+
+## rencontres.nursery
+
+**Statut :** historical-context
+**Spec :** The list is compacted once per conception window. Its size is bounded by CMAX, rather than by the monotonically increasing creature IDs. No Creature pointer survives a call: an egg remains valid if either parent subsequently dies.
+**Descr :** Deux parents financent un œuf en saison, incubation et éclosion locale sans supprimer adulte.
+
+Source : {'path': 'experiments/rencontres-ligne/naissance.c', 'sha256': '8255fe7a48c8a2e5e13b96d04454a7a1e6a30a2cd286988686fb1e54de5e5f6f'}
+
+## rencontres.meeting
+
+**Statut :** historical-context
+**Spec :** Le pas standard maintient occupation, compteur et coût de base ensemble.
+**Descr :** Marques attirantes, test comportemental capteur+STEP isolé, coût du mouvement et expiration.
+
+Source : {'path': 'experiments/rencontres-ligne/rendezvous.c', 'sha256': '03d7717a015b0a51ebc5e32beadc2bbe6c290c101006ebc332a3c107ef5966b9'}
+
+## rencontres.senescence
+
+**Statut :** historical-context
+**Spec :** Trois physiques de vie (voir vivre.h). Aucune n'invente un opcode ; aucune ne touche le RNG du monde. Les octets hérités sont lus en fin de génome : SPLIT recopie le soma, donc la mutation du moteur les fait dériver comme n'importe quel autre octet.
+**Descr :** Vieillissement et extinction définis par bras expérimental; aucun réensemencement.
+
+Source : {'path': 'experiments/rencontres-ligne/vivre.c', 'sha256': '8e792c21c80d8f5cc6ae6c24781697b4f240f13280509e24903f8e9b961e7f5b'}
+
+## tronc.osmo
+
+**Statut :** native-supported
+**Spec :** Osmotrophie de la soupe : une unité par île et par relevé, d'une case qui en a plus de 2 vers sa voisine est, si celle-ci est sous 14. La somme est conservée. Le génome copieur n'est pas rejoué.
+**Descr :** Au relevé transfère une nourriture d’une case riche vers sa voisine est, conserve la somme.
+
+Source : {'path': 'experiments/tronc-ligne/osmo.c', 'sha256': '70e7f2bd883d5066e1330b9e5eaa0685a6ea3f3801a901568a87b7a85b4cb168'}
+
+## tronc.competition
+
+**Statut :** native-supported
+**Spec :** Compétition entre îles : une unité par relevé, de l'île la plus nourrie vers la plus pauvre. Scan déterministe, aucun tirage. Les génomes de compétition-ligne ne sont pas rejoués.
+**Descr :** Au relevé transfère une unité de l’île la plus nourrie vers la plus pauvre.
+
+Source : {'path': 'experiments/tronc-ligne/competition.c', 'sha256': '196ff08b07182765a9e849e4ee637b462350c6315eeccf0a12240d877e9500bc'}
+
+## tronc.heritage
+
+**Statut :** native-supported
+**Spec :** Lois locales : la table portée par chaque individu n'entre pas dans ce contrat. Ce qui tient, c'est une marque réécrite à chaque relevé : case (0,0) de chaque île, valeur 1.
+**Descr :** Réécrit marque1 en (0,0) sur chaque île; ne rejoue pas les tables locales.
+
+Source : {'path': 'experiments/tronc-ligne/heritage.c', 'sha256': '35a71ce477676e171d6fb004c58754e107a2db3f1cae6cb12c5c35535a0ea2c0'}
+
+## tronc.memoire
+
+**Statut :** native-supported
+**Spec :** Mémoire du relevé précédent : une chaleur sur une case de l'île 0 si la population a baissé. L'événement ne part qu'à la première baisse et se réarme quand la population remonte. Les traces de mémoire-2 ne sont pas rejouées.
+**Descr :** Baisse de population dépose chaleur; mémoire du relevé précédent et réarmement à la hausse.
+
+Source : {'path': 'experiments/tronc-ligne/memoire.c', 'sha256': '674e960a8a1e401729c9a5036b175d30af345f6196797ebaff2cce3b2ebac911'}
+
+## tronc.renaissance
+
+**Statut :** native-supported
+**Spec :** Filet de reprise. Au-dessus de 1000 individus, rien. En dessous, huit unités sur l'île 0. La table d'opcodes de la recherche d'univers n'est pas rejouée : ce contrat ne change pas les instructions.
+**Descr :** Sous1000 individus ajoute huit nourritures; ne recrée pas d’organismes.
+
+Source : {'path': 'experiments/tronc-ligne/renaissance.c', 'sha256': '20e64bb00a884193d1002c8ed63232c4bc8fc2e83c66bd68d7922df1ad6f0ec4'}
+
+## tronc.lecture
+
+**Statut :** native-supported
+**Spec :** Lecture seule. Compte les briques une fois et se tait. Ne retire rien. Ne pas déposer dans vie-tronc/lois/ : ce processus n'a pas le champ lire_brique.
+**Descr :** Observation une fois du nombre de briques et carrés mixtes, sans retrait.
+
+Source : {'path': 'experiments/tronc-ligne/lecture.c', 'sha256': 'eaac3c78f55607530c698b824dd53d4c2aeb1aca55e7e9ead6af296f771c981d'}
+
+## tronc.trace
+
+**Statut :** native-supported
+**Spec :** Marque 2 sur le coin haut-gauche de chaque carré 2×2 mixte encore visible au relevé. La case (0,0) reste à l'héritage. Ne retire rien. Ne pas déposer dans vie-tronc/lois/ : ce processus n'a pas le champ lire_brique.
+**Descr :** Marque2 sur coin de carré2×2 mixte, sauf (0,0) réservé à héritage.
+
+Source : {'path': 'experiments/tronc-ligne/trace.c', 'sha256': '60630e041fe60d94439cd1089c9aee63cf9cab4e08533c55648dab15d10d08c5'}
+
+## relief.material
+
+**Statut :** native-supported
+**Spec :** The binary format deliberately uses this ABI, validated before allocation.
+**Descr :** Conservation exacte minéral+nourriture+détritus+construction+cache+corps+réserve; énergie ouverte.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.climate
+
+**Statut :** native-supported
+**Spec :** The binary format deliberately uses this ABI, validated before allocation.
+**Descr :** Altitude, roche, pente, bords réfléchissants; lumière saisonnière, pluie, humidité et diffusion.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.life
+
+**Statut :** native-supported
+**Spec :** The binary format deliberately uses this ABI, validated before allocation.
+**Descr :** Corps/réserve/énergie, abri et sécheresse; division locale, héritage partiel mémoire, mutations de bits et âge maximal.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.witnesses
+
+**Statut :** native-supported
+**Spec :** The binary format deliberately uses this ABI, validated before allocation.
+**Descr :** Témoins sans perception ou mémoire sur copies; dépendance immédiate seulement, aucune preuve de raisonnement.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## transmission.memory
+
+**Statut :** native-supported
+**Spec :** New experiment, deliberately no Relief ABI or source dependency.
+**Descr :** RAM4096, code modifiable512, pointeur16bits, deux registres, huit artefacts et livres; copie mémoire à reproduction.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.preservation
+
+**Statut :** native-supported
+**Spec :** New experiment, deliberately no Relief ABI or source dependency.
+**Descr :** Restitution explicite: égalité exacte longueur et octets; bonus énergétique avec coût/plafond/cooldown.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.mail
+
+**Statut :** native-supported
+**Spec :** New experiment, deliberately no Relief ABI or source dependency.
+**Descr :** Sortie binaire et courrier limité; provenance, identité, checksum; les lettres ne sont jamais exécutées.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.library
+
+**Statut :** native-broker-supported
+**Spec :** New experiment, deliberately no Relief ABI or source dependency.
+**Descr :** Requête de titre Grokipedia seulement via broker extérieur strict; aucun réseau arbitraire de la VM. Broker dédié à ce monde, pont de fichiers seul.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## quantique.q1
+
+**Statut :** historical-context
+**Spec :** // Q1: independent hybrid mean-field experiment; see PROTOCOLE.md.
+**Descr :** Octets continus classiques, champ rotor de phase, potentiel attractif/répulsif, liens durables et projection de Born après boucle.
+
+Source : {'path': 'experiments/quantique/monde.cpp', 'sha256': '8956923cf0cbe78d442add4b91952ba0440e7b2b55bef78ca50501b6cc617b29'}
+
+## quantique.q2
+
+**Statut :** historical-context
+**Spec :** // Q2 : ensembles qui se recopient par l'observation. Suite de Q1 (experiments/quantique), voir PROTOCOLE.md.
+**Descr :** Q1+bain Langevin, queue répulsive SALR, relaxation/renormalisation du champ, empreinte dans octet libre, filiation des assemblages.
+
+Source : {'path': 'experiments/quantique2/monde2.cpp', 'sha256': 'c89b6cc567a9773c7bcdf4a740f5b3975591539595f23033c136140dbe963039'}
+
+## choix.m1-m2-e1
+
+**Statut :** historical-context
+**Spec :** Banc M1/M2 isolé. Lire choix/README.md et PLAN-VALIDE.md avant mesure. La VM est liée telle quelle ; ce fichier fournit un autre milieu World. Aucun état H/C n'est placé dans Creature par le banc.
+**Descr :** Consultation coûteuse indice fiable75%, choix différé irrévocable; M2 composition; E1 métabolisme et reproduction sans réensemencement.
+
+Source : {'path': 'experiments/choix.c', 'sha256': '26ed0986c30d1530eee996a9d15f6e0a91a2e313ae43e75cbe78b0fc6936bdd1'}
+
+## raison.ten-environments
+
+**Statut :** historical-context
+**Spec :** Arène du raisonnement : dix milieux d'épisodes, une écologie par milieu. Lire experiments/raison/PROTOCOLE.md avant toute mesure. Même VM que les mondes (src/vm.c, ISA, RNG), liée telle quelle dans un ELF neuf. Aucun objet, checkpoint ou processus d'un monde vivant n'est lu ni écrit. Leçon d'E1 (éteint) : la décision ne peut plus être omise. Au tick de décision, l'action est le premier EMIT de ce tick, sinon A & 1 à la fin du tick. Tout génome décide donc ; un génome aveugle obtient 50 % et, avec métabolisme = récompense / 2, reste à l'équilibre. L'information donne un avantage de reproduction, pas une survie. Bras 0 « info » : le milieu a de l'information exploitable. Bras 1 « témoin » : même milieu, mêmes coûts, information rendue inutile.
+**Descr :** Mémoire, composition, inversion, observation, patience, chaînage, transfert, signal, autrui, relation; bras information et témoins.
+
+Source : {'path': 'experiments/raison.c', 'sha256': 'd0469d3efb6f220e3dfdaf954f72861afde5acfa577ca0db8c2cd3be9e5c99fa'}
+
+## universe.tables
+
+**Statut :** historical-context
+**Spec :** Recherche d'univers v2 (experiments/universe-search/v2) : fitness ROBUSTE + origine à grand N + dérive lente. Réutilise tel quel le moteur de la v1 (universe_search.c : catalogue fermé, VM, soupe, copieur vérifié, cristaux exclus, garde-fou anti-triche) : ce fichier l'inclut et n'y change rien. race : sélection vs témoin aléatoire, MÊME procédure de racing (successive halving) dans les deux bras : étape 0 : chaque univers évalué sur 2 graines à N0 (sélection = GA ; témoin = univers frais) ; étape 1 : top K1 de chaque archive, +4 graines neuves à N0 ; étape 2 : top K2, 4 graines neuves à N=4096 ; finalistes (top K3) revalidés sur V graines JAMAIS vues à N=4096 ; Fisher exact + permutation. Score de classement = taux d'émergence lissé (nem+0.1)/(nev+2), départage par la fitness façonnée v1. origin : univers d'origine (soupe b) et finalistes sauvegardés, à N donné (16384), graines neuves. drift : population établie d'un finaliste, physique qui dérive d'UNE entrée de table / un paramètre toutes les K époques ; témoin = saut brutal vers le MÊME point d'arrivée, et témoin sans dérive.
+**Descr :** Tables aléatoires octet→primitive, coûts et dérive des univers; exécution et réplication sous lois propres.
+
+Source : {'path': 'experiments/universe_search2.c', 'sha256': '083dc7e8a33760dc6f81057c2843775ce8dc6038efccfa42958a0f3ced852a72'}
+
+## universe.keepers
+
+**Statut :** historical-context
+**Spec :** La vie qui protège ses lois — de façon ÉMERGENTE ? (experiments/universe-search/law-keepers) Inclut rebirth.c (donc k8_survivor.c, universe_search2.c, v1) sans en changer une ligne de logique. Ce fichier a sa propre VM lx_exec() = u_exec() + 2 primitives qui rendent la table des lois accessible : READ_LAW : a = loi[phase de l'instruction][b] (lit 1 octet de la table, n'écrit rien) WRITE_LAW : loi[phase][b] = a mod 30 (écrit 1 SEUL octet de la table, 0 de la bande) La table (kper×256 octets) est un ruban partagé par toute la soupe. Pas d'oracle : rien ne dit à la VM quelle loi est « essentielle », rien ne récompense une réparation. Bras (même table de départ, mêmes graines) : v2 : primitives de loi inertes (NOP) — dérive v2 pure (K=8, catalogue de 30 valeurs) A : lois dans le monde ; la soupe dispose d'UN jeton de réécriture par pas de dérive (même débit que la dérive) : la 1re WRITE_LAW exécutée après le pas l'emporte, les suivantes sont sans effet A-jet : idem, mais les écritures sont jetées (READ_LAW marche) A-redir : idem A, mais l'octet écrit atterrit à une position tirée au hasard B : v2 + inertie par l'usage : l'entrée qui dérive est tirée avec un poids 1/(1+f), f = usage récent de l'entrée / usage moyen (moyenne glissante ~64 époques), sans savoir qui l'exécute ni pourquoi B-perm : idem B, mais le vecteur d'usage est permuté au hasard à chaque pas (même distribution de poids) ./experiments/law_keepers selftest ./experiments/law_keepers run --load fin2.bin [--edrift 16384] [--seeds 8] [--fert 1]
+**Descr :** READ_LAW et WRITE_LAW avec jeton limité au débit de dérive, contre témoins écritures jetées/redirigées.
+
+Source : {'path': 'experiments/law_keepers.c', 'sha256': 'be2eee713d7ee2f46e8d3d9377fd8a7fbe6e69b4ff5eb3a7766451312fbd37af'}
+
+## universe.local-laws
+
+**Statut :** historical-context
+**Spec :** Lois LOCALES héritées : la sélection fait-elle émerger des gardiens de lois ? (experiments/universe-search/local-laws) Suite de law_keepers.c (inclus sans son main, garde LK_NO_MAIN ; même VM lx_exec, mêmes primitives READ_LAW / WRITE_LAW, même anti-triche). Différence : chaque programme porte SA table des lois (kper×256 octets, la table entière) et s'exécute avec elle. Règles physiques, sans oracle : exécution : la paire (pa,pb) tourne avec les lois de pa (c'est pa qui démarre en ip=0) ; héritage : si l'exécution a changé au moins L/2 octets de la moitié pb, pb reçoit une copie de la table de pa (critère mécanique : « qui écrit l'autre lui transmet ses lois », aucun test de fidélité) ; dérive : chaque individu voit sa table frappée avec probabilité 0.9/K par époque (K=8), soit le même débit par lignée que la dérive globale de v2 (90 % entrées) ; les paramètres (coûts, pas, mutation) restent globaux (10 % des pas de dérive, tous les K) ; jeton : chaque frappe de dérive donne à l'individu un jeton de réécriture (non cumulable), comme en law_keepers : la vie écrit au plus au débit de la dérive ; WRITE_LAW : écrit 1 octet de la table PROPRE de pa (redir : position aléatoire de la table propre). Bras : A-local, A-local-jet (écritures jetées), A-local-redir, local-sans-W (primitives de loi inertes : dérive + héritage seuls), et en référence A global et v2 (lrun de law_keepers.c, mêmes graines). ./experiments/local_laws selftest ./experiments/local_laws run --load fin2.bin [--edrift 8192] [--seeds 8] [--fert 1]
+**Descr :** Chaque individu porte sa table; réécrire ≥moitié de l’autre transmet sa table de lois, sans oracle de fidélité.
+
+Source : {'path': 'experiments/local_laws.c', 'sha256': '17e1c846e4a09ad619ffba2673e4b91631cd260055b22984cf813a867b9bc3a8'}
+
+## innovant.cellular
+
+**Statut :** historical-context
+**Spec :** Univers à lois locales figées, sans génome et sans ISA. La barre est dans experiments/univers-innovant/README.md, avant les chiffres. src/, include/ et seeds/ ne bougent pas. Ce fichier ne les inclut pas. Huit familles, 32 tirages, 8 graines de bruit. Une loi passe si au moins 4 graines partagent le même motif canonique. L'approche passe à 4 lois.
+**Descr :** Huit familles d’automates locaux octets, tirages et test de motifs persistants, sans ISA ni génome.
+
+Source : {'path': 'experiments/univers_innovant.c', 'sha256': '26e18b35f7b6edc513e49b5995a91359c3de7cc8a2019adec23df95a2a09097f'}
+
+## lab.org-seeds
+
+**Statut :** historical-context
+**Spec :** lignées distinctes viables (clusters Hamming) × diversité (génomes uniques / pop)
+**Descr :** Organiser d'autres seeds; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.max-pop
+
+**Statut :** historical-context
+**Spec :** population moyenne sur le cycle (+10 % du pic)
+**Descr :** Population la plus haute; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.survival
+
+**Statut :** historical-context
+**Spec :** espérance de vie moyenne × fraction du cycle survécue (monde pauvre)
+**Descr :** Longévité; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.energy-eff
+
+**Statut :** historical-context
+**Spec :** énergie mangée / créature-tick
+**Descr :** Efficacité métabolique; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.self-rewrite
+
+**Statut :** historical-context
+**Spec :** STORE utiles (codon réécrit PUIS exécuté) / créature-tick
+**Descr :** Auto-réécriture utile; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.emit-echo
+
+**Statut :** historical-context
+**Spec :** EMIT == stimulus (0..15) ; corrects / créature-tick
+**Descr :** Communiquer : écho d'un stimulus; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.emit-dialog
+
+**Statut :** historical-context
+**Spec :** hello 00→AC, s→s+1, bye 0F→00 ; corrects / créature-tick
+**Descr :** Dialogue : protocole stimulus → réponse; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.predict-walk
+
+**Statut :** historical-context
+**Spec :** précision sur le bin (0..7) du prochain point ; baseline = répéter la dernière valeur
+**Descr :** Prédire une série AR(2) bruitée; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.predict-stock
+
+**Statut :** historical-context
+**Spec :** précision hausse/baisse du pas suivant (A&1) ; hasard = 50 %
+**Descr :** Direction d'un prix (proxy GBM / CSV local); fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.predator-prey
+
+**Statut :** historical-context
+**Spec :** fraction des ticks de coexistence × équilibre min(proies/20, préd/5)
+**Descr :** Proies (espèce 0) et prédateurs (espèce 1, ATTACK); fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.fold
+
+**Statut :** historical-context
+**Spec :** contacts H-H / optimum connu, moyenne sur 6 benchmarks ; baseline = marche auto-évitante aléatoire
+**Descr :** Repliement de protéine (modèle HP 2D); fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.antibiotic
+
+**Statut :** historical-context
+**Spec :** ticks avant échappement (> 60 pathogènes) / ticks, ×1.25 si éradiqué, × hôtes vivants, × (1 − dégâts médicament) ; baseline = sans traitement
+**Descr :** Antibiotique contre pathogène co-évolutif; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.commons
+
+**Statut :** historical-context
+**Spec :** population moyenne (/100) sur la 2e moitié d'un horizon de 5 × ticks × fraction de capacité restante ; vider une case la dégrade pour toujours ; baseline = fourrageur glouton
+**Descr :** Biens communs : ressource à repousse lente; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.pandemic
+
+**Statut :** historical-context
+**Spec :** moyenne sur 4 paires appariées (nombres aléatoires communs) de : morts évitées / max(morts sans actions, 10) × maintien pop − énergie des actions / mangée ; baseline = même pool, même graine, actions sans effet
+**Descr :** Pandémie : contagion SEIR entre agents; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.code-repair
+
+**Statut :** historical-context
+**Spec :** score moyen par patient résolu : 1 si les 256 entrées redonnent la sortie de référence (+0.5 × patch minimal), 0 sinon ; baseline = flips aléatoires sans retour arrière
+**Descr :** Réparer un programme cassé via STORE; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.self-evolve
+
+**Statut :** historical-context
+**Spec :** Σ(1 − écart/4)⁺ des EMIT / créature-tick, moyenne sur les régimes (cible 0..15 qui change toutes les 50 ticks) ; paramètres d'évolution lus dans le génome (octets 2..5) ; baseline = paramètres fixes du moteur
+**Descr :** La seed pilote sa propre évolution; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.diagnose
+
+**Statut :** historical-context
+**Spec :** justesse des EMIT : le médicament est ((marque + 1) XOR 4) mod 8, la marque est le stimulus ; baseline = même pool, stimulus renversé
+**Descr :** Calculer un médicament que le stimulus ne donne pas; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.general
+
+**Statut :** historical-context
+**Spec :** note affichée = justesse des essais 32..63 sur la mémoire 2 et la mémoire 3 (T[indice d'il y a 2 ou 3 essais], tables réservées) ; pool en deux moitiés : niche mémoire (3 places T[p1], 3 places T[p2], 2 places T[p3], autres tables ; note et champion) et curriculum (la suite, jusqu'à 16) ; la réévaluation appariée note les deux ; le pool garde le génome de naissance, pas les STORE de la vie ; known = familles déjà dans la seed ; baseline = mêmes génomes, génome gelé
+**Descr :** Apprendre pendant sa vie, généraliser à des tâches jamais vues; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.dialog-mem
+
+**Statut :** historical-context
+**Spec :** réponse = (s_{t-1} + 1) mod 16 (le message d'avant, + 1), un symbole neuf par tick, historique vidé ; crédit gradué (Hamming 4 bits) / créature-tick ; plafond sans mémoire = 0,2875 de crédit, 1/16 exact ; seed-amorce = seed emit-dialog (s_t + 1, sans mémoire) ; baseline = même pool, faux s_{t-1}
+**Descr :** Dialogue avec mémoire : répondre au message d'avant; fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## lab.dialog-lag2
+
+**Statut :** historical-context
+**Spec :** question q_t ∈ {1,2} tirée au hasard, annoncée un tick d'avance (bit 0x20 du stimulus) ; crédit = c(réponse, s_{t-q}+1) − c(réponse, s_{t-q'}+1), q' = 3 − q, c = crédit gradué Hamming 4 bits, / créature-tick ; créature-tick sans EMIT = −0,1 ; espérance 0 sans mémoire ou avec une mémoire d'un tick constante ; une case (avec ou sans phase) plafonne à 0,5 / émission ; deux cases : optimum 0,7125 ; seed-amorce = seed emit-dialog ; baseline = même pool, faux s_{t-q} ; curriculum (cycle du labo) : q ≡ 1 jusqu'à 1500, P(q=2) 0 → 1/2 jusqu'à 4000, puis uniforme ; échelon : quand q = 2, bonus w × (0,2875 − c(réponse, s_{t-1}+1)), w = 1 sur 1500..4000 puis → 0 en 6000 (espérance nulle pour une réponse qui ignore s_{t-1}) ; eval tenue à l'écart = régime final (sans bonus)
+**Descr :** Dialogue à deux cases mémoire : répondre au message demandé (il y a 1 ou 2 tours); fonction de sélection du banc historique, pas une récompense active du monde ouvert.
+
+Source : {'path': 'src/labs.c', 'sha256': '73bd56b9aefef47337938cd3d6ca16e1f688c7e32f61c105a08b575a6859a3ef'}
+
+## raison.memoire
+
+**Statut :** historical-context
+**Spec :** Indice fiable75% au tick0, décision au tick5; témoin indice aléatoire.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.composition
+
+**Statut :** historical-context
+**Spec :** u puis v0..19; cible parité(u XOR v), décision tick6;80couples réservés aux tests.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.inversion
+
+**Statut :** historical-context
+**Spec :** Indice exact, règle cachée basculant tous16cycles; témoin règle indépendante à chaque épisode.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.observation
+
+**Statut :** historical-context
+**Spec :** Signal gratuit annonce fiabilité de l’indice payant; témoin signal sans rapport.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.patience
+
+**Statut :** historical-context
+**Spec :** Signal annonce récompense différée+18deux épisodes plus tard; prendre immédiatement+10.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.chainage
+
+**Statut :** historical-context
+**Spec :** Déverrouillage tick1 nécessaire à indice tick2 et décision tick5; témoin paiement sans déverrouillage.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.transfert
+
+**Statut :** historical-context
+**Spec :** Entrée x0..255, cible bit4; quartets bas12..15 réservés aux tests.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.signal
+
+**Statut :** historical-context
+**Spec :** Émetteur voit cible; EMIT ticks1–2 transmis au récepteur tick3; témoin canal bruité.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.autrui
+
+**Statut :** historical-context
+**Spec :** Observateur voit action d’un acteur jouant la mémoire au tick3; témoin action aléatoire.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## raison.relation
+
+**Statut :** historical-context
+**Spec :** x puis y, cible égalité x=y; valeurs192..255 réservées aux tests.
+**Descr :** Milieu informationnel historique avec bras témoin; protocole conservé, pas activé dans l’écologie spatiale.
+
+Source : {'path': 'experiments/raison/PROTOCOLE.md', 'sha256': '8d8580a1f37af6f8e3cf590ec447d6b664daa6d1f449c6f3c88e5603f6dc0c65'}
+
+## legacy.isa.00
+
+**Statut :** native-supported
+**Spec :** legacy opcode 0 (NOP). Intron gratuit; la recherche est bornée à la longueur du génome.
+**Descr :** Instruction NOP; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.01
+
+**Statut :** native-supported
+**Spec :** legacy opcode 1 (INC_A). A←A+1 modulo256.
+**Descr :** Instruction INC_A; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.02
+
+**Statut :** native-supported
+**Spec :** legacy opcode 2 (DEC_A). A←A−1 modulo256.
+**Descr :** Instruction DEC_A; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.03
+
+**Statut :** native-supported
+**Spec :** legacy opcode 3 (INC_B). B←B+1 modulo256.
+**Descr :** Instruction INC_B; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.04
+
+**Statut :** native-supported
+**Spec :** legacy opcode 4 (DEC_B). B←B−1 modulo256.
+**Descr :** Instruction DEC_B; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.05
+
+**Statut :** native-supported
+**Spec :** legacy opcode 5 (CLR_A). A←0.
+**Descr :** Instruction CLR_A; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.06
+
+**Statut :** native-supported
+**Spec :** legacy opcode 6 (STORE). Lit imm8; écrit A dans soma[imm8 modulo longueur], ou fenêtre de réparation si active et imm8≥224. Marque le codon comme réécrit.
+**Descr :** Instruction STORE; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.07
+
+**Statut :** native-supported
+**Spec :** legacy opcode 7 (LOAD). Lit imm8; charge soma[imm8 modulo longueur] dans A, ou la fenêtre de réparation si active.
+**Descr :** Instruction LOAD; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.08
+
+**Statut :** native-supported
+**Spec :** legacy opcode 8 (JMP). Lit imm8 puis avance le pointeur de cet offset, modulo longueur.
+**Descr :** Instruction JMP; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.09
+
+**Statut :** native-supported
+**Spec :** legacy opcode 9 (JZ). Lit imm8; avance de cet offset si A=0.
+**Descr :** Instruction JZ; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0a
+
+**Statut :** native-supported
+**Spec :** legacy opcode 10 (SENSE). Charge dans A la nourriture devant soi.
+**Descr :** Instruction SENSE; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0b
+
+**Statut :** native-supported
+**Spec :** legacy opcode 11 (TURN). Orientation←A modulo4.
+**Descr :** Instruction TURN; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0c
+
+**Statut :** native-supported
+**Spec :** legacy opcode 12 (STEP). Tente un pas dans son orientation selon la grille et le coût natif.
+**Descr :** Instruction STEP; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0d
+
+**Statut :** native-supported
+**Spec :** legacy opcode 13 (EAT). Consomme la nourriture locale selon les règles énergétiques natives.
+**Descr :** Instruction EAT; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0e
+
+**Statut :** native-supported
+**Spec :** legacy opcode 14 (SPLIT). Tente une division selon énergie, plafond, place et règles germen/soma natives.
+**Descr :** Instruction SPLIT; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.0f
+
+**Statut :** native-supported
+**Spec :** legacy opcode 15 (YIELD). Termine le budget du tick.
+**Descr :** Instruction YIELD; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.10
+
+**Statut :** native-supported
+**Spec :** legacy opcode 16 (SENSE_NB). A←min(255,nombre de voisins).
+**Descr :** Instruction SENSE_NB; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.11
+
+**Statut :** native-supported
+**Spec :** legacy opcode 17 (SENSE_EN). A←min(255,énergie divisée par8).
+**Descr :** Instruction SENSE_EN; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.12
+
+**Statut :** native-supported
+**Spec :** legacy opcode 18 (SENSE_STIM). A←stimulus extérieur courant sur8bits.
+**Descr :** Instruction SENSE_STIM; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.13
+
+**Statut :** native-supported
+**Spec :** legacy opcode 19 (NEURAL). Lit adresse imm8; neurone4entrées nourriture/voisins/énergie/stimulus, poids int8 dans génome et biais; sortie saturée0..255.
+**Descr :** Instruction NEURAL; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.14
+
+**Statut :** native-supported
+**Spec :** legacy opcode 20 (EMIT). Première émission du tick: publie A; émissions suivantes du même tick ignorées.
+**Descr :** Instruction EMIT; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.15
+
+**Statut :** native-supported
+**Spec :** legacy opcode 21 (MOV_BA). B←A.
+**Descr :** Instruction MOV_BA; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.16
+
+**Statut :** native-supported
+**Spec :** legacy opcode 22 (MOV_AB). A←B.
+**Descr :** Instruction MOV_AB; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.17
+
+**Statut :** native-supported
+**Spec :** legacy opcode 23 (ADD). A←A+B modulo256.
+**Descr :** Instruction ADD; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.18
+
+**Statut :** native-supported
+**Spec :** legacy opcode 24 (SUB). A←A−B modulo256.
+**Descr :** Instruction SUB; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.19
+
+**Statut :** native-supported
+**Spec :** legacy opcode 25 (XOR). A←A XOR B.
+**Descr :** Instruction XOR; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1a
+
+**Statut :** native-supported
+**Spec :** legacy opcode 26 (ATTACK). Tente prédation selon espèce, proximité, énergie et paramètres natifs.
+**Descr :** Instruction ATTACK; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1b
+
+**Statut :** native-supported
+**Spec :** legacy opcode 27 (JNZ). Lit imm8; avance le pointeur de cet offset si A≠0.
+**Descr :** Instruction JNZ; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1c
+
+**Statut :** native-supported
+**Spec :** legacy opcode 28 (LOADI). A←octet immédiat suivant.
+**Descr :** Instruction LOADI; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1d
+
+**Statut :** native-supported
+**Spec :** legacy opcode 29 (SENSE_HIST). Lit imm8; A←valeur de l’historique à cet indice.
+**Descr :** Instruction SENSE_HIST; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1e
+
+**Statut :** native-supported
+**Spec :** legacy opcode 30 (LOOP). Pointeur←0.
+**Descr :** Instruction LOOP; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.isa.1f
+
+**Statut :** native-supported
+**Spec :** legacy opcode 31 (AND). Lit imm8; A←A AND imm8.
+**Descr :** Instruction AND; sémantique et adressage propres au dialecte legacy, sans conversion de génome.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## relief.isa.00
+
+**Statut :** native-supported
+**Spec :** relief opcode 0 (manger). Coût1énergie;1..4nourriture locale→réserve et24énergie/unité, avec plafonds.
+**Descr :** Instruction manger; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.01
+
+**Statut :** native-supported
+**Spec :** relief opcode 1 (avancer). Coût2+corps/16+construction_destination/8; pas vers case libre sans roche ni pente≥180.
+**Descr :** Instruction avancer; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.02
+
+**Statut :** native-supported
+**Spec :** relief opcode 2 (orienter). Coût1; orientation tourne de1+(argument modulo3).
+**Descr :** Instruction orienter; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.03
+
+**Statut :** native-supported
+**Spec :** relief opcode 3 (croître). Coût4énergie;1réserve→1corps, corps<256.
+**Descr :** Instruction croître; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.04
+
+**Statut :** native-supported
+**Spec :** relief opcode 4 (reproduire). Corps≥12,réserve≥8,énergie≥100,voisin libre; coût20 puis partage corps/réserve/énergie et héritage natif.
+**Descr :** Instruction reproduire; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.05
+
+**Statut :** native-supported
+**Spec :** relief opcode 5 (construire). Coût6;1réserve→1construction locale, plafond256; inscrit marque de lignée.
+**Descr :** Instruction construire; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.06
+
+**Statut :** native-supported
+**Spec :** relief opcode 6 (défaire). Coût4;1construction→1réserve, plafond réserve4096.
+**Descr :** Instruction défaire; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.07
+
+**Statut :** native-supported
+**Spec :** relief opcode 7 (déposer). Coût2;1réserve→1cache commune, plafond65536.
+**Descr :** Instruction déposer; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.08
+
+**Statut :** native-supported
+**Spec :** relief opcode 8 (reprendre). Coût2;1cache commune→1réserve, plafond4096.
+**Descr :** Instruction reprendre; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.09
+
+**Statut :** native-supported
+**Spec :** relief opcode 9 (attaquer). Coût8; si force corps+(génome[63]&15)>corps_cible+abri/2, prélève réserve puis corps de la cible, avec plafonds.
+**Descr :** Instruction attaquer; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0a
+
+**Statut :** native-supported
+**Spec :** relief opcode 10 (parasiter). Coût4; si corps≤corps voisin, siphonne au plus8énergie, borné par disponibilité et plafond.
+**Descr :** Instruction parasiter; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0b
+
+**Statut :** native-supported
+**Spec :** relief opcode 11 (donner). Coût2 plus don4énergie et1réserve à voisin; conditions de réserve et plafonds, aucun bonus.
+**Descr :** Instruction donner; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0c
+
+**Statut :** native-supported
+**Spec :** relief opcode 12 (émettre). Coût3; signal local augmente de16+4×argument, plafond4095.
+**Descr :** Instruction émettre; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0d
+
+**Statut :** native-supported
+**Spec :** relief opcode 13 (percevoir). Mémoire[argument&7]←capteur: nourriture×8,énergie/4,réserve×8,nourriture devant×8,occupation devant,humidité/4,signal/8 ou construction×8; saturation255.
+**Descr :** Instruction percevoir; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0e
+
+**Statut :** native-supported
+**Spec :** relief opcode 14 (conditionner). Si mémoire[argument&7]<(64 si argument<8 sinon192), saute un octet; au plus8instructions décodées par tick.
+**Descr :** Instruction conditionner; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## relief.isa.0f
+
+**Statut :** native-supported
+**Spec :** relief opcode 15 (attendre). Aucun acte; entretien normal.
+**Descr :** Instruction attendre; sémantique et adressage propres au dialecte relief, sans conversion de génome.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## transmission.isa.00
+
+**Statut :** native-supported
+**Spec :** transmission opcode 0 (NOP). Attend une instruction, coût énergétique normal.
+**Descr :** Instruction NOP; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.01
+
+**Statut :** native-supported
+**Spec :** transmission opcode 1 (IMM). A←octet immédiat du code.
+**Descr :** Instruction IMM; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.02
+
+**Statut :** native-supported
+**Spec :** transmission opcode 2 (LOAD). A←octet du support sélectionné: RAM, code, artefact partagé ou livre, à l’adresse P.
+**Descr :** Instruction LOAD; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.03
+
+**Statut :** native-supported
+**Spec :** transmission opcode 3 (STORE). RAM[P modulo4096]←A.
+**Descr :** Instruction STORE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.04
+
+**Statut :** native-supported
+**Spec :** transmission opcode 4 (NEXT). P←P+1 modulo65536.
+**Descr :** Instruction NEXT; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.05
+
+**Statut :** native-supported
+**Spec :** transmission opcode 5 (PREV). P←P−1 modulo65536.
+**Descr :** Instruction PREV; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.06
+
+**Statut :** native-supported
+**Spec :** transmission opcode 6 (ZERO). P←0.
+**Descr :** Instruction ZERO; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.07
+
+**Statut :** native-supported
+**Spec :** transmission opcode 7 (JUMP). Lit adresse little-endian16bits et saute modulo512.
+**Descr :** Instruction JUMP; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.08
+
+**Statut :** native-supported
+**Spec :** transmission opcode 8 (JZERO). Lit adresse little-endian16bits et saute modulo512 si A=0.
+**Descr :** Instruction JZERO; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.09
+
+**Statut :** native-supported
+**Spec :** transmission opcode 9 (EMIT). Ajoute A à la sortie si elle contient moins de4096octets.
+**Descr :** Instruction EMIT; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0a
+
+**Statut :** native-supported
+**Spec :** transmission opcode 10 (EAT). Alimentation abstraite +native_eat_gain énergie plafonnée4096; termine le tick.
+**Descr :** Instruction EAT; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0b
+
+**Statut :** native-supported
+**Spec :** transmission opcode 11 (SPLIT). Si énergie≥3000 et place libre: coût80, partage énergie et copie code/RAM; erreurs possibles selon native_mutation_divisor.
+**Descr :** Instruction SPLIT; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0c
+
+**Statut :** native-supported
+**Spec :** transmission opcode 12 (RESTORE). Compare sortie explicite à la cible: même longueur et tous octets identiques. Bonus min(1024+2×longueur,plafond4096) après coût16 et délai512ticks.
+**Descr :** Instruction RESTORE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0d
+
+**Statut :** native-supported
+**Spec :** transmission opcode 13 (MAIL). Poste sortie si limites et cooldown satisfaits; coût32+longueur/32, délai individuel2048 et global512ticks; provenance enregistrée.
+**Descr :** Instruction MAIL; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0e
+
+**Statut :** native-supported
+**Spec :** transmission opcode 14 (RANDOM). A←octet du RNG natif déterministe.
+**Descr :** Instruction RANDOM; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.0f
+
+**Statut :** native-supported
+**Spec :** transmission opcode 15 (XOR). A←A XOR B.
+**Descr :** Instruction XOR; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.10
+
+**Statut :** native-supported
+**Spec :** transmission opcode 16 (ADD). A←A+B modulo256.
+**Descr :** Instruction ADD; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.11
+
+**Statut :** native-supported
+**Spec :** transmission opcode 17 (SWAP). Échange A et B.
+**Descr :** Instruction SWAP; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.12
+
+**Statut :** native-supported
+**Spec :** transmission opcode 18 (SOURCE). Support←A AND3: RAM/code/partagé/bibliothèque.
+**Descr :** Instruction SOURCE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.13
+
+**Statut :** native-supported
+**Spec :** transmission opcode 19 (BOOK). Case livre/artefact←A modulo8.
+**Descr :** Instruction BOOK; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.14
+
+**Statut :** native-supported
+**Spec :** transmission opcode 20 (REQUEST). Demande titre ASCII1..96octets dans sortie; coût64, délai4096ticks; écrit requête du broker, sans réseau arbitraire.
+**Descr :** Instruction REQUEST; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.15
+
+**Statut :** native-supported
+**Spec :** transmission opcode 21 (OUTCLEAR). Vide la sortie sans effacer les mémoires.
+**Descr :** Instruction OUTCLEAR; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.16
+
+**Statut :** native-supported
+**Spec :** transmission opcode 22 (SETLO). P bas←A, conserve octet haut.
+**Descr :** Instruction SETLO; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.17
+
+**Statut :** native-supported
+**Spec :** transmission opcode 23 (SETHI). P haut←A, conserve octet bas.
+**Descr :** Instruction SETHI; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.18
+
+**Statut :** native-supported
+**Spec :** transmission opcode 24 (GETLO). A←octet bas de P.
+**Descr :** Instruction GETLO; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.19
+
+**Statut :** native-supported
+**Spec :** transmission opcode 25 (GETHI). A←octet haut de P.
+**Descr :** Instruction GETHI; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1a
+
+**Statut :** native-supported
+**Spec :** transmission opcode 26 (INC). A←A+1 modulo256.
+**Descr :** Instruction INC; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1b
+
+**Statut :** native-supported
+**Spec :** transmission opcode 27 (DEC). A←A−1 modulo256.
+**Descr :** Instruction DEC; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1c
+
+**Statut :** native-supported
+**Spec :** transmission opcode 28 (SHAREDSTORE). Coût supplémentaire2; artefact partagé[case][P modulo4096]←A et marque propriétaire.
+**Descr :** Instruction SHAREDSTORE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1d
+
+**Statut :** native-supported
+**Spec :** transmission opcode 29 (CODESTORE). Coût supplémentaire2; code[P modulo512]←A.
+**Descr :** Instruction CODESTORE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1e
+
+**Statut :** native-supported
+**Spec :** transmission opcode 30 (SENSE). A←énergie/16 sur8bits.
+**Descr :** Instruction SENSE; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## transmission.isa.1f
+
+**Statut :** native-supported
+**Spec :** transmission opcode 31 (YIELD). Termine le tick.
+**Descr :** Instruction YIELD; sémantique et adressage propres au dialecte transmission, sans conversion de génome.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## legacy.regs.f0
+
+**Statut :** native-supported
+**Spec :** RPUSH imm8 sous cfg.regs; intron sinon.
+**Descr :** Pile de quatre registres de vie; sémantique originale, pas une conversion des génomes.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## legacy.regs.f1
+
+**Statut :** native-supported
+**Spec :** RPEEK imm8 sous cfg.regs; intron sinon.
+**Descr :** Pile de quatre registres de vie; sémantique originale, pas une conversion des génomes.
+
+Source : {'path': 'src/vm.c', 'sha256': '1b99e7511d07c3f9040eb848e950e2c23ad2fba8fbb7f5eee8ebfe7954153818'}
+
+## archive.competition
+
+**Statut :** historical-context
+**Spec :** Compétition entre lignées. Daniel ouvre la porte malgré 7/32 (bande du milieu). Moteur : soup_exec / soup_copier de src/soup.c. src/, include/, seeds/ ne bougent pas. PHRASE (écrite avant le compte). Six réplicateurs dominants des graines qui ont envahi la soupe 32 (0, 2, 13, 17, 24, 29). La graine 10 est hors jeu : un copieur, puis plus rien. On les mélange à parts égales, N = 16384, adressage B, mutation 0,00024, 4096 époques. Chaque copieur vérifié est attribué à la lignée fondatrice la plus proche (Hamming). Portes, écrites avant : monopole : une lignée ≥ 50 % des copieurs, aucune autre ≥ 10 % coexistence : au moins deux lignées ≥ 10 % indécis : le reste ./experiments/competition selftest ./experiments/competition mix ./experiments/competition dump soupe des 3 lignées qui tiennent, pour le terrarium
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/competition.c', 'sha256': '7e04f9aa20d1818d9fa76a4c1cd233bc402738f4dbe24a2de5847d7f601ce9f6'}
+
+## archive.dispers
+
+**Statut :** historical-context
+**Spec :** Ensemble dispersé : fenêtres hors-grille, écarts non constants, plus de graines. Lois fixes. src/, include/ et seeds/ ne bougent pas. ./experiments/dispers selftest ./experiments/dispers run
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/dispers.c', 'sha256': '3e0533d3968e01e6d69db8f0fdc267187944a7531a7965f092c40376047c3380'}
+
+## archive.ensembles
+
+**Statut :** historical-context
+**Spec :** Ensembles : lois fixes, période sans connaître les coupures, génome déduit. src/, include/ et seeds/ ne bougent pas. ./experiments/ensembles selftest ./experiments/ensembles run
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/ensembles.c', 'sha256': '5fff3008f1b0dbf22ad6a1f08fad8b7523cbd6eb3afcc77f2b2c0d97a11665d9'}
+
+## archive.gene_transplant
+
+**Statut :** historical-context
+**Spec :** Gene-calling statistique par matrice de transplantation (lab general). Généralise experiments/general-transfer (« un octet de la lignée 3 débloque la lignée 2 ») : chaque motif candidat (k octets contigus, k = 1..4, pris chez un génome passant) est greffé à la même position dans chaque fond génétique du panel, et l'effet est mesuré par gn_check (m2/m3 sur 40 tâches tenues à l'écart). Mesure seulement : aucun opérateur, aucune course. Depuis la racine : make experiments/gene_transplant ./experiments/gene_transplant panel DIR S0.ck S1.ck ... extrait le panel (lignée = rang de l'argument) ./experiments/gene_transplant matrix DIR [MATRICE.tsv] matrice effet[motif, fond] + verdict sur stdout OADN_JOBS=N fixe le nombre de processus (défaut : nombre de cœurs). Le résultat n'en dépend pas.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/gene_transplant.c', 'sha256': '1651a94e0edd648f4aa34a00adf2f9720cce997d0b32e3e79477b37748a84cee'}
+
+## archive.general_regs
+
+**Statut :** historical-context
+**Spec :** Levier « regs » : chemins à la main depuis la seed, puis tous les mutants à un octet. Mesure, pas opérateur de naissance. Depuis la racine : make experiments/general_regs ./experiments/general_regs chemins à la main (secondes) ./experiments/general_regs --scan + tous les mutants à un octet des deux bases (long : > 20 min)
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/general_regs.c', 'sha256': '06660ca592c0735e776b19a0eed048e794dd44924dc8166374f17236c33dab25'}
+
+## archive.general_transfer
+
+**Statut :** historical-context
+**Spec :** Mesure, pas opérateur de naissance : on s'arrête au premier transfert minimal. Depuis la racine : make experiments/general_transfer ./experiments/general_transfer /tmp/general-transfer.adn ./octet-adn general /tmp/general-transfer.adn ; echo $? Les trois entrées sont des génomes de naissance du pool au cycle 60 de main 382747b, --labs general --seed 0|3|2 --no-reload, 200 ticks/cycle.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/general_transfer.c', 'sha256': '6cfaa8dd1d5f8ad8e04d24d13d679b2738903a0e02d3a74dedc57ea6690d6b7e'}
+
+## archive.heritage-milieu.heritage
+
+**Statut :** historical-context
+**Spec :** Héritage écologique : ne transférer que food[][] entre deux mondes neufs. Protocole et seuils : README.md, pré-enregistrés avant l'appel run. Aucun changement de src/, aucun hook dans la VM.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/heritage-milieu/heritage.c', 'sha256': 'cf3af243fefb9fd78a8a27a3a1ff1fe2f828f64fb220e00a8668de71791e5574'}
+
+## archive.incubation_stepback
+
+**Statut :** historical-context
+**Spec :** Une seule condition : durée de contact des partenaires, sans exécution offerte. Moteur et dérive existants, sans modifier src/, include/ ou les seeds.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/incubation_stepback.c', 'sha256': '83425244311fbf10ec15b0d37e54d0a34beafc765eb8d14362e53831d835f8d9'}
+
+## archive.join_wheel
+
+**Statut :** historical-context
+**Spec :** Joint : réplicateur né du bruit + lois locales héritées + ombre neutre. src/, include/ et seeds/ ne bougent pas. Pas de WRITE_LAW, pas de nouveau taux. ./experiments/join_wheel selftest ./experiments/join_wheel run
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/join_wheel.c', 'sha256': '66fb7cf08a3dd984536d2b34a4d3827c83deb37c376526b5f65019be81b40f5c'}
+
+## archive.k8_survivor
+
+**Statut :** historical-context
+**Spec :** Autopsie du survivant de la dérive K=8 (experiments/universe-search/k8-survivor). Inclut universe_search2.c (donc v1) sans en changer la logique : même soupe, même dérive, même copieur vérifié, même garde-fou anti-triche. trace_run() est une copie instrumentée de drift_run() : elle consomme EXACTEMENT les mêmes tirages aléatoires (les mesures ajoutées utilisent des générateurs à part), donc elle rejoue la trajectoire à l'identique ; `replay` le vérifie en comparant avec drift_run(). ./experiments/k8_survivor replay --load fin2.bin # 4 sources × 8 répliques, K=8, dérive + saut ./experiments/k8_survivor trace --load fin2.bin --src 0 --rep 5 [--mode 0|1] ./experiments/k8_survivor robust --load fin2.bin # (b) tables perturbées au hasard ./experiments/k8_survivor fresh --load fin2.bin # (e) émergence depuis le bruit sous la physique finale ./experiments/k8_survivor knockout --load fin2.bin --src 0 --rep 5 --at E --h H # (e) contrôle causal de lignée ./experiments/k8_survivor selftest
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/k8_survivor.c', 'sha256': 'b33841303307e96fe523712c03199e42b93155d94ae45b8706bdeacf9f678d42'}
+
+## archive.metabolic_order
+
+**Statut :** historical-context
+**Spec :** Paramètre d'ordre métabolique : un vivant capte et STOCKE de l'énergie mieux qu'un marcheur aveugle de même motricité, et le maintient dans le temps. Aveugle au code : on ne lit que des observables (énergie, pas, virages, divisions). 1. Run génome : COPIES copies du génome dans un monde cfg_default sans labo, T ticks. Biomasse B_g(t) = Σ énergie des vivants. On mesure aussi, par créature-tick, la motricité : λ_step (pas/tick), p_turn (changements de direction ×4/3), p_split (divisions / ticks où e ≥ seuil). 2. Run nul, MÊME graine monde (nombres aléatoires communs) : des marcheurs dont le génome est réduit à YIELD ; à chaque tick ils tournent au hasard (p_turn), font λ_step pas, MANGENT toujours (manger à vide est gratuit), se divisent avec p_split si e ≥ seuil. → même motricité, même coût, aucune information sur le monde. Biomasse B_w(t). M = moyenne sur t ∈ (T/2, T] de (B_g − B_w) / (COPIES · E0), moyenne sur R répliques. Tenue S = fraction des ticks de la 2e moitié où B_g > B_w (soutenu, pas un pic). M_glouton : même chose contre un marcheur GLOUTON (mange après chaque pas, vide sa case) : témoin dur. M > 0 : le génome fait mieux que le hasard matché. Génome mort ou inerte : M = 0 (ou < 0). Gene-calling : chaque octet → 0xFF (intron sûr), ΔM. Le cœur n'est pas touché (hook before_vm + scratch ls[] hors labo) : labos historiques identiques.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/metabolic_order.c', 'sha256': '1ef431711958156ff6f3bac9630728dc99e4b2dae7117134e8c1878d000add73'}
+
+## archive.mi_detector
+
+**Statut :** historical-context
+**Spec :** Détecteur de vie par compression : un vivant modélise son monde, donc ses actions portent de l'information sur ce qu'il perçoit — et, s'il a de la mémoire, sur ce qu'il a perçu AVANT. Aveugle au code : on ne lit que la trace observable d'UN individu posé seul dans un monde par défaut sans labo (le fondateur ; à sa mort, le plus vieux vivant de sa lignée prend le relais). Par tick : action A_t = (EMIT & 15 ou « rien ») × (a bougé, a mangé, a tourné, s'est divisé) — 272 symboles percept S_t = stimulus du monde (0..15, processus de Markov : 1 chance sur 4 de changer par tick) F_t = nourriture devant lui au début de son tour (0 / 1..7 / ≥ 8) P1,P2 = les deux dernières valeurs de stimulus DIFFÉRENTES de S_t (le passé) Codeur séquentiel adaptatif (mélange de Dirichlet hiérarchique, β = 0.5, contextes hachés), longueurs de code en bits — aucun sur-apprentissage possible, le coût d'apprentissage est payé : L_B = L(A | A_{t-1}, A_{t-2}) (le comportement prédit par lui-même) L_R = L(A | …, S_t, F_t) (+ le présent du monde) L_F = L(A | …, S_t, F_t, P1, P2) (+ le passé du monde) I_react = (L_B − L_R)/T, I_mem = (L_R − L_F)/T (bits/tick, T = horizon : mourir tôt coûte) Témoin nul : la même trace codée avec les percepts d'une AUTRE réplique (monde indépendant). Score MI = (I_react + I_mem) − même quantité sous le témoin nul, moyenne sur R répliques. Persistance : le même score (débiaisé) sur le dernier quart de l'horizon seul (q4). FUITE (correctif) : F_t n'est pas exogène — la nourriture devant dépend des pas et des repas passés de l'agent (boucle fermée). I(A;F) peut donc refléter l'au
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/mi_detector.c', 'sha256': '25b8a08a3f054ac25ec8b2e74574054a4cdd89f44de57b5e95d298c5a303bde5'}
+
+## archive.monde_v0
+
+**Statut :** historical-context
+**Spec :** Monde v0 : réplicateur de soupe, lois locales à dérive lente, îles, nourriture passive, greffe d'une loi. src/, include/ et seeds/ ne bougent pas. Pas de WRITE_LAW, pas de SPLIT. ./experiments/monde_v0 selftest ./experiments/monde_v0 run
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/monde_v0.c', 'sha256': '74c404bde4065d41ae93dee0ee9b9767b5eedc8e088b82a484fa22b87c9850ab'}
+
+## archive.motif_artefact
+
+**Statut :** historical-context
+**Spec :** Artefact du motif soupe, posé seul. Le 48/15 de seul-duree est-il l'écho d'une période de 16, ou une organisation ? src/ ne bouge pas. La barre est dans experiments/motif-artefact/README.md, avant les chiffres. Levier période : un STORE dont la valeur est déjà l'octet 16 cases en amont n'écrit pas. Levier wrap : LOAD/STORE n'agissent que si B+k est déjà dans 0..63. Les sauts restent modulo. Levier tours : LOOP s'arrête (il ne remet pas ip à 0), budget 8192 ; puis LOOP intact et budget 48. Carte : sur la sonde normale, les cases réparées sont dans 16..63, les mortelles dans 0..15. Un levier est nul si le restaurateur fait main tombe. Le copieur, le cristal et le bruit de graine 1 ne passent pas la sonde normale.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/motif_artefact.c', 'sha256': 'dd928580d040bcaa51d0781ec6d812eccba07aec9e1e7646efc09a6b647bf65d'}
+
+## archive.pari-phenotypique.pari
+
+**Statut :** historical-context
+**Spec :** Pari phénotypique, mission 0996a2cd. Modèle indépendant, libc + libm.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/pari-phenotypique/pari.c', 'sha256': '813f3cfe25b0af5a3d1064ce2f9852005e596d7ac4ce52d8f010c76094745600'}
+
+## archive.perception_sequence
+
+**Statut :** historical-context
+**Spec :** Sonde causale par relecture d'une sequence complete. Voir pre-enregistrement.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/perception_sequence.c', 'sha256': 'a91623a6ef17f3f8bec2c7d27b45b5df301c0135bd7f350d06d2dc1d95c71c6e'}
+
+## archive.rebirth
+
+**Statut :** historical-context
+**Spec :** La vie qui renaît après la mort est-elle plus persistante ? (experiments/universe-search/rebirth) Inclut k8_survivor.c (donc universe_search2.c et v1) sans en changer la logique : même soupe, même dérive, même copieur vérifié, même garde-fou anti-triche (aucune primitive nouvelle ; u_exec inchangé). life_run() est une copie de drift_run() qui consomme EXACTEMENT les mêmes tirages tant que ses options valent celles de drift_run (selftest), et ajoute : continuité STRICTE de lignée (0 copieur vérifié dans la population ENTIÈRE à un point de contrôle = mort), cycles mort/renaissance, effacement de la soupe à la mort (générateur à part), taux de mutation imposé, bifurcation de la graine de dérive à une époque donnée. La physique d'une dérive ne dépend que de son générateur de dérive (indépendant de la soupe) : phys_at() la reconstruit sans simuler la soupe (selftest : == drift_run). ./experiments/rebirth pool --load fin2.bin --save pool.bin # émergences depuis le bruit (bases, fins, milieux de dérive) ./experiments/rebirth persist --load fin2.bin --pool pool.bin # Q1 né-de-nouveau vs premier-né ./experiments/rebirth cycles --load fin2.bin # Q2 cycles mort/renaissance, avec/sans effacement ./experiments/rebirth features --pool pool.bin # Q3 fertile vs stérile : prédicteur simple ./experiments/rebirth selftest
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/rebirth.c', 'sha256': 'b5afdb9e89cb9c6bbccee07622f02579c1b06229124843322523d13571f9901f'}
+
+## archive.rencontres-ligne.diagnostic
+
+**Statut :** historical-context
+**Spec :** Diagnostics bornés, sans run vivant, /proc ni fichier d'état. CMAX est le plafond réel, pas un petit plafond de fixture.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/rencontres-ligne/diagnostic.c', 'sha256': 'b6dd0cd46161e296d5db79006c30c1a5bd6264e8144514db9fec8977f096a0a6'}
+
+## archive.rencontres-ligne.garde
+
+**Statut :** historical-context
+**Spec :** Garde avant/après : lecture de /proc uniquement, jamais de signal ni ELF écrit. cc -std=c11 -O2 -Wall -Wextra -Werror garde.c -o /CHEMIN/NEUF/garde garde [--proc DIR] snapshot FILE | check FILE --proc sert aux fixtures ; seule la racine /proc décrit le namespace courant. Une absence dans ce namespace n'est pas une vérification de l'hôte distant. Snapshot exclusif (FILE doit être absent), seulement après 14 mondes valides. Format : OCTET_GARDE_V1 14, puis 14 lignes séparées par tabulations : nom pid starttime ppid dev inode taille mtime_sec mtime_nsec ctime_sec ctime_nsec dir_hex. check exige aussi l'absence de doublons et PPID=1.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/rencontres-ligne/garde.c', 'sha256': '044c304a238e7e673d7e043b4f7929be52841b38fe16143ce1ae1254ab3ad43b'}
+
+## archive.rencontres-ligne.test_garde
+
+**Statut :** historical-context
+**Spec :** Tests reproductibles de garde : aucune lecture du vrai /proc. Compiler vers un chemin neuf, puis : test_garde /chemin/neuf/garde Tous les fichiers et liens de fixture restent dans un mkdtemp privé. Nettoyage sur succès ; répertoire conservé sur échec pour diagnostic.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/rencontres-ligne/test_garde.c', 'sha256': '4f1ee20990cc3910d0d907f00c61756bdc0019d7539032fe28d8362c696ce154'}
+
+## archive.rencontres
+
+**Statut :** historical-context
+**Spec :** ELF neuf : trois physiques désactivables, aucun changement du cœur src/. Les extensions sont sauvegardées dans le même tmp+rename que le terrarium. Ne jamais compiler ce fichier vers le chemin d'un ELF déjà en marche.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/rencontres.c', 'sha256': '1857cd69b8410f2d3af538c6a969161fdcfcfc9d8ae04d7e1f10f7d4affb125e'}
+
+## archive.selection_episodes
+
+**Statut :** historical-context
+**Spec :** Ordre 0996a2cd : sélection lexicase hors runner, protocole préenregistré.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/selection_episodes.c', 'sha256': 'cc9d7beae6eed25a7d96afc5e5041404f1eb39acf4118750338d59f403e0e2ef'}
+
+## archive.seul
+
+**Statut :** historical-context
+**Spec :** Seul : une bande de 64 octets, sans partenaire, monde éteint. Question : après une atteinte sur un de ses octets, la même organisation revient-elle ? Le copieur n'est pas le score. src/ n'est pas modifié. Barre, déclarée avant les chiffres (macros ci-dessous) : - point fixe : une exécution de la bande réglée la laisse identique ; - active : cette exécution fait au moins un STORE (un cristal que rien n'écrit échoue) ; - au moins 3 valeurs d'octet distinctes ; - au moins REPAIR_MIN cases réparées (3 substitutions sur 4 ramènent la bande entière) ; - au moins LETHAL_MIN case létale (0 substitution sur 4 ne ramène rien : une atteinte peut tuer) ; - la même bande reste point fixe, active, et franchit les deux comptes quand les capteurs lisent 7, puis quand ils lisent le numéro du pas (indépendante du monde). Tirage : DRAW_N bandes uniformes. Oui si DRAW_YES d'entre elles passent. Marche : WALK_N bandes, WALK_EPOCHS époques, mutation de fond MUT puis une exécution. Oui si WALK_YES bandes finales passent. Un seul des deux seuils suffit pour un oui. En dessous, le verdict est non.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/seul.c', 'sha256': 'd5d6064dfade7cf7e692bb822e08740dcc6744547e7c1459cbc4c49a6567494d'}
+
+## archive.sonde_phase
+
+**Statut :** historical-context
+**Spec :** Sonde de phase : un détecteur de réparation, contrôlé avant toute mesure de vie. Moteur copié de experiments/seul.c (bande 64, adressage B, exec64, budget 8192, capteurs nuls). src/, include/, seeds/ et experiments/seul.c ne bougent pas. DÉTECTEUR v2 (figé avant le nouveau compte). La v1 lésait les 16 cases 16..31 d'un coup et détruisait la source de la copie : le motif soupe ne tenait qu'à 1 phase sur 4. Ici on lèse une seule case, la cible du prochain STORE de l'intact. Sans STORE à venir, pas de blessure. Réparation si : (0) la case lésée diffère ; (1) la période de 16 qui la contient est revenue, chez les deux jumeaux, à sa valeur d'avant la lésion ; (2) les deux y ont fait un STORE après la lésion, dernière valeur égale à celle d'avant. Pas d'étiquette. wrap_cut (hors score) ignore LOAD/STORE quand B+k sort de 0..63 : c'est le motif-artefact. ./experiments/sonde_phase selftest contrôles à phases fixes, code non nul si ça rate ./experiments/sonde_phase run écrit experiments/sonde-phase/results.txt ./experiments/sonde_phase barre 32 phases neuves, seuil 28, détecteur inchangé ./experiments/sonde_phase fuzz substitutions d'un octet, formes qui restent et repassent 28/32
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/sonde_phase.c', 'sha256': 'af6f22ebc1e0d7eb4bccad560930d4b7b2118f0dc2ab9ad34159614a435078e3'}
+
+## archive.soupe_spatiale
+
+**Statut :** historical-context
+**Spec :** Soupe spatiale : chaque programme ne rencontre que ses quatre voisins sur un tore. Physique figée (univers d'origine, adressage B). Le bras mélangé est la fonction sim du cadre, inchangée. Le bras grille est la même boucle, seul l'appariement change (pavage en dominos). src/, include/ et seeds/ ne bougent pas. ./experiments/soupe_spatiale selftest ./experiments/soupe_spatiale run [--threads 32]
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/soupe_spatiale.c', 'sha256': '742a2cce21d698607196219846d209047c32437307210d35ad9c4ceecf43f7f0'}
+
+## archive.symbiose-paquets.symbiose
+
+**Statut :** historical-context
+**Spec :** Ordre 0996a2cd : sélection d'un métabolisme à deux catalyseurs. VM historique et mondes strictement locaux ; aucun format de checkpoint.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/symbiose-paquets/symbiose.c', 'sha256': '3662f58a5452c5a0601000129e729c4885667d3cd453ed596639a517e4aeb5eb'}
+
+## archive.symbiose_metabolique
+
+**Statut :** historical-context
+**Spec :** Symbiose métabolique, protocole fixé dans symbiose-metabolique/README.md. La VM native reste intacte. Cette éprouvette remplace seulement les effets du milieu de deux actions : EAT n'a pas de ressource, EMIT demande une conversion chimique unitaire. Aucun nouveau codon ni nouvelle division.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/symbiose_metabolique.c', 'sha256': '6dc0746239a49c6c5a2b81d39d6f6a301feb85607d4d2a7a144375c1c9067571'}
+
+## archive.transmission-20261026.reward-control
+
+**Statut :** historical-context
+**Spec :** Isolated in-memory controls. Never loads or modifies a living checkpoint.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/transmission-20261026/reward-control.c', 'sha256': '68f3500941c133efbd6bc4208f48325cb95193a2e095dd648c5bcb9aeb84252f'}
+
+## archive.transplant
+
+**Statut :** historical-context
+**Spec :** Rencontres entre mondes : jardin commun et téléportation. Lire experiments/transplant/PROTOCOLE.md. Les mondes vivants ne sont jamais ouverts en écriture : leurs state.ck sont lus en lecture seule (fopen "rb"), toute expérience écrit dans un répertoire neuf. Aucun processus vivant n'est touché. Origine d'une lignée : table par île, indexée par l'identifiant de créature. Un fondateur reçoit son origine (1 = A, 2 = B) ; un né hérite de celle de son parent (champ parent = id du parent, posé par world_split et copy_attempt). 3 = inconnue (ne devrait pas arriver : migration coupée dans le jardin).
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/transplant.c', 'sha256': 'e297843511cbe4b3764f4085e775ac1be27948fff512eb905e5790f3ce1ec9fe'}
+
+## archive.tronc-ligne.exemple
+
+**Statut :** historical-context
+**Spec :** Exemple inerte : il s'annonce une fois. Le déposer dans vie-tronc/lois/ le branche au relevé suivant. Tant qu'il n'y est pas, il ne tourne pas.
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/tronc-ligne/exemple.c', 'sha256': '0c1cdfcd3abc366b432b40e7d2c1d0d331fb5705a18100378fb87aec92ac66af'}
+
+## archive.universe_search
+
+**Statut :** historical-context
+**Spec :** Recherche d'univers (experiments/universe-search) : on fait évoluer la PHYSIQUE, pas la vie. Un « univers » est un génome tiré d'une graine : - une table chimie[pos % kper][octet] -> primitive ÉLÉMENTAIRE (catalogue fermé ci-dessous), kper ∈ {1,2,4} : le sens d'un octet peut dépendre de sa position dans le programme ; - des lois du monde : longueur L des programmes (bande = 2L), mode d'adressage de LOAD/STORE k (abs : k ; b : B+k ; ip : position de l'instruction + k), coût en pas d'une lecture / écriture, budget de pas par interaction, taux de mutation de fond. Dans chaque univers on lance une soupe sans SPLIT, protocole de src/soup.c généralisé à L : N programmes appariés au hasard, concaténés, exécutés depuis 0, recoupés. Une naissance = une moitié réécrite (≥ L/8 octets écrits ET changés) en copie fidèle (≥ L − L/8) de l'autre — détectée après coup. Un réplicateur vérifié = copie fidèle sur 3 bruits sur 4, et sa copie aussi (comme soup_copier). GARDE-FOU ANTI-TRICHE : le catalogue ne contient que des opérations sur UN octet ou un registre. Aucune primitive de copie de bloc, duplication ou SPLIT ; une instruction écrit au plus un octet de la bande (vérifié dynamiquement dans le selftest, sur des univers aléatoires, mutés et croisés). Le moteur des labos (vm.c, soup.c) n'est pas touché ; ce fichier a sa propre VM. ./experiments/universe_search selftest ./experiments/universe_search run [--seed S] [--pop 32] [--gens 12] [--N 1024] [--epochs 512] [--fixL 0|16|32|64] [--threads 8] [--migrate 1]
+**Descr :** Famille historique conservée avec sa source exacte; dispositif original distinct, non invoqué automatiquement.
+
+Source : {'path': 'experiments/universe_search.c', 'sha256': '4417b93390851cc186f3255b327b746853f81bdf441cf1a874937d568c0d863a'}
+
+## controller.heterogeneous-habitats
+
+**Statut :** runtime-supported
+**Spec :** Trois compartiments legacy/Relief/Transmission. Chaque créature garde son enregistrement natif; aucune traduction des génomes et aucune reproduction entre ISA.
+**Descr :** La chimie et un pont sensoriel relient ces habitats; ce monde est un système couplé, pas une grille native unique.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## controller.sensory-bridge
+
+**Statut :** runtime-supported
+**Spec :** Les émissions natives alimentent une chimie commune; son octet dominant devient stimulus historique et signal Relief; chaînes exactes dans artefact partagé7 de Transmission à la frontière de lot.
+**Descr :** Pont extérieur conçu: il peut écraser le signal Relief et l’artefact7 au début de lot. Lire ce pont ne prouve pas comprendre les autres ISA.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## controller.live-updates
+
+**Statut :** runtime-supported
+**Spec :** Patches JSON validés, empreinte SHA256 et reçu; paramètres numériques natifs et règles déclaratives left/right/product/rate/spec/descr appliqués à la frontière de lot.
+**Descr :** Les instructions injectables sont des règles de réaction de la chimie. Elles n’ajoutent pas automatiquement un nouvel opcode C aux ISA natives.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## controller.selection-injection
+
+**Statut :** runtime-supported
+**Spec :** Initialisation exige420 enregistrements avec SHA256 vérifié; injection native permet ensuite d’ajouter des enregistrements compatibles dans une place libre.
+**Descr :** Identité/provenance conservées dans manifeste; identifiants, parent de fondation et position peuvent être réassignés par adaptateur. Aucun ancien monde n’est repris.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## controller.persistence
+
+**Statut :** runtime-supported
+**Spec :** Verrou écrivain, vérification SHA256 ELF, fichiers atomiques fsync+rename. Avant lot: sauvegarde des3checkpoints, chimie, statut et stimuli puis marque READY. Reprise restaure ces fichiers si READY subsiste; fin de lot retire durablement READY.
+**Descr :** Retour arrière coordonné des états principaux; effets externes du broker/courrier et journaux doivent être réconciliés séparément. Extinction totale termine la boucle sans réensemencement.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## native.parameters.relief
+
+**Statut :** native-supported
+**Spec :** Valeurs tirées dans des bornes validées par adaptateur; params.tsv appliqué au tick de frontière.
+**Descr :** Paramètres numériques mutables du dialecte; tout changement est enregistré sans traduire les génomes. Les drapeaux de familles héritées restent activés à la genèse; leurs variables numériques sont tirées.
+
+Source : {'path': 'experiments/relief-20261025/relief.c', 'sha256': '10ac2a592745b2a83bd657f01961a01a3ff8ee7b8709ce0e4310f74dd3ac080c'}
+
+## native.parameters.legacy
+
+**Statut :** native-supported
+**Spec :** Valeurs tirées dans des bornes validées par adaptateur; params.tsv appliqué au tick de frontière.
+**Descr :** Paramètres numériques mutables du dialecte; tout changement est enregistré sans traduire les génomes. Les drapeaux de familles héritées restent activés à la genèse; leurs variables numériques sont tirées.
+
+Source : {'path': 'src/world.c', 'sha256': '52099c1c3d93ec0ccdf62329974d9ad2dc7d9f15faa3052ccdbec24514ca8a74'}
+
+## native.parameters.transmission
+
+**Statut :** native-supported
+**Spec :** Valeurs tirées dans des bornes validées par adaptateur; params.tsv appliqué au tick de frontière.
+**Descr :** Paramètres numériques mutables du dialecte; tout changement est enregistré sans traduire les génomes. Les drapeaux de familles héritées restent activés à la genèse; leurs variables numériques sont tirées.
+
+Source : {'path': 'experiments/transmission-20261026/transmission.c', 'sha256': 'd761cb0c5c7b5ece8921e8e4b2898e7cf08f74be20c2745b55681b2acd248ef2'}
+
+## chemistry.bytes
+
+**Statut :** runtime-supported
+**Spec :** Les256 valeurs ont masse, charge, valence, affinité, catalyse, rétention et dureté; table déterministe par graine.
+**Descr :** Ces propriétés sont une physique conçue, distincte des significations natives des opcodes; aucune valeur est dépourvue de propriétés.
+
+Source : {'path': 'experiments/generateur-20261027/laws.py', 'sha256': 'a2beec536f8525570dccca9bc8e4f9678d9c158104326bc363e52b52a678a88f'}
+
+## chemistry.composition
+
+**Statut :** runtime-supported
+**Spec :** Par lot,256//reaction_period collisions tirées. Charge: abs(charge[a]+charge[b])≤bond_threshold; valences positives. Probabilité de liaison=bond_probability×(0,5+(affinity[a] XOR affinity[b])/510). Deux atomes deviennent chaîne ordonnée conservant leurs valeurs et leurs masses; doublons de paires refusés.
+**Descr :** Catalyse=min(catalysis), force=min(valence)+min(hardness), rétention=min(retention). La croissance ajoute un atome libre avec probabilité0,02, jusqu’à max_chain; propriétés initiales de la paire restent fixes. Aucune émission n’est exécutée comme programme hôte.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## chemistry.reaction-rules
+
+**Statut :** runtime-supported
+**Spec :** Règle déclarative left+right→product avec rate; au plus min(1+min(catalyst_gain,nombre_catalyseurs),instruction_budget) essais par règle et lot. Différence de masse au réservoir; produit plus lourd exige réservoir suffisant.
+**Descr :** Énergie chimique extérieure: ajoute instruction_budget par lot, plafond4096. Réaction coûte reaction_cost et exige énergie disponible. Les artefacts à catalyse>0 augmentent les essais; un artefact tiré reçoit compteur d’usages. Fonction conçue; pas de savoir ni technologie démontrés.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## chemistry.decay
+
+**Statut :** runtime-supported
+**Spec :** Probabilité de décomposition par lot=1/(decay_period×max(1,retention+strength/4)); tous les octets de la chaîne retournent libres.
+**Descr :** Masse totale vérifiée à chaque lot: atomes libres+chaînes+réservoir =8×somme des256masses + masse acceptée depuis émissions natives. Entrées externes mesurées, aucune conservation commune aux trois physiques natives.
+
+Source : {'path': 'experiments/generateur-20261027/generator.py', 'sha256': '8f84dbcef312f9074439709ae8c0578db9387011bc7dc0b01ae5a3a56a2366a9'}
+
+## primordial-binding
+
+**Statut :** active-chemistry
+**Spec :** Deux atomes libres se transforment en un produit typé, avec rejet du résidu au réservoir.
+**Descr :** Réaction élémentaire conçue, catalysée par les assemblages fonctionnels.
+
+## Propriétés des 256 octets
+
+Les opérations ISA restent celles du moteur natif. Ces propriétés pilotent la chimie commune.
+
+```json
+[
+  {
+    "affinity": 232,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 10,
+    "mass": 14,
+    "retention": 32,
+    "valence": 3,
+    "value": 0
+  },
+  {
+    "affinity": 207,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 15,
+    "mass": 3,
+    "retention": 3,
+    "valence": 3,
+    "value": 1
+  },
+  {
+    "affinity": 42,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 1,
+    "mass": 14,
+    "retention": 31,
+    "valence": 3,
+    "value": 2
+  },
+  {
+    "affinity": 205,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 3,
+    "mass": 8,
+    "retention": 4,
+    "valence": 1,
+    "value": 3
+  },
+  {
+    "affinity": 76,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 16,
+    "mass": 6,
+    "retention": 25,
+    "valence": 1,
+    "value": 4
+  },
+  {
+    "affinity": 169,
+    "catalysis": 2,
+    "charge": -4,
+    "hardness": 1,
+    "mass": 2,
+    "retention": 15,
+    "valence": 3,
+    "value": 5
+  },
+  {
+    "affinity": 127,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 8,
+    "mass": 4,
+    "retention": 18,
+    "valence": 2,
+    "value": 6
+  },
+  {
+    "affinity": 37,
+    "catalysis": 0,
+    "charge": 0,
+    "hardness": 6,
+    "mass": 16,
+    "retention": 16,
+    "valence": 1,
+    "value": 7
+  },
+  {
+    "affinity": 178,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 16,
+    "mass": 9,
+    "retention": 7,
+    "valence": 3,
+    "value": 8
+  },
+  {
+    "affinity": 237,
+    "catalysis": 4,
+    "charge": 3,
+    "hardness": 16,
+    "mass": 13,
+    "retention": 3,
+    "valence": 3,
+    "value": 9
+  },
+  {
+    "affinity": 30,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 15,
+    "mass": 15,
+    "retention": 17,
+    "valence": 3,
+    "value": 10
+  },
+  {
+    "affinity": 153,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 7,
+    "mass": 8,
+    "retention": 15,
+    "valence": 4,
+    "value": 11
+  },
+  {
+    "affinity": 166,
+    "catalysis": 2,
+    "charge": -4,
+    "hardness": 7,
+    "mass": 8,
+    "retention": 15,
+    "valence": 1,
+    "value": 12
+  },
+  {
+    "affinity": 60,
+    "catalysis": 2,
+    "charge": -2,
+    "hardness": 14,
+    "mass": 8,
+    "retention": 30,
+    "valence": 4,
+    "value": 13
+  },
+  {
+    "affinity": 81,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 15,
+    "mass": 3,
+    "retention": 6,
+    "valence": 1,
+    "value": 14
+  },
+  {
+    "affinity": 129,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 10,
+    "mass": 16,
+    "retention": 29,
+    "valence": 3,
+    "value": 15
+  },
+  {
+    "affinity": 14,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 7,
+    "mass": 7,
+    "retention": 5,
+    "valence": 2,
+    "value": 16
+  },
+  {
+    "affinity": 61,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 4,
+    "mass": 3,
+    "retention": 27,
+    "valence": 1,
+    "value": 17
+  },
+  {
+    "affinity": 88,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 1,
+    "mass": 15,
+    "retention": 21,
+    "valence": 2,
+    "value": 18
+  },
+  {
+    "affinity": 109,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 4,
+    "mass": 5,
+    "retention": 19,
+    "valence": 1,
+    "value": 19
+  },
+  {
+    "affinity": 15,
+    "catalysis": 2,
+    "charge": 2,
+    "hardness": 7,
+    "mass": 10,
+    "retention": 9,
+    "valence": 3,
+    "value": 20
+  },
+  {
+    "affinity": 22,
+    "catalysis": 0,
+    "charge": -3,
+    "hardness": 9,
+    "mass": 4,
+    "retention": 21,
+    "valence": 1,
+    "value": 21
+  },
+  {
+    "affinity": 24,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 6,
+    "mass": 2,
+    "retention": 24,
+    "valence": 4,
+    "value": 22
+  },
+  {
+    "affinity": 86,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 1,
+    "mass": 11,
+    "retention": 5,
+    "valence": 1,
+    "value": 23
+  },
+  {
+    "affinity": 203,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 1,
+    "mass": 9,
+    "retention": 28,
+    "valence": 3,
+    "value": 24
+  },
+  {
+    "affinity": 233,
+    "catalysis": 4,
+    "charge": 3,
+    "hardness": 9,
+    "mass": 4,
+    "retention": 27,
+    "valence": 3,
+    "value": 25
+  },
+  {
+    "affinity": 157,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 10,
+    "mass": 14,
+    "retention": 21,
+    "valence": 2,
+    "value": 26
+  },
+  {
+    "affinity": 134,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 15,
+    "mass": 3,
+    "retention": 13,
+    "valence": 1,
+    "value": 27
+  },
+  {
+    "affinity": 42,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 12,
+    "mass": 11,
+    "retention": 3,
+    "valence": 4,
+    "value": 28
+  },
+  {
+    "affinity": 192,
+    "catalysis": 0,
+    "charge": -4,
+    "hardness": 4,
+    "mass": 7,
+    "retention": 6,
+    "valence": 3,
+    "value": 29
+  },
+  {
+    "affinity": 232,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 15,
+    "mass": 14,
+    "retention": 15,
+    "valence": 1,
+    "value": 30
+  },
+  {
+    "affinity": 21,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 13,
+    "mass": 6,
+    "retention": 21,
+    "valence": 4,
+    "value": 31
+  },
+  {
+    "affinity": 75,
+    "catalysis": 0,
+    "charge": -4,
+    "hardness": 7,
+    "mass": 8,
+    "retention": 18,
+    "valence": 2,
+    "value": 32
+  },
+  {
+    "affinity": 166,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 10,
+    "mass": 11,
+    "retention": 28,
+    "valence": 2,
+    "value": 33
+  },
+  {
+    "affinity": 142,
+    "catalysis": 3,
+    "charge": -2,
+    "hardness": 14,
+    "mass": 9,
+    "retention": 30,
+    "valence": 1,
+    "value": 34
+  },
+  {
+    "affinity": 170,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 13,
+    "mass": 2,
+    "retention": 19,
+    "valence": 2,
+    "value": 35
+  },
+  {
+    "affinity": 179,
+    "catalysis": 0,
+    "charge": -4,
+    "hardness": 3,
+    "mass": 3,
+    "retention": 14,
+    "valence": 2,
+    "value": 36
+  },
+  {
+    "affinity": 183,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 16,
+    "retention": 16,
+    "valence": 3,
+    "value": 37
+  },
+  {
+    "affinity": 161,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 15,
+    "mass": 7,
+    "retention": 1,
+    "valence": 3,
+    "value": 38
+  },
+  {
+    "affinity": 167,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 10,
+    "mass": 9,
+    "retention": 3,
+    "valence": 3,
+    "value": 39
+  },
+  {
+    "affinity": 242,
+    "catalysis": 1,
+    "charge": 0,
+    "hardness": 12,
+    "mass": 15,
+    "retention": 18,
+    "valence": 4,
+    "value": 40
+  },
+  {
+    "affinity": 216,
+    "catalysis": 2,
+    "charge": -4,
+    "hardness": 15,
+    "mass": 1,
+    "retention": 8,
+    "valence": 3,
+    "value": 41
+  },
+  {
+    "affinity": 37,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 7,
+    "mass": 10,
+    "retention": 28,
+    "valence": 1,
+    "value": 42
+  },
+  {
+    "affinity": 178,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 14,
+    "mass": 4,
+    "retention": 23,
+    "valence": 3,
+    "value": 43
+  },
+  {
+    "affinity": 138,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 1,
+    "mass": 10,
+    "retention": 9,
+    "valence": 1,
+    "value": 44
+  },
+  {
+    "affinity": 73,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 15,
+    "mass": 5,
+    "retention": 5,
+    "valence": 3,
+    "value": 45
+  },
+  {
+    "affinity": 38,
+    "catalysis": 0,
+    "charge": 2,
+    "hardness": 7,
+    "mass": 10,
+    "retention": 7,
+    "valence": 2,
+    "value": 46
+  },
+  {
+    "affinity": 121,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 13,
+    "mass": 15,
+    "retention": 18,
+    "valence": 4,
+    "value": 47
+  },
+  {
+    "affinity": 52,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 1,
+    "mass": 8,
+    "retention": 3,
+    "valence": 1,
+    "value": 48
+  },
+  {
+    "affinity": 11,
+    "catalysis": 3,
+    "charge": 2,
+    "hardness": 16,
+    "mass": 8,
+    "retention": 32,
+    "valence": 3,
+    "value": 49
+  },
+  {
+    "affinity": 119,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 10,
+    "mass": 13,
+    "retention": 8,
+    "valence": 2,
+    "value": 50
+  },
+  {
+    "affinity": 196,
+    "catalysis": 3,
+    "charge": 1,
+    "hardness": 9,
+    "mass": 8,
+    "retention": 14,
+    "valence": 4,
+    "value": 51
+  },
+  {
+    "affinity": 72,
+    "catalysis": 2,
+    "charge": 0,
+    "hardness": 13,
+    "mass": 5,
+    "retention": 23,
+    "valence": 3,
+    "value": 52
+  },
+  {
+    "affinity": 178,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 7,
+    "mass": 13,
+    "retention": 16,
+    "valence": 2,
+    "value": 53
+  },
+  {
+    "affinity": 55,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 13,
+    "retention": 11,
+    "valence": 4,
+    "value": 54
+  },
+  {
+    "affinity": 234,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 14,
+    "mass": 7,
+    "retention": 2,
+    "valence": 1,
+    "value": 55
+  },
+  {
+    "affinity": 150,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 8,
+    "mass": 6,
+    "retention": 28,
+    "valence": 1,
+    "value": 56
+  },
+  {
+    "affinity": 18,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 13,
+    "mass": 2,
+    "retention": 32,
+    "valence": 3,
+    "value": 57
+  },
+  {
+    "affinity": 252,
+    "catalysis": 2,
+    "charge": 1,
+    "hardness": 11,
+    "mass": 14,
+    "retention": 4,
+    "valence": 2,
+    "value": 58
+  },
+  {
+    "affinity": 155,
+    "catalysis": 3,
+    "charge": 1,
+    "hardness": 11,
+    "mass": 15,
+    "retention": 15,
+    "valence": 3,
+    "value": 59
+  },
+  {
+    "affinity": 181,
+    "catalysis": 2,
+    "charge": 0,
+    "hardness": 13,
+    "mass": 12,
+    "retention": 21,
+    "valence": 1,
+    "value": 60
+  },
+  {
+    "affinity": 46,
+    "catalysis": 4,
+    "charge": 3,
+    "hardness": 2,
+    "mass": 1,
+    "retention": 27,
+    "valence": 3,
+    "value": 61
+  },
+  {
+    "affinity": 50,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 6,
+    "mass": 13,
+    "retention": 9,
+    "valence": 1,
+    "value": 62
+  },
+  {
+    "affinity": 151,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 14,
+    "mass": 14,
+    "retention": 28,
+    "valence": 1,
+    "value": 63
+  },
+  {
+    "affinity": 112,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 10,
+    "mass": 1,
+    "retention": 10,
+    "valence": 4,
+    "value": 64
+  },
+  {
+    "affinity": 254,
+    "catalysis": 4,
+    "charge": 1,
+    "hardness": 7,
+    "mass": 11,
+    "retention": 32,
+    "valence": 1,
+    "value": 65
+  },
+  {
+    "affinity": 251,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 3,
+    "mass": 2,
+    "retention": 6,
+    "valence": 4,
+    "value": 66
+  },
+  {
+    "affinity": 184,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 11,
+    "mass": 12,
+    "retention": 20,
+    "valence": 4,
+    "value": 67
+  },
+  {
+    "affinity": 212,
+    "catalysis": 4,
+    "charge": 1,
+    "hardness": 7,
+    "mass": 5,
+    "retention": 14,
+    "valence": 2,
+    "value": 68
+  },
+  {
+    "affinity": 199,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 14,
+    "mass": 3,
+    "retention": 8,
+    "valence": 3,
+    "value": 69
+  },
+  {
+    "affinity": 108,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 16,
+    "mass": 2,
+    "retention": 30,
+    "valence": 4,
+    "value": 70
+  },
+  {
+    "affinity": 72,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 4,
+    "mass": 15,
+    "retention": 4,
+    "valence": 1,
+    "value": 71
+  },
+  {
+    "affinity": 10,
+    "catalysis": 4,
+    "charge": 1,
+    "hardness": 13,
+    "mass": 9,
+    "retention": 7,
+    "valence": 3,
+    "value": 72
+  },
+  {
+    "affinity": 66,
+    "catalysis": 0,
+    "charge": 0,
+    "hardness": 14,
+    "mass": 12,
+    "retention": 11,
+    "valence": 1,
+    "value": 73
+  },
+  {
+    "affinity": 143,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 7,
+    "mass": 1,
+    "retention": 12,
+    "valence": 2,
+    "value": 74
+  },
+  {
+    "affinity": 169,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 11,
+    "mass": 7,
+    "retention": 30,
+    "valence": 1,
+    "value": 75
+  },
+  {
+    "affinity": 92,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 4,
+    "mass": 1,
+    "retention": 32,
+    "valence": 4,
+    "value": 76
+  },
+  {
+    "affinity": 189,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 6,
+    "mass": 5,
+    "retention": 30,
+    "valence": 2,
+    "value": 77
+  },
+  {
+    "affinity": 156,
+    "catalysis": 2,
+    "charge": -3,
+    "hardness": 5,
+    "mass": 11,
+    "retention": 3,
+    "valence": 1,
+    "value": 78
+  },
+  {
+    "affinity": 112,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 9,
+    "retention": 5,
+    "valence": 4,
+    "value": 79
+  },
+  {
+    "affinity": 75,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 15,
+    "mass": 7,
+    "retention": 23,
+    "valence": 1,
+    "value": 80
+  },
+  {
+    "affinity": 122,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 7,
+    "mass": 13,
+    "retention": 22,
+    "valence": 2,
+    "value": 81
+  },
+  {
+    "affinity": 66,
+    "catalysis": 0,
+    "charge": 2,
+    "hardness": 12,
+    "mass": 15,
+    "retention": 16,
+    "valence": 3,
+    "value": 82
+  },
+  {
+    "affinity": 130,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 7,
+    "mass": 16,
+    "retention": 9,
+    "valence": 2,
+    "value": 83
+  },
+  {
+    "affinity": 26,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 1,
+    "mass": 6,
+    "retention": 17,
+    "valence": 2,
+    "value": 84
+  },
+  {
+    "affinity": 230,
+    "catalysis": 0,
+    "charge": -3,
+    "hardness": 15,
+    "mass": 16,
+    "retention": 20,
+    "valence": 3,
+    "value": 85
+  },
+  {
+    "affinity": 76,
+    "catalysis": 4,
+    "charge": 3,
+    "hardness": 10,
+    "mass": 13,
+    "retention": 19,
+    "valence": 4,
+    "value": 86
+  },
+  {
+    "affinity": 245,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 8,
+    "mass": 9,
+    "retention": 26,
+    "valence": 4,
+    "value": 87
+  },
+  {
+    "affinity": 158,
+    "catalysis": 2,
+    "charge": 0,
+    "hardness": 5,
+    "mass": 8,
+    "retention": 2,
+    "valence": 1,
+    "value": 88
+  },
+  {
+    "affinity": 12,
+    "catalysis": 0,
+    "charge": 2,
+    "hardness": 16,
+    "mass": 5,
+    "retention": 17,
+    "valence": 3,
+    "value": 89
+  },
+  {
+    "affinity": 88,
+    "catalysis": 4,
+    "charge": 0,
+    "hardness": 1,
+    "mass": 9,
+    "retention": 4,
+    "valence": 4,
+    "value": 90
+  },
+  {
+    "affinity": 68,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 4,
+    "mass": 5,
+    "retention": 20,
+    "valence": 3,
+    "value": 91
+  },
+  {
+    "affinity": 107,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 13,
+    "mass": 16,
+    "retention": 15,
+    "valence": 4,
+    "value": 92
+  },
+  {
+    "affinity": 220,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 2,
+    "mass": 4,
+    "retention": 7,
+    "valence": 2,
+    "value": 93
+  },
+  {
+    "affinity": 4,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 9,
+    "mass": 5,
+    "retention": 11,
+    "valence": 3,
+    "value": 94
+  },
+  {
+    "affinity": 16,
+    "catalysis": 2,
+    "charge": 2,
+    "hardness": 7,
+    "mass": 13,
+    "retention": 21,
+    "valence": 1,
+    "value": 95
+  },
+  {
+    "affinity": 248,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 9,
+    "mass": 4,
+    "retention": 25,
+    "valence": 1,
+    "value": 96
+  },
+  {
+    "affinity": 253,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 12,
+    "mass": 11,
+    "retention": 5,
+    "valence": 4,
+    "value": 97
+  },
+  {
+    "affinity": 191,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 15,
+    "mass": 4,
+    "retention": 1,
+    "valence": 4,
+    "value": 98
+  },
+  {
+    "affinity": 4,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 10,
+    "mass": 12,
+    "retention": 13,
+    "valence": 1,
+    "value": 99
+  },
+  {
+    "affinity": 0,
+    "catalysis": 2,
+    "charge": -2,
+    "hardness": 10,
+    "mass": 14,
+    "retention": 13,
+    "valence": 2,
+    "value": 100
+  },
+  {
+    "affinity": 108,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 11,
+    "mass": 8,
+    "retention": 23,
+    "valence": 2,
+    "value": 101
+  },
+  {
+    "affinity": 240,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 5,
+    "mass": 7,
+    "retention": 32,
+    "valence": 1,
+    "value": 102
+  },
+  {
+    "affinity": 92,
+    "catalysis": 2,
+    "charge": 2,
+    "hardness": 10,
+    "mass": 6,
+    "retention": 18,
+    "valence": 4,
+    "value": 103
+  },
+  {
+    "affinity": 4,
+    "catalysis": 0,
+    "charge": -3,
+    "hardness": 10,
+    "mass": 6,
+    "retention": 24,
+    "valence": 3,
+    "value": 104
+  },
+  {
+    "affinity": 174,
+    "catalysis": 0,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 15,
+    "retention": 12,
+    "valence": 2,
+    "value": 105
+  },
+  {
+    "affinity": 32,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 16,
+    "mass": 6,
+    "retention": 9,
+    "valence": 2,
+    "value": 106
+  },
+  {
+    "affinity": 98,
+    "catalysis": 0,
+    "charge": 1,
+    "hardness": 8,
+    "mass": 12,
+    "retention": 30,
+    "valence": 3,
+    "value": 107
+  },
+  {
+    "affinity": 148,
+    "catalysis": 0,
+    "charge": -1,
+    "hardness": 11,
+    "mass": 9,
+    "retention": 32,
+    "valence": 1,
+    "value": 108
+  },
+  {
+    "affinity": 90,
+    "catalysis": 2,
+    "charge": -2,
+    "hardness": 10,
+    "mass": 5,
+    "retention": 32,
+    "valence": 2,
+    "value": 109
+  },
+  {
+    "affinity": 181,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 14,
+    "mass": 10,
+    "retention": 17,
+    "valence": 4,
+    "value": 110
+  },
+  {
+    "affinity": 168,
+    "catalysis": 2,
+    "charge": -3,
+    "hardness": 4,
+    "mass": 10,
+    "retention": 24,
+    "valence": 2,
+    "value": 111
+  },
+  {
+    "affinity": 151,
+    "catalysis": 0,
+    "charge": 4,
+    "hardness": 7,
+    "mass": 2,
+    "retention": 8,
+    "valence": 1,
+    "value": 112
+  },
+  {
+    "affinity": 110,
+    "catalysis": 1,
+    "charge": 2,
+    "hardness": 2,
+    "mass": 5,
+    "retention": 31,
+    "valence": 2,
+    "value": 113
+  },
+  {
+    "affinity": 64,
+    "catalysis": 0,
+    "charge": 1,
+    "hardness": 14,
+    "mass": 13,
+    "retention": 10,
+    "valence": 2,
+    "value": 114
+  },
+  {
+    "affinity": 111,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 13,
+    "mass": 3,
+    "retention": 5,
+    "valence": 4,
+    "value": 115
+  },
+  {
+    "affinity": 87,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 3,
+    "mass": 10,
+    "retention": 5,
+    "valence": 1,
+    "value": 116
+  },
+  {
+    "affinity": 18,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 9,
+    "mass": 15,
+    "retention": 7,
+    "valence": 3,
+    "value": 117
+  },
+  {
+    "affinity": 251,
+    "catalysis": 0,
+    "charge": 1,
+    "hardness": 15,
+    "mass": 12,
+    "retention": 3,
+    "valence": 4,
+    "value": 118
+  },
+  {
+    "affinity": 62,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 5,
+    "mass": 13,
+    "retention": 7,
+    "valence": 4,
+    "value": 119
+  },
+  {
+    "affinity": 144,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 11,
+    "mass": 16,
+    "retention": 29,
+    "valence": 3,
+    "value": 120
+  },
+  {
+    "affinity": 26,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 11,
+    "mass": 11,
+    "retention": 23,
+    "valence": 1,
+    "value": 121
+  },
+  {
+    "affinity": 66,
+    "catalysis": 0,
+    "charge": 4,
+    "hardness": 10,
+    "mass": 6,
+    "retention": 10,
+    "valence": 1,
+    "value": 122
+  },
+  {
+    "affinity": 192,
+    "catalysis": 2,
+    "charge": -2,
+    "hardness": 10,
+    "mass": 3,
+    "retention": 23,
+    "valence": 2,
+    "value": 123
+  },
+  {
+    "affinity": 243,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 3,
+    "mass": 9,
+    "retention": 7,
+    "valence": 2,
+    "value": 124
+  },
+  {
+    "affinity": 46,
+    "catalysis": 2,
+    "charge": -4,
+    "hardness": 5,
+    "mass": 7,
+    "retention": 21,
+    "valence": 1,
+    "value": 125
+  },
+  {
+    "affinity": 123,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 9,
+    "mass": 16,
+    "retention": 4,
+    "valence": 1,
+    "value": 126
+  },
+  {
+    "affinity": 0,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 8,
+    "mass": 10,
+    "retention": 12,
+    "valence": 2,
+    "value": 127
+  },
+  {
+    "affinity": 54,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 7,
+    "mass": 1,
+    "retention": 8,
+    "valence": 1,
+    "value": 128
+  },
+  {
+    "affinity": 24,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 11,
+    "mass": 1,
+    "retention": 30,
+    "valence": 3,
+    "value": 129
+  },
+  {
+    "affinity": 65,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 7,
+    "mass": 2,
+    "retention": 20,
+    "valence": 2,
+    "value": 130
+  },
+  {
+    "affinity": 151,
+    "catalysis": 2,
+    "charge": 2,
+    "hardness": 7,
+    "mass": 7,
+    "retention": 10,
+    "valence": 3,
+    "value": 131
+  },
+  {
+    "affinity": 206,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 5,
+    "mass": 8,
+    "retention": 3,
+    "valence": 4,
+    "value": 132
+  },
+  {
+    "affinity": 103,
+    "catalysis": 2,
+    "charge": 4,
+    "hardness": 11,
+    "mass": 5,
+    "retention": 18,
+    "valence": 4,
+    "value": 133
+  },
+  {
+    "affinity": 8,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 9,
+    "retention": 3,
+    "valence": 4,
+    "value": 134
+  },
+  {
+    "affinity": 112,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 12,
+    "mass": 11,
+    "retention": 22,
+    "valence": 1,
+    "value": 135
+  },
+  {
+    "affinity": 141,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 11,
+    "mass": 12,
+    "retention": 30,
+    "valence": 2,
+    "value": 136
+  },
+  {
+    "affinity": 26,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 6,
+    "mass": 9,
+    "retention": 11,
+    "valence": 3,
+    "value": 137
+  },
+  {
+    "affinity": 6,
+    "catalysis": 0,
+    "charge": 1,
+    "hardness": 7,
+    "mass": 3,
+    "retention": 24,
+    "valence": 2,
+    "value": 138
+  },
+  {
+    "affinity": 127,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 16,
+    "mass": 5,
+    "retention": 2,
+    "valence": 3,
+    "value": 139
+  },
+  {
+    "affinity": 239,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 3,
+    "mass": 1,
+    "retention": 25,
+    "valence": 1,
+    "value": 140
+  },
+  {
+    "affinity": 245,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 5,
+    "retention": 29,
+    "valence": 4,
+    "value": 141
+  },
+  {
+    "affinity": 157,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 8,
+    "mass": 11,
+    "retention": 4,
+    "valence": 4,
+    "value": 142
+  },
+  {
+    "affinity": 103,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 14,
+    "mass": 11,
+    "retention": 8,
+    "valence": 4,
+    "value": 143
+  },
+  {
+    "affinity": 100,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 13,
+    "mass": 14,
+    "retention": 14,
+    "valence": 3,
+    "value": 144
+  },
+  {
+    "affinity": 192,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 11,
+    "mass": 14,
+    "retention": 24,
+    "valence": 1,
+    "value": 145
+  },
+  {
+    "affinity": 113,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 3,
+    "mass": 3,
+    "retention": 21,
+    "valence": 2,
+    "value": 146
+  },
+  {
+    "affinity": 86,
+    "catalysis": 2,
+    "charge": 4,
+    "hardness": 13,
+    "mass": 6,
+    "retention": 12,
+    "valence": 2,
+    "value": 147
+  },
+  {
+    "affinity": 75,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 3,
+    "mass": 1,
+    "retention": 10,
+    "valence": 3,
+    "value": 148
+  },
+  {
+    "affinity": 175,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 11,
+    "mass": 9,
+    "retention": 21,
+    "valence": 2,
+    "value": 149
+  },
+  {
+    "affinity": 232,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 14,
+    "mass": 6,
+    "retention": 7,
+    "valence": 2,
+    "value": 150
+  },
+  {
+    "affinity": 180,
+    "catalysis": 2,
+    "charge": -3,
+    "hardness": 12,
+    "mass": 9,
+    "retention": 32,
+    "valence": 4,
+    "value": 151
+  },
+  {
+    "affinity": 189,
+    "catalysis": 0,
+    "charge": 0,
+    "hardness": 16,
+    "mass": 14,
+    "retention": 29,
+    "valence": 3,
+    "value": 152
+  },
+  {
+    "affinity": 59,
+    "catalysis": 3,
+    "charge": -2,
+    "hardness": 13,
+    "mass": 6,
+    "retention": 2,
+    "valence": 3,
+    "value": 153
+  },
+  {
+    "affinity": 40,
+    "catalysis": 1,
+    "charge": 0,
+    "hardness": 9,
+    "mass": 2,
+    "retention": 19,
+    "valence": 3,
+    "value": 154
+  },
+  {
+    "affinity": 69,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 4,
+    "mass": 7,
+    "retention": 31,
+    "valence": 1,
+    "value": 155
+  },
+  {
+    "affinity": 48,
+    "catalysis": 2,
+    "charge": -3,
+    "hardness": 5,
+    "mass": 16,
+    "retention": 9,
+    "valence": 2,
+    "value": 156
+  },
+  {
+    "affinity": 124,
+    "catalysis": 4,
+    "charge": -2,
+    "hardness": 1,
+    "mass": 3,
+    "retention": 30,
+    "valence": 1,
+    "value": 157
+  },
+  {
+    "affinity": 8,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 6,
+    "retention": 5,
+    "valence": 2,
+    "value": 158
+  },
+  {
+    "affinity": 189,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 16,
+    "retention": 5,
+    "valence": 1,
+    "value": 159
+  },
+  {
+    "affinity": 2,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 8,
+    "mass": 10,
+    "retention": 16,
+    "valence": 4,
+    "value": 160
+  },
+  {
+    "affinity": 98,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 13,
+    "mass": 9,
+    "retention": 19,
+    "valence": 2,
+    "value": 161
+  },
+  {
+    "affinity": 92,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 5,
+    "mass": 2,
+    "retention": 25,
+    "valence": 1,
+    "value": 162
+  },
+  {
+    "affinity": 232,
+    "catalysis": 2,
+    "charge": -3,
+    "hardness": 15,
+    "mass": 14,
+    "retention": 29,
+    "valence": 3,
+    "value": 163
+  },
+  {
+    "affinity": 243,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 14,
+    "mass": 7,
+    "retention": 25,
+    "valence": 1,
+    "value": 164
+  },
+  {
+    "affinity": 21,
+    "catalysis": 4,
+    "charge": 0,
+    "hardness": 6,
+    "mass": 16,
+    "retention": 22,
+    "valence": 4,
+    "value": 165
+  },
+  {
+    "affinity": 177,
+    "catalysis": 2,
+    "charge": 0,
+    "hardness": 2,
+    "mass": 4,
+    "retention": 26,
+    "valence": 4,
+    "value": 166
+  },
+  {
+    "affinity": 224,
+    "catalysis": 2,
+    "charge": -2,
+    "hardness": 3,
+    "mass": 15,
+    "retention": 21,
+    "valence": 3,
+    "value": 167
+  },
+  {
+    "affinity": 223,
+    "catalysis": 4,
+    "charge": -2,
+    "hardness": 9,
+    "mass": 8,
+    "retention": 19,
+    "valence": 2,
+    "value": 168
+  },
+  {
+    "affinity": 116,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 9,
+    "mass": 12,
+    "retention": 2,
+    "valence": 4,
+    "value": 169
+  },
+  {
+    "affinity": 241,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 9,
+    "mass": 10,
+    "retention": 9,
+    "valence": 1,
+    "value": 170
+  },
+  {
+    "affinity": 182,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 10,
+    "mass": 16,
+    "retention": 28,
+    "valence": 1,
+    "value": 171
+  },
+  {
+    "affinity": 32,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 3,
+    "retention": 9,
+    "valence": 2,
+    "value": 172
+  },
+  {
+    "affinity": 204,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 5,
+    "mass": 11,
+    "retention": 25,
+    "valence": 1,
+    "value": 173
+  },
+  {
+    "affinity": 236,
+    "catalysis": 2,
+    "charge": 4,
+    "hardness": 2,
+    "mass": 14,
+    "retention": 20,
+    "valence": 3,
+    "value": 174
+  },
+  {
+    "affinity": 27,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 7,
+    "mass": 4,
+    "retention": 11,
+    "valence": 1,
+    "value": 175
+  },
+  {
+    "affinity": 9,
+    "catalysis": 1,
+    "charge": -2,
+    "hardness": 10,
+    "mass": 13,
+    "retention": 26,
+    "valence": 3,
+    "value": 176
+  },
+  {
+    "affinity": 165,
+    "catalysis": 0,
+    "charge": 0,
+    "hardness": 11,
+    "mass": 12,
+    "retention": 31,
+    "valence": 2,
+    "value": 177
+  },
+  {
+    "affinity": 144,
+    "catalysis": 4,
+    "charge": -1,
+    "hardness": 8,
+    "mass": 13,
+    "retention": 32,
+    "valence": 3,
+    "value": 178
+  },
+  {
+    "affinity": 238,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 6,
+    "mass": 8,
+    "retention": 8,
+    "valence": 3,
+    "value": 179
+  },
+  {
+    "affinity": 22,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 3,
+    "mass": 9,
+    "retention": 32,
+    "valence": 3,
+    "value": 180
+  },
+  {
+    "affinity": 92,
+    "catalysis": 2,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 13,
+    "retention": 25,
+    "valence": 2,
+    "value": 181
+  },
+  {
+    "affinity": 32,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 13,
+    "mass": 2,
+    "retention": 30,
+    "valence": 1,
+    "value": 182
+  },
+  {
+    "affinity": 254,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 5,
+    "mass": 13,
+    "retention": 2,
+    "valence": 2,
+    "value": 183
+  },
+  {
+    "affinity": 133,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 13,
+    "mass": 1,
+    "retention": 17,
+    "valence": 2,
+    "value": 184
+  },
+  {
+    "affinity": 174,
+    "catalysis": 0,
+    "charge": 4,
+    "hardness": 7,
+    "mass": 10,
+    "retention": 11,
+    "valence": 3,
+    "value": 185
+  },
+  {
+    "affinity": 187,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 15,
+    "mass": 10,
+    "retention": 19,
+    "valence": 1,
+    "value": 186
+  },
+  {
+    "affinity": 24,
+    "catalysis": 1,
+    "charge": 0,
+    "hardness": 11,
+    "mass": 5,
+    "retention": 13,
+    "valence": 2,
+    "value": 187
+  },
+  {
+    "affinity": 129,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 12,
+    "mass": 5,
+    "retention": 1,
+    "valence": 3,
+    "value": 188
+  },
+  {
+    "affinity": 28,
+    "catalysis": 3,
+    "charge": -2,
+    "hardness": 15,
+    "mass": 1,
+    "retention": 22,
+    "valence": 1,
+    "value": 189
+  },
+  {
+    "affinity": 69,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 2,
+    "retention": 31,
+    "valence": 1,
+    "value": 190
+  },
+  {
+    "affinity": 204,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 15,
+    "retention": 26,
+    "valence": 2,
+    "value": 191
+  },
+  {
+    "affinity": 163,
+    "catalysis": 0,
+    "charge": 4,
+    "hardness": 12,
+    "mass": 9,
+    "retention": 8,
+    "valence": 3,
+    "value": 192
+  },
+  {
+    "affinity": 220,
+    "catalysis": 2,
+    "charge": 0,
+    "hardness": 15,
+    "mass": 7,
+    "retention": 32,
+    "valence": 2,
+    "value": 193
+  },
+  {
+    "affinity": 30,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 10,
+    "mass": 16,
+    "retention": 23,
+    "valence": 3,
+    "value": 194
+  },
+  {
+    "affinity": 94,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 5,
+    "mass": 2,
+    "retention": 2,
+    "valence": 2,
+    "value": 195
+  },
+  {
+    "affinity": 8,
+    "catalysis": 2,
+    "charge": 1,
+    "hardness": 11,
+    "mass": 16,
+    "retention": 31,
+    "valence": 4,
+    "value": 196
+  },
+  {
+    "affinity": 255,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 15,
+    "retention": 13,
+    "valence": 3,
+    "value": 197
+  },
+  {
+    "affinity": 245,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 13,
+    "mass": 11,
+    "retention": 9,
+    "valence": 3,
+    "value": 198
+  },
+  {
+    "affinity": 175,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 4,
+    "retention": 5,
+    "valence": 1,
+    "value": 199
+  },
+  {
+    "affinity": 232,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 6,
+    "mass": 11,
+    "retention": 27,
+    "valence": 1,
+    "value": 200
+  },
+  {
+    "affinity": 208,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 2,
+    "mass": 8,
+    "retention": 3,
+    "valence": 3,
+    "value": 201
+  },
+  {
+    "affinity": 57,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 6,
+    "mass": 14,
+    "retention": 4,
+    "valence": 3,
+    "value": 202
+  },
+  {
+    "affinity": 210,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 9,
+    "mass": 16,
+    "retention": 30,
+    "valence": 3,
+    "value": 203
+  },
+  {
+    "affinity": 105,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 12,
+    "mass": 3,
+    "retention": 30,
+    "valence": 3,
+    "value": 204
+  },
+  {
+    "affinity": 201,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 16,
+    "mass": 7,
+    "retention": 6,
+    "valence": 4,
+    "value": 205
+  },
+  {
+    "affinity": 214,
+    "catalysis": 4,
+    "charge": 2,
+    "hardness": 1,
+    "mass": 14,
+    "retention": 4,
+    "valence": 1,
+    "value": 206
+  },
+  {
+    "affinity": 166,
+    "catalysis": 3,
+    "charge": -3,
+    "hardness": 11,
+    "mass": 15,
+    "retention": 1,
+    "valence": 2,
+    "value": 207
+  },
+  {
+    "affinity": 85,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 11,
+    "mass": 9,
+    "retention": 10,
+    "valence": 4,
+    "value": 208
+  },
+  {
+    "affinity": 235,
+    "catalysis": 3,
+    "charge": -1,
+    "hardness": 14,
+    "mass": 2,
+    "retention": 21,
+    "valence": 2,
+    "value": 209
+  },
+  {
+    "affinity": 134,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 3,
+    "mass": 2,
+    "retention": 25,
+    "valence": 1,
+    "value": 210
+  },
+  {
+    "affinity": 118,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 1,
+    "mass": 2,
+    "retention": 3,
+    "valence": 3,
+    "value": 211
+  },
+  {
+    "affinity": 216,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 8,
+    "mass": 10,
+    "retention": 21,
+    "valence": 3,
+    "value": 212
+  },
+  {
+    "affinity": 64,
+    "catalysis": 0,
+    "charge": -3,
+    "hardness": 2,
+    "mass": 16,
+    "retention": 23,
+    "valence": 1,
+    "value": 213
+  },
+  {
+    "affinity": 51,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 7,
+    "mass": 14,
+    "retention": 13,
+    "valence": 2,
+    "value": 214
+  },
+  {
+    "affinity": 7,
+    "catalysis": 0,
+    "charge": 2,
+    "hardness": 11,
+    "mass": 5,
+    "retention": 29,
+    "valence": 3,
+    "value": 215
+  },
+  {
+    "affinity": 222,
+    "catalysis": 3,
+    "charge": 1,
+    "hardness": 8,
+    "mass": 11,
+    "retention": 29,
+    "valence": 1,
+    "value": 216
+  },
+  {
+    "affinity": 51,
+    "catalysis": 1,
+    "charge": 1,
+    "hardness": 4,
+    "mass": 13,
+    "retention": 31,
+    "valence": 3,
+    "value": 217
+  },
+  {
+    "affinity": 155,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 4,
+    "mass": 6,
+    "retention": 29,
+    "valence": 3,
+    "value": 218
+  },
+  {
+    "affinity": 192,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 8,
+    "mass": 11,
+    "retention": 13,
+    "valence": 2,
+    "value": 219
+  },
+  {
+    "affinity": 111,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 3,
+    "mass": 1,
+    "retention": 20,
+    "valence": 2,
+    "value": 220
+  },
+  {
+    "affinity": 223,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 11,
+    "mass": 9,
+    "retention": 19,
+    "valence": 3,
+    "value": 221
+  },
+  {
+    "affinity": 23,
+    "catalysis": 4,
+    "charge": -3,
+    "hardness": 15,
+    "mass": 5,
+    "retention": 28,
+    "valence": 3,
+    "value": 222
+  },
+  {
+    "affinity": 221,
+    "catalysis": 0,
+    "charge": -4,
+    "hardness": 8,
+    "mass": 7,
+    "retention": 20,
+    "valence": 2,
+    "value": 223
+  },
+  {
+    "affinity": 29,
+    "catalysis": 2,
+    "charge": -1,
+    "hardness": 9,
+    "mass": 5,
+    "retention": 32,
+    "valence": 1,
+    "value": 224
+  },
+  {
+    "affinity": 122,
+    "catalysis": 1,
+    "charge": 0,
+    "hardness": 5,
+    "mass": 4,
+    "retention": 21,
+    "valence": 3,
+    "value": 225
+  },
+  {
+    "affinity": 160,
+    "catalysis": 4,
+    "charge": 0,
+    "hardness": 2,
+    "mass": 2,
+    "retention": 24,
+    "valence": 3,
+    "value": 226
+  },
+  {
+    "affinity": 232,
+    "catalysis": 0,
+    "charge": 1,
+    "hardness": 1,
+    "mass": 9,
+    "retention": 11,
+    "valence": 3,
+    "value": 227
+  },
+  {
+    "affinity": 217,
+    "catalysis": 1,
+    "charge": -4,
+    "hardness": 16,
+    "mass": 9,
+    "retention": 22,
+    "valence": 3,
+    "value": 228
+  },
+  {
+    "affinity": 106,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 2,
+    "mass": 6,
+    "retention": 11,
+    "valence": 4,
+    "value": 229
+  },
+  {
+    "affinity": 91,
+    "catalysis": 3,
+    "charge": 4,
+    "hardness": 8,
+    "mass": 13,
+    "retention": 24,
+    "valence": 2,
+    "value": 230
+  },
+  {
+    "affinity": 232,
+    "catalysis": 0,
+    "charge": 2,
+    "hardness": 4,
+    "mass": 5,
+    "retention": 9,
+    "valence": 2,
+    "value": 231
+  },
+  {
+    "affinity": 122,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 9,
+    "mass": 13,
+    "retention": 7,
+    "valence": 1,
+    "value": 232
+  },
+  {
+    "affinity": 66,
+    "catalysis": 4,
+    "charge": 0,
+    "hardness": 7,
+    "mass": 15,
+    "retention": 20,
+    "valence": 2,
+    "value": 233
+  },
+  {
+    "affinity": 135,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 13,
+    "mass": 15,
+    "retention": 31,
+    "valence": 4,
+    "value": 234
+  },
+  {
+    "affinity": 113,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 12,
+    "mass": 16,
+    "retention": 12,
+    "valence": 4,
+    "value": 235
+  },
+  {
+    "affinity": 232,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 1,
+    "mass": 1,
+    "retention": 10,
+    "valence": 3,
+    "value": 236
+  },
+  {
+    "affinity": 91,
+    "catalysis": 3,
+    "charge": -4,
+    "hardness": 2,
+    "mass": 3,
+    "retention": 17,
+    "valence": 2,
+    "value": 237
+  },
+  {
+    "affinity": 242,
+    "catalysis": 3,
+    "charge": 0,
+    "hardness": 11,
+    "mass": 5,
+    "retention": 15,
+    "valence": 3,
+    "value": 238
+  },
+  {
+    "affinity": 254,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 10,
+    "mass": 2,
+    "retention": 1,
+    "valence": 2,
+    "value": 239
+  },
+  {
+    "affinity": 183,
+    "catalysis": 0,
+    "charge": 3,
+    "hardness": 8,
+    "mass": 2,
+    "retention": 14,
+    "valence": 2,
+    "value": 240
+  },
+  {
+    "affinity": 42,
+    "catalysis": 1,
+    "charge": -1,
+    "hardness": 15,
+    "mass": 16,
+    "retention": 7,
+    "valence": 3,
+    "value": 241
+  },
+  {
+    "affinity": 152,
+    "catalysis": 1,
+    "charge": 3,
+    "hardness": 6,
+    "mass": 7,
+    "retention": 19,
+    "valence": 2,
+    "value": 242
+  },
+  {
+    "affinity": 123,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 11,
+    "mass": 15,
+    "retention": 5,
+    "valence": 2,
+    "value": 243
+  },
+  {
+    "affinity": 171,
+    "catalysis": 4,
+    "charge": -4,
+    "hardness": 1,
+    "mass": 1,
+    "retention": 12,
+    "valence": 2,
+    "value": 244
+  },
+  {
+    "affinity": 156,
+    "catalysis": 3,
+    "charge": -2,
+    "hardness": 4,
+    "mass": 1,
+    "retention": 8,
+    "valence": 4,
+    "value": 245
+  },
+  {
+    "affinity": 44,
+    "catalysis": 1,
+    "charge": 0,
+    "hardness": 4,
+    "mass": 8,
+    "retention": 6,
+    "valence": 1,
+    "value": 246
+  },
+  {
+    "affinity": 149,
+    "catalysis": 3,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 5,
+    "retention": 6,
+    "valence": 4,
+    "value": 247
+  },
+  {
+    "affinity": 231,
+    "catalysis": 2,
+    "charge": 3,
+    "hardness": 3,
+    "mass": 14,
+    "retention": 5,
+    "valence": 3,
+    "value": 248
+  },
+  {
+    "affinity": 190,
+    "catalysis": 1,
+    "charge": -3,
+    "hardness": 2,
+    "mass": 7,
+    "retention": 5,
+    "valence": 3,
+    "value": 249
+  },
+  {
+    "affinity": 193,
+    "catalysis": 4,
+    "charge": 4,
+    "hardness": 8,
+    "mass": 11,
+    "retention": 18,
+    "valence": 2,
+    "value": 250
+  },
+  {
+    "affinity": 220,
+    "catalysis": 0,
+    "charge": -2,
+    "hardness": 1,
+    "mass": 9,
+    "retention": 21,
+    "valence": 1,
+    "value": 251
+  },
+  {
+    "affinity": 202,
+    "catalysis": 3,
+    "charge": -2,
+    "hardness": 15,
+    "mass": 7,
+    "retention": 10,
+    "valence": 3,
+    "value": 252
+  },
+  {
+    "affinity": 17,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 1,
+    "mass": 9,
+    "retention": 23,
+    "valence": 3,
+    "value": 253
+  },
+  {
+    "affinity": 101,
+    "catalysis": 1,
+    "charge": 4,
+    "hardness": 10,
+    "mass": 11,
+    "retention": 8,
+    "valence": 3,
+    "value": 254
+  },
+  {
+    "affinity": 107,
+    "catalysis": 0,
+    "charge": 0,
+    "hardness": 8,
+    "mass": 5,
+    "retention": 30,
+    "valence": 3,
+    "value": 255
+  }
+]
+```

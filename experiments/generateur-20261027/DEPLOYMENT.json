@@ -1,0 +1,54 @@
+{
+  "primary": {
+    "name": "octet-passage-001",
+    "id": "fdba4d507da64005a6d6a3acc01578df29569d3b70cf583a887ece92e31a047c",
+    "image": "sha256:2333bd330d12de02514770b3585cad313644316047cdee24a7acfdece6de6efb",
+    "started": "2026-10-27T01:47:07.133512736Z",
+    "status": "running",
+    "restarts": 0,
+    "oom": false,
+    "memory_limit": 805306368,
+    "cpu_nano": 1500000000,
+    "network": "none",
+    "readonly": true
+  },
+  "broker": {
+    "name": "octet-passage-library",
+    "id": "4ba560a8d945d0c0e1830c9276d0d6a68596fc58605acb2aef34dc468b8c8b9b",
+    "image": "sha256:2333bd330d12de02514770b3585cad313644316047cdee24a7acfdece6de6efb",
+    "started": "2026-10-27T01:47:07.241803705Z",
+    "status": "running",
+    "restarts": 0,
+    "oom": false,
+    "memory_limit": 100663296,
+    "cpu_nano": 250000000,
+    "network": "bridge",
+    "readonly": true
+  },
+  "octet-relief": {
+    "name": "octet-relief",
+    "id": "345eee37071e62b103b8f91779e6e8ba4304cee13e57e4a3bda8136f990d5c39",
+    "image": "sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587",
+    "started": "2026-10-25T19:56:08.295975832Z",
+    "status": "running",
+    "restarts": 0,
+    "oom": false,
+    "memory_limit": 536870912,
+    "cpu_nano": 2000000000,
+    "network": "none",
+    "readonly": true
+  },
+  "octet-transmission": {
+    "name": "octet-transmission",
+    "id": "ceea07a23c38cd57417ce73cce011b44f4037021f89ec6e0feb37ba5d89cb700",
+    "image": "sha256:2333bd330d12de02514770b3585cad313644316047cdee24a7acfdece6de6efb",
+    "started": "2026-10-26T22:32:30.245652658Z",
+    "status": "running",
+    "restarts": 0,
+    "oom": false,
+    "memory_limit": 67108864,
+    "cpu_nano": 500000000,
+    "network": "none",
+    "readonly": true
+  }
+}
