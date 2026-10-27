@@ -373,6 +373,8 @@ def run(world, batches=0, realtime=True):
    remaining=recipe['limits']['batch_seconds']-(time.monotonic()-start)
    while remaining>0 and not STOP:
     time.sleep(min(.2,remaining));remaining=recipe['limits']['batch_seconds']-(time.monotonic()-start)
+ if status.get('population')==0:
+  write_json(world/'.archive-closed.json',{'closed':True,'reason':'extinction','last_batch':status['batches']})
  guard.close()
  return status
 

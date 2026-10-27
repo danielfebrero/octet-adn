@@ -81,11 +81,18 @@ class Export:
         self.db.commit(); self.path.unlink(); self.reset()
 def cold_worlds():
     # Only the explicitly retired worlds of 25 October. Never infer extinction by age.
-    return set(json.loads((Path(__file__).parent / 'cold-worlds.json').read_text()))
+    paths = set(json.loads((Path(__file__).parent / 'cold-worlds.json').read_text()))
+    for marker in (ROOT / 'experiments').rglob('.archive-closed.json'):
+        try:
+            if json.loads(marker.read_text()).get('closed') is True:
+                paths.add(str(marker.parent.relative_to(ROOT)))
+        except (ValueError, FileNotFoundError): pass
+    return paths
 def evictable(key, age, cold):
     if key.startswith(('captured/', 'ledger/')): return True
     if key.startswith('backups/'): return key.startswith('backups/octet-adn-20261025-20f62d86/')
     rel = key.removeprefix('repo/')
+    if Path(rel).name == '.archive-closed.json': return False
     if any(rel.startswith(w + '/') for w in cold): return True
     parts = Path(rel).parts
     if 'histoire' in parts and 'reports' in parts and rel.endswith('.json'): return True

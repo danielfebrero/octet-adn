@@ -1,0 +1,26 @@
+{
+  "verified_input_bytes": 13648049774,
+  "evicted_bytes": 11955600347,
+  "completed_cycles": [
+    {
+      "at": "2026-10-27T07:58:54.955319+00:00",
+      "status": "cycle_ok",
+      "files": 7768,
+      "evicted_bytes": 8537586701,
+      "free_bytes": 222596853760
+    },
+    {
+      "at": "2026-10-27T08:00:55.339682+00:00",
+      "status": "cycle_ok",
+      "files": 103,
+      "evicted_bytes": 3229310877,
+      "free_bytes": 225985933312
+    }
+  ],
+  "historical_errors_resolved": [
+    "initial private boot.log permission fixed with archive-only DAC_OVERRIDE"
+  ],
+  "live_world_restarts": 0,
+  "release": "https://github.com/danielfebrero/octet-adn/releases/tag/octet-history-20261027",
+  "tests": "6 archive + 5 generator passed; actual report and 85MB checkpoint restored"
+}

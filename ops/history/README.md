@@ -24,7 +24,7 @@ Les snapshots des fichiers vivants sont indépendants : ils ne constituent pas u
 ## Rétention locale
 
 - États courants, ELF, paramètres, recettes, lois, bibliothèques, files d'injection, journaux ouverts et anneaux : conservés. Aucun `copytruncate`, aucun arrêt ou réensemencement.
-- Mondes froids explicitement archivés le 25/10 : `cold-worlds.json` (44 répertoires, contrôles inclus). Leurs fichiers partent après vérification. Un futur monde n'est **jamais** déclaré froid par son âge.
+- Mondes froids explicitement archivés le 25/10 : `cold-worlds.json` (44 répertoires, contrôles inclus, plus cinq racines de résultats de bancs terminés). Leurs fichiers partent après vérification. Un futur monde n'est **jamais** déclaré froid par son âge. Le générateur marque automatiquement une extinction validée avec `.archive-closed.json` (`closed: true`) : ce marqueur, conservé localement, permet alors l'éviction vérifiée du monde terminé. Aucun réensemencement. Un arrêt temporaire ou un nombre fini de lots ne crée pas ce marqueur.
 - Sauvegarde froide explicitement autorisée `octet-adn-20261025-20f62d86` : fichiers déplacés vers Releases après vérification ; les autres sauvegardes sont exportées sans éviction automatique.
 - Rapports immuables `histoire/reports` et spool du collecteur : retrait après vérification.
 - Segments d'histoire datés fermés : 24 heures locales ; Relief conserve sa règle particulière sur les événements.

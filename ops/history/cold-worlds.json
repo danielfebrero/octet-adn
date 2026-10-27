@@ -1,4 +1,9 @@
 [
+  "experiments/choix-runs",
+  "experiments/quantique-runs",
+  "experiments/raison-runs",
+  "experiments/relief-comparatif-20261026/data",
+  "experiments/transplant-runs",
   "experiments/vie-attention",
   "experiments/vie-briques",
   "experiments/vie-briques-ctrl",
