@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-27",
+  "source": "captured/vie-passage-001-20261027/0000000000001356-5be5c6742ab2d6098ab08472bbe346c3abd04d366764fa090a889ac4ab7dff58.json",
+  "manifest": "https://github.com/danielfebrero/octet-adn/releases/download/octet-history-20261027/blocks-51ee380bbf48f203eed48b9df15a7a1a60e52dfa80f682e163835d1b219d8849.json",
+  "archive": "https://github.com/danielfebrero/octet-adn/releases/download/octet-history-20261027/blocks-51ee380bbf48f203eed48b9df15a7a1a60e52dfa80f682e163835d1b219d8849.tar.gz",
+  "bytes": 1283,
+  "sha256": "5be5c6742ab2d6098ab08472bbe346c3abd04d366764fa090a889ac4ab7dff58",
+  "expected": "5be5c6742ab2d6098ab08472bbe346c3abd04d366764fa090a889ac4ab7dff58",
+  "batches": 1356,
+  "verified": true,
+  "cold_checkpoint_restoration": {
+    "path": "repo/experiments/vie-attention/state.ck",
+    "bytes": 85024824,
+    "sha256": "41ef98e745257f9052c4a35ea0e446f522c86b1d4cd6acfb2b9010a415154a4a",
+    "verified_each_block": true,
+    "no_execution": true
+  }
+}

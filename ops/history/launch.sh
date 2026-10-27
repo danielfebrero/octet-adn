@@ -20,9 +20,9 @@ for role in capture archive; do
       --mount type=bind,src="$state",dst=/state \
       --entrypoint python3 python:3.11-slim-bookworm -u /repo/ops/history/capture.py
   else
-    docker run -d --name "$name" --restart unless-stopped --user 10003:999 \
+    docker run -d --name "$name" --restart unless-stopped --user 0:999 \
       --cpus 1 --memory 768m --pids-limit 16 \
-      --read-only --cap-drop ALL --security-opt no-new-privileges \
+      --read-only --cap-drop ALL --cap-add DAC_OVERRIDE --security-opt no-new-privileges \
       -e PYTHONDONTWRITEBYTECODE=1 \
       --mount type=bind,src="$repo",dst=/repo \
       --mount type=bind,src="$backups",dst=/backups \

@@ -39,6 +39,10 @@ class HistoryTests(unittest.TestCase):
         with patch.object(r,'get',return_value=payload):
             self.assertEqual(r.restore(rows,out),len(data)); self.assertEqual(out.read_bytes(),data)
             with self.assertRaises(FileExistsError):r.restore(rows,out)
+        with patch.object(r,'get',return_value=payload+b'corruption'):
+            with self.assertRaises(ValueError):r.restore(rows,self.root/'corrupt')
+        self.assertFalse((self.root/'corrupt').exists())
+        self.assertFalse((self.root/'corrupt.restoring').exists())
     def test_restore_rejects_corruption_and_incomplete(self):
         row=({},dict(signature=[1,2,5,3,4],offset=0,size=2),'memory')
         with self.assertRaises(ValueError):r.restore([row],self.root/'missing')

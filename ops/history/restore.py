@@ -46,8 +46,10 @@ def restore(rows, output):
     if output.exists(): raise FileExistsError(output)
     temporary = output.with_name(output.name + '.restoring')
     # Exclusive creation, no overwrite of checkpoints or existing output.
+    created = False
     try:
         with temporary.open('xb') as dest:
+            created = True
             cached_url = None
             for meta, entry, url in chosen:
                 if url != cached_url:
@@ -61,7 +63,7 @@ def restore(rows, output):
         os.chmod(temporary, chosen[0][1]['mode'])
         os.link(temporary, output); temporary.unlink()
     except BaseException:
-        if temporary.exists(): temporary.unlink()
+        if created and temporary.exists(): temporary.unlink()
         raise
     return output.stat().st_size
 if __name__ == '__main__':

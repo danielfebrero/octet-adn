@@ -31,6 +31,8 @@ Les snapshots des fichiers vivants sont indépendants : ils ne constituent pas u
 - Snapshots historiques : sept jours locaux, puis retrait vérifié.
 - Courrier : sept jours minimum ; retrait seulement des séquences déjà ramassées (`pickups/cursor`), après export vérifié. Originaux anciens récupérables depuis Releases. Ne pas remettre le curseur à zéro sans restaurer le courrier correspondant.
 
+Le journal local tourne à 8 Mio ; ses segments fermés sont aussi exportés puis retirés. L'index ne conserve que les versions encore utiles localement.
+
 Les journaux ouverts restent locaux. Les nouvelles implémentations doivent fermer et segmenter leurs journaux à taille bornée (modèle : `relief-20261025/vivre.sh`) et placer les segments sous `histoire/`. Un writer qui garde un fichier ouvert indéfiniment ne peut être purgé sans son protocole de rotation.
 
 ## Restauration
@@ -45,6 +47,8 @@ L'outil parcourt les manifestes des Releases quotidiennes, sélectionne la derni
 Les chemins des sauvegardes commencent par `backups/octet-adn-20261025-20f62d86/`. Les rapports capturés de Passage sont sous `captured/vie-passage-001-20261027/NUMERO-SHA.json` ; leur champ `batches` identifie le lot d'origine.
 
 ## Exploitation
+
+Le service d'export utilise UID 0 avec la seule capacité `DAC_OVERRIDE`, pour lire les anciens fichiers privés des différents runners ; les autres capacités sont supprimées. Le collecteur est UID 10003, sans réseau. Les montages du jeton et du code restent hors du périmètre archivé.
 
 État durable : `/workspace/ops/octet-history/` (`index.sqlite`, `releases.jsonl`, spool et marqueurs). Le jeton n'est jamais copié dans cet état ni les archives : montage en lecture seule depuis le coffre hôte.
 
