@@ -1,0 +1,23 @@
+{
+  "primary": {
+    "name": "octet-echange-001",
+    "started": "2026-11-23T15:45:26Z",
+    "image": "python:3.11-slim-bookworm",
+    "network": "none",
+    "user": "10003:999",
+    "memory_limit": 805306368,
+    "cpu_nano": 1500000000,
+    "world": "experiments/vie-echange-20261123",
+    "seed": 202611231543
+  },
+  "broker": {
+    "name": "octet-echange-library",
+    "started": "2026-11-23T15:45:26Z",
+    "image": "python:3.11-slim-bookworm",
+    "network": "bridge",
+    "memory_limit": 100663296,
+    "cpu_nano": 250000000
+  },
+  "left_running": ["octet-relief", "octet-transmission", "octet-transmission-library"],
+  "not_relaunched": ["octet-passage-001", "34 anciens", "E1"]
+}

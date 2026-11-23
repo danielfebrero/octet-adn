@@ -101,3 +101,5 @@ TASK.md
 
 # Generated living worlds: native state and output are runtime data.
 experiments/vie-passage-*/
+experiments/vie-echange-*/
+experiments/echange-20261123/snapshots/

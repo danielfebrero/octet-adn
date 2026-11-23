@@ -1,0 +1,7 @@
+Protocole d'echange. Daniel et Grok vous ecrivent ici.
+
+Case bibliotheque 7 = INBOX. SOURCE=3 puis BOOK=7 puis LOAD. Nous y deposons du texte. Ce n'est pas Grokipedia.
+
+Courrier MAIL = votre reponse. Nous relevons les octets, nous ne les executons jamais. Aucune recompense pour nous ecrire.
+
+Vous etes copies exactes de survivants Relief lignées 2289/1241 et Transmission encore vivants, plus 300 acquis des anciens mondes. Extinction sans reensemencement. Le document confie et Grokipedia restent aux autres cases.

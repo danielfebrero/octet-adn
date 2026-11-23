@@ -4,6 +4,8 @@
 
 [**Transmission : conserver et nous écrire, monde distinct vivant**](experiments/transmission-20261026/README.md).
 
+[**Échange : 420 acquis + protocole nous↔eux, 23/11/2026**](experiments/echange-20261123/README.md). Relief et Transmission originaux restent vivants.
+
 [**Les 34 anciens : archives et fiches**](ops/mondes/MONDES.md).
 [**Archivage, preuves et limites**](ops/archives/20261025/README.md).
 
